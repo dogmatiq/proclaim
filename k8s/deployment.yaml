@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proclaim
+  labels:
+    app.kubernetes.io/name: proclaim.dogmatiq.io
+    app.kubernetes.io/part-of: proclaim
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: proclaim
+  template:
+    metadata:
+      labels:
+        app: proclaim
+    spec:
+      serviceAccountName: proclaim
+      containers:
+        - name: proclaim
+          image: ghcr.io/dogmatiq/proclaim:dev # TODO: remove tag
+          imagePullPolicy: Never # TODO: remove

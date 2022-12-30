@@ -1,0 +1,13 @@
+apiVersion: dns-sd.proclaim.dogmatiq.io/v1alpha1
+kind: Instance
+metadata:
+  name: test-1
+spec:
+  name: "xxx"
+  service: "_foo._tcp"
+  domain: "example.org"
+  host: "foo.example.org"
+  port: 1234
+  attributes:
+    foo: "bar"
+    baz: "qux"
