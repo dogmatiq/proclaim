@@ -1,29 +1,37 @@
 package proclaim
 
 import (
-	"golang.org/x/exp/maps"
+	"time"
+
+	"github.com/dogmatiq/dissolve/dnssd"
+	"github.com/mohae/deepcopy"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
+const (
+	// FinalizerName is the name of the finalizer that is added to instances
+	// so that they can be cleaned up when they are deleted.
+	finalizerName = groupName + "/finalizer"
+	groupName     = "dns-sd.proclaim.dogmatiq.io"
+)
+
+// InstanceSpec is the specification for a service instance.
 type InstanceSpec struct {
-	Name       string            `json:"name"`
-	Service    string            `json:"service"`
-	Domain     string            `json:"domain"`
-	Host       string            `json:"host"`
-	Port       uint16            `json:"port"`
-	Priority   uint16            `json:"priority,omitempty"`
-	Weight     uint16            `json:"weight,omitempty"`
-	Attributes map[string]string `json:"attributes,omitempty"`
+	Name       string              `json:"name"`
+	Service    string              `json:"service"`
+	Domain     string              `json:"domain"`
+	TargetHost string              `json:"targetHost"`
+	TargetPort uint16              `json:"targetPort"`
+	Priority   uint16              `json:"priority,omitempty"`
+	Weight     uint16              `json:"weight,omitempty"`
+	Attributes []map[string]string `json:"attributes,omitempty"`
+	TTL        uint16              `json:"ttl,omitempty"`
 }
 
-func (s InstanceSpec) DeepCopy() InstanceSpec {
-	s.Attributes = maps.Clone(s.Attributes)
-	return s
-}
-
+// Instance is a resource that represents a DNS-SD service instance.
 type Instance struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -31,38 +39,16 @@ type Instance struct {
 	Spec InstanceSpec `json:"spec,omitempty"`
 }
 
-// func (i *DNSSDInstance) ValidateCreate() error {
-// 	return nil
-// }
-
-// func (i *DNSSDInstance) ValidateUpdate(old runtime.Object) error {
-// 	return nil
-// }
-
-// func (i *DNSSDInstance) ValidateDelete() error {
-// 	return nil
-// }
-
-func (i *Instance) DeepCopy() *Instance {
-	if i == nil {
-		return nil
-	}
-
-	clone := *i
-	i.ObjectMeta.DeepCopyInto(&clone.ObjectMeta)
-	clone.Spec = i.Spec.DeepCopy()
-
-	return &clone
-}
-
+// DeepCopyObject returns a deep clone of i.
 func (i *Instance) DeepCopyObject() runtime.Object {
 	if i == nil {
 		return nil
 	}
 
-	return i.DeepCopy()
+	return deepcopy.Copy(i).(*Instance)
 }
 
+// InstanceList is a list of DNS-SD service instances.
 type InstanceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -70,36 +56,57 @@ type InstanceList struct {
 	Items []Instance `json:"items"`
 }
 
-func (l *InstanceList) DeepCopy() *InstanceList {
-	if l == nil {
-		return nil
-	}
-
-	clone := *l
-	l.ListMeta.DeepCopyInto(&clone.ListMeta)
-
-	for i, inst := range l.Items {
-		clone.Items[i] = *inst.DeepCopy()
-	}
-
-	return &clone
-}
-
+// DeepCopyObject returns a deep clone of l.
 func (l *InstanceList) DeepCopyObject() runtime.Object {
 	if l == nil {
 		return nil
 	}
 
-	return l.DeepCopy()
+	return deepcopy.Copy(l).(*InstanceList)
 }
 
+// SchemeBuilder is the scheme builder for the CRD.
 var SchemeBuilder = &scheme.Builder{
 	GroupVersion: schema.GroupVersion{
-		Group:   "dns-sd.proclaim.dogmatiq.io",
+		Group:   groupName,
 		Version: "v1alpha1",
 	},
 }
 
 func init() {
 	SchemeBuilder.Register(&Instance{}, &InstanceList{})
+}
+
+// newInstanceFromSpec returns a dnssd.Instance from a specification.
+func newInstanceFromSpec(spec InstanceSpec) dnssd.ServiceInstance {
+	result := dnssd.ServiceInstance{
+		Instance:    spec.Name,
+		ServiceType: spec.Service,
+		Domain:      spec.Domain,
+		TargetHost:  spec.TargetHost,
+		TargetPort:  spec.TargetPort,
+		Priority:    spec.Priority,
+		Weight:      spec.Weight,
+		TTL:         time.Duration(spec.TTL) * time.Second,
+	}
+
+	if result.TTL == 0 {
+		result.TTL = 60 * time.Second
+	}
+
+	for _, src := range spec.Attributes {
+		var dst dnssd.Attributes
+
+		for k, v := range src {
+			if v == "" {
+				dst.SetFlag(k)
+			} else {
+				dst.Set(k, []byte(v))
+			}
+		}
+
+		result.Attributes = append(result.Attributes, dst)
+	}
+
+	return result
 }

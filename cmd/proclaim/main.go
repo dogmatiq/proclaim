@@ -1,55 +1,49 @@
 package main
 
 import (
-	"os"
-
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/dogmatiq/proclaim"
+	"github.com/dogmatiq/proclaim/driver/route53driver"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	runtime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
-var (
-	setupLog = runtime.Log.WithName("setup")
-)
-
 func main() {
-	runtime.SetLogger(zap.New())
-
-	m, err := runtime.NewManager(runtime.GetConfigOrDie(), runtime.Options{})
+	m, err := runtime.NewManager(
+		runtime.GetConfigOrDie(),
+		runtime.Options{
+			Logger: zap.New(zap.UseDevMode(true)),
+		},
+	)
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
+		panic(err)
 	}
 
-	err = proclaim.SchemeBuilder.AddToScheme(m.GetScheme())
-	if err != nil {
-		setupLog.Error(err, "unable to add scheme")
-		os.Exit(1)
+	if err := proclaim.SchemeBuilder.AddToScheme(m.GetScheme()); err != nil {
+		panic(err)
 	}
 
-	err = runtime.NewControllerManagedBy(m).
+	if err := runtime.
+		NewControllerManagedBy(m).
 		For(&proclaim.Instance{}).
 		Complete(&proclaim.Reconciler{
 			Client: m.GetClient(),
-			Scheme: m.GetScheme(),
-		})
-	if err != nil {
-		setupLog.Error(err, "unable to create controller")
-		os.Exit(1)
+			Drivers: []proclaim.Driver{
+				&route53driver.Driver{
+					API: route53.New(
+						session.Must(session.NewSession()),
+					),
+				},
+			},
+		}); err != nil {
+		panic(err)
 	}
 
-	// err = runtime.NewWebhookManagedBy(m).
-	// 	For(&proclaim.Instance{}).
-	// 	Complete()
-	// if err != nil {
-	// 	setupLog.Error(err, "unable to create webhook")
-	// 	os.Exit(1)
-	// }
+	ctx := runtime.SetupSignalHandler()
 
-	setupLog.Info("starting manager")
-	if err := m.Start(runtime.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
+	if err := m.Start(ctx); err != nil {
+		panic(err)
 	}
 }

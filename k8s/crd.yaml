@@ -30,19 +30,18 @@ spec:
                 - name
                 - service
                 - domain
-                - host
-                - port
+                - targetHost
+                - targetPort
               properties:
                 name:
                   type: string
-                  description:
                 service:
                   type: string
                 domain:
                   type: string
-                host:
+                targetHost:
                   type: string
-                port:
+                targetPort:
                   type: integer
                   format: uint16
                 priority:
@@ -51,7 +50,12 @@ spec:
                 weight:
                   type: integer
                   format: uint16
+                ttl:
+                  type: integer
+                  format: uint16
                 attributes:
-                  type: object
-                  additionalProperties:
-                    type: string
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties:
+                      type: string

@@ -5,9 +5,99 @@ metadata:
 spec:
   name: "xxx"
   service: "_foo._tcp"
-  domain: "example.org"
-  host: "foo.example.org"
-  port: 1234
+  domain: "dnssd.example.org"
+  targetHost: "host200.example.org"
+  targetPort: 4321
   attributes:
-    foo: "bar"
-    baz: "qux"
+    - foo: "bar"
+      baz: "qux"
+      flag: ""
+    - more: attrs
+# ---
+# apiVersion: dns-sd.proclaim.dogmatiq.io/v1alpha1
+# kind: Instance
+# metadata:
+#   name: test-2
+# spec:
+#   name: "yyy"
+#   service: "_foo._tcp"
+#   domain: "dnssd.example.org"
+#   targetHost: "host300.example.org"
+#   targetPort: 4321
+# ---
+# apiVersion: dns-sd.proclaim.dogmatiq.io/v1alpha1
+# kind: Instance
+# metadata:
+#   name: test-3
+# spec:
+#   name: "zzz"
+#   service: "_foo._tcp"
+#   domain: "dnssd.example.org"
+#   targetHost: "host300.example.org"
+#   targetPort: 4321
+# ---
+# apiVersion: dns-sd.proclaim.dogmatiq.io/v1alpha1
+# kind: Instance
+# metadata:
+#   name: test-4
+# spec:
+#   name: "aaa"
+#   service: "_foo._tcp"
+#   domain: "dnssd.example.org"
+#   targetHost: "host300.example.org"
+#   targetPort: 4321
+# ---
+# apiVersion: dns-sd.proclaim.dogmatiq.io/v1alpha1
+# kind: Instance
+# metadata:
+#   name: test-5
+# spec:
+#   name: "bbb"
+#   service: "_foo._tcp"
+#   domain: "dnssd.example.org"
+#   targetHost: "host300.example.org"
+#   targetPort: 4321
+# ---
+# apiVersion: dns-sd.proclaim.dogmatiq.io/v1alpha1
+# kind: Instance
+# metadata:
+#   name: test-6
+# spec:
+#   name: "ccc"
+#   service: "_foo._tcp"
+#   domain: "dnssd.example.org"
+#   targetHost: "host300.example.org"
+#   targetPort: 4321
+# ---
+# apiVersion: dns-sd.proclaim.dogmatiq.io/v1alpha1
+# kind: Instance
+# metadata:
+#   name: test-7
+# spec:
+#   name: "ddd"
+#   service: "_foo._tcp"
+#   domain: "dnssd.example.org"
+#   targetHost: "host300.example.org"
+#   targetPort: 4321
+# ---
+# apiVersion: dns-sd.proclaim.dogmatiq.io/v1alpha1
+# kind: Instance
+# metadata:
+#   name: test-8
+# spec:
+#   name: "eee"
+#   service: "_foo._tcp"
+#   domain: "dnssd.example.org"
+#   targetHost: "host300.example.org"
+#   targetPort: 4321
+# ---
+# apiVersion: dns-sd.proclaim.dogmatiq.io/v1alpha1
+# kind: Instance
+# metadata:
+#   name: test-9
+# spec:
+#   name: "qqq"
+#   service: "_foo._tcp"
+#   domain: "dnssd.example.org"
+#   targetHost: "host300.example.org"
+#   targetPort: 4321
