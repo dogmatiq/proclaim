@@ -17,6 +17,11 @@ type Driver struct {
 	API route53iface.Route53API
 }
 
+// Name returns a human-readable name for the driver.
+func (d *Driver) Name() string {
+	return "Amazon Route 53"
+}
+
 // AdvertiserForDomain returns the Advertiser used to advertise services on the
 // given domain.
 //

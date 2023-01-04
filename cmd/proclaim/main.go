@@ -29,7 +29,8 @@ func main() {
 		NewControllerManagedBy(m).
 		For(&proclaim.DNSSDServiceInstance{}).
 		Complete(&proclaim.Reconciler{
-			Client: m.GetClient(),
+			Client:        m.GetClient(),
+			EventRecorder: m.GetEventRecorderFor("dogmatiq/proclaim"),
 			Drivers: []proclaim.Driver{
 				&route53driver.Driver{
 					API: route53.New(

@@ -16,8 +16,8 @@ const (
 	finalizerName = groupName
 )
 
-// Spec is the specification for a service instance.
-type Spec struct {
+// DNSSDServiceInstanceSpec is the specification for a service instance.
+type DNSSDServiceInstanceSpec struct {
 	Name       string              `json:"name"`
 	Service    string              `json:"service"`
 	Domain     string              `json:"domain"`
@@ -29,12 +29,18 @@ type Spec struct {
 	TTL        uint16              `json:"ttl,omitempty"`
 }
 
+// DNSSDServiceInstanceStatus contains the status of a service instance.
+type DNSSDServiceInstanceStatus struct {
+	Driver string `json:"driver"`
+}
+
 // DNSSDServiceInstance is a resource that represents a DNS-SD service instance.
 type DNSSDServiceInstance struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec Spec `json:"spec,omitempty"`
+	Spec   DNSSDServiceInstanceSpec   `json:"spec,omitempty"`
+	Status DNSSDServiceInstanceStatus `json:"status,omitempty"`
 }
 
 // DeepCopyObject returns a deep clone of i.
@@ -79,7 +85,7 @@ func init() {
 }
 
 // newInstanceFromSpec returns a dnssd.Instance from a specification.
-func newInstanceFromSpec(spec Spec) dnssd.ServiceInstance {
+func newInstanceFromSpec(spec DNSSDServiceInstanceSpec) dnssd.ServiceInstance {
 	result := dnssd.ServiceInstance{
 		Instance:    spec.Name,
 		ServiceType: spec.Service,

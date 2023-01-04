@@ -68,7 +68,7 @@ func (a *advertiser) Advertise(
 		},
 	)
 
-	res, err := a.API.ChangeResourceRecordSetsWithContext(
+	_, err = a.API.ChangeResourceRecordSetsWithContext(
 		ctx,
 		&route53.ChangeResourceRecordSetsInput{
 			HostedZoneId: a.ZoneID,
@@ -82,16 +82,7 @@ func (a *advertiser) Advertise(
 			},
 		},
 	)
-	if err != nil {
-		return fmt.Errorf("unable to reconcile DNS records: %w", err)
-	}
-
-	logger.Info(
-		"reconciled DNS records",
-		"route53-change-id", *res.ChangeInfo.Id,
-	)
-
-	return nil
+	return err
 }
 
 func (a *advertiser) Unadvertise(
@@ -158,7 +149,7 @@ func (a *advertiser) Unadvertise(
 		return nil
 	}
 
-	res, err := a.API.ChangeResourceRecordSetsWithContext(
+	_, err = a.API.ChangeResourceRecordSetsWithContext(
 		ctx,
 		&route53.ChangeResourceRecordSetsInput{
 			HostedZoneId: a.ZoneID,
@@ -172,16 +163,7 @@ func (a *advertiser) Unadvertise(
 			},
 		},
 	)
-	if err != nil {
-		return fmt.Errorf("unable to reconcile DNS records: %w", err)
-	}
-
-	logger.Info(
-		"reconciled DNS records",
-		"route53-change-id", *res.ChangeInfo.Id,
-	)
-
-	return nil
+	return err
 }
 
 func (a *advertiser) getResourceRecordSet(

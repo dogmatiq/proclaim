@@ -12,12 +12,14 @@ spec:
     plural: dnssd-service-instances
     singular: dnssd-service-instance
     kind: DNSSDServiceInstance
-    shortNames:
+    categories:
       - dnssd
   versions:
     - name: v1alpha1
       served: true
       storage: true
+      subresources:
+        status: {}
       schema:
         openAPIV3Schema:
           type: object
@@ -59,3 +61,8 @@ spec:
                     type: object
                     additionalProperties:
                       type: string
+            status:
+              type: object
+              properties:
+                driver:
+                  type: string

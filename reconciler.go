@@ -2,12 +2,11 @@ package proclaim
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"reflect"
 
 	"github.com/dogmatiq/dissolve/dnssd"
 	"github.com/go-logr/logr"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -16,8 +15,9 @@ import (
 
 // Reconciler reconciles DNS records with a Instance CRD.
 type Reconciler struct {
-	Client  client.Client
-	Drivers []Driver
+	Client        client.Client
+	EventRecorder record.EventRecorder
+	Drivers       []Driver
 }
 
 // Reconcile performs a full reconciliation for the object referred to by the
@@ -37,63 +37,72 @@ func (r *Reconciler) Reconcile(
 		"domain", obj.Spec.Domain,
 	)
 
-	driver, adv, err := r.advertiserForDomain(ctx, logger, obj.Spec.Domain)
+	driver, adv, ok, err := r.advertiser(ctx, logger, obj)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
+	if !ok {
+		r.EventRecorder.Eventf(
+			obj,
+			"Warn",
+			"DNSSDAdvertiserUnavailable",
+			"none of the configured drivers can advertise DNS-SD services on %q",
+			obj.Spec.Domain,
+		)
+
+		return reconcile.Result{}, nil
+	}
+
 	logger = logger.WithValues(
-		"driver", reflect.TypeOf(driver).String(),
+		"driver", driver.Name(),
 	)
+
+	if obj.Status.Driver != driver.Name() {
+		obj.Status.Driver = driver.Name()
+
+		if err := r.Client.Status().Update(
+			ctx,
+			obj,
+		); err != nil {
+			return reconcile.Result{}, err
+		}
+	}
 
 	op := r.advertise
 	if !obj.ObjectMeta.DeletionTimestamp.IsZero() {
 		op = r.unadvertise
 	}
 
-	err = op(
+	ok, err = op(
 		ctx,
 		adv,
 		logger,
 		obj,
 		newInstanceFromSpec(obj.Spec),
 	)
-
-	// TODO: update status instead of returning an error
-
-	return reconcile.Result{}, err
+	return reconcile.Result{
+		Requeue: !ok,
+	}, err
 }
 
-func (r *Reconciler) advertiserForDomain(
+func (r *Reconciler) advertiser(
 	ctx context.Context,
 	logger logr.Logger,
-	domain string,
-) (Driver, Advertiser, error) {
+	obj *DNSSDServiceInstance,
+) (Driver, Advertiser, bool, error) {
 	for _, d := range r.Drivers {
-		adv, ok, err := d.AdvertiserForDomain(ctx, logger, domain)
+		adv, ok, err := d.AdvertiserForDomain(ctx, logger, obj.Spec.Domain)
 		if err != nil {
-			logger.Error(
-				err,
-				"driver failed when attempting to obtain an advertiser",
-				"driver", reflect.TypeOf(d).String(),
-			)
-
-			continue
+			return nil, nil, false, fmt.Errorf("%s: %w", d.Name(), err)
 		}
 
 		if ok {
-			return d, adv, nil
+			return d, adv, true, nil
 		}
 	}
 
-	err := errors.New("could not find advertiser")
-
-	logger.Error(
-		err,
-		"none of the configured drivers could provide an advertiser for this domain",
-	)
-
-	return nil, nil, err
+	return nil, nil, false, nil
 }
 
 func (r *Reconciler) advertise(
@@ -102,25 +111,30 @@ func (r *Reconciler) advertise(
 	logger logr.Logger,
 	obj *DNSSDServiceInstance,
 	inst dnssd.ServiceInstance,
-) error {
-	// Only advertise the instance if the finalizer has already been added.
-	if controllerutil.ContainsFinalizer(obj, finalizerName) {
-		return adv.Advertise(ctx, logger, inst)
+) (bool, error) {
+	if !controllerutil.ContainsFinalizer(obj, finalizerName) {
+		controllerutil.AddFinalizer(obj, finalizerName)
+		return true, r.Client.Update(ctx, obj)
 	}
 
-	// Otherwise, add the finalizer, which is itself and update and will cause
-	// the controller to be called again.
-	controllerutil.AddFinalizer(obj, finalizerName)
-	if err := r.Client.Update(ctx, obj); err != nil {
-		return fmt.Errorf("unable to add finalizer: %w", err)
+	if err := adv.Advertise(ctx, logger, inst); err != nil {
+		r.EventRecorder.Eventf(
+			obj,
+			"Warning",
+			"DNSSDAdvertiseFailed",
+			err.Error(),
+		)
+		return false, nil
 	}
 
-	logger.Info(
-		"added finalizer",
-		"finalizer", finalizerName,
+	r.EventRecorder.Eventf(
+		obj,
+		"Warning",
+		"DNSSDAdvertiseSucceeded",
+		"DNS-SD service instance has been successfully advertised",
 	)
 
-	return nil
+	return true, nil
 }
 
 func (r *Reconciler) unadvertise(
@@ -129,22 +143,28 @@ func (r *Reconciler) unadvertise(
 	logger logr.Logger,
 	obj *DNSSDServiceInstance,
 	inst dnssd.ServiceInstance,
-) error {
+) (bool, error) {
 	if err := adv.Unadvertise(ctx, logger, inst); err != nil {
-		return err
+		r.EventRecorder.Eventf(
+			obj,
+			"Warning",
+			"DNSSDUnadvertiseFailed",
+			err.Error(),
+		)
+		return false, nil
 	}
+
+	r.EventRecorder.Eventf(
+		obj,
+		"Warning",
+		"DNSSDUnadvertiseSucceeded",
+		"DNS-SD service instance has been successfully un-advertised",
+	)
 
 	if controllerutil.ContainsFinalizer(obj, finalizerName) {
 		controllerutil.RemoveFinalizer(obj, finalizerName)
-		if err := r.Client.Update(ctx, obj); err != nil {
-			return fmt.Errorf("unable to remove finalizer: %w", err)
-		}
-
-		logger.Info(
-			"removed finalizer",
-			"finalizer", finalizerName,
-		)
+		return true, r.Client.Update(ctx, obj)
 	}
 
-	return nil
+	return true, nil
 }

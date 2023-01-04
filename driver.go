@@ -15,6 +15,9 @@ const EnumerationRecordTTL = 60 * time.Second
 // Driver is an interface for advertising DNS-SD service instances on domains
 // hosted by a specific hosting provider.
 type Driver interface {
+	// Name returns a human-readable name for the driver.
+	Name() string
+
 	// AdvertiserForDomain returns the Advertiser used to advertise services on the
 	// given domain.
 	//
