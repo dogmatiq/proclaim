@@ -12,14 +12,12 @@ import (
 )
 
 const (
-	// FinalizerName is the name of the finalizer that is added to instances
-	// so that they can be cleaned up when they are deleted.
-	finalizerName = groupName + "/finalizer"
-	groupName     = "dns-sd.proclaim.dogmatiq.io"
+	groupName     = "proclaim.dogmatiq.io"
+	finalizerName = groupName
 )
 
-// InstanceSpec is the specification for a service instance.
-type InstanceSpec struct {
+// Spec is the specification for a service instance.
+type Spec struct {
 	Name       string              `json:"name"`
 	Service    string              `json:"service"`
 	Domain     string              `json:"domain"`
@@ -31,38 +29,38 @@ type InstanceSpec struct {
 	TTL        uint16              `json:"ttl,omitempty"`
 }
 
-// Instance is a resource that represents a DNS-SD service instance.
-type Instance struct {
+// DNSSDServiceInstance is a resource that represents a DNS-SD service instance.
+type DNSSDServiceInstance struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec InstanceSpec `json:"spec,omitempty"`
+	Spec Spec `json:"spec,omitempty"`
 }
 
 // DeepCopyObject returns a deep clone of i.
-func (i *Instance) DeepCopyObject() runtime.Object {
+func (i *DNSSDServiceInstance) DeepCopyObject() runtime.Object {
 	if i == nil {
 		return nil
 	}
 
-	return deepcopy.Copy(i).(*Instance)
+	return deepcopy.Copy(i).(*DNSSDServiceInstance)
 }
 
-// InstanceList is a list of DNS-SD service instances.
-type InstanceList struct {
+// DNSSDServiceInstanceList is a list of DNS-SD service instances.
+type DNSSDServiceInstanceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []Instance `json:"items"`
+	Items []DNSSDServiceInstance `json:"items"`
 }
 
 // DeepCopyObject returns a deep clone of l.
-func (l *InstanceList) DeepCopyObject() runtime.Object {
+func (l *DNSSDServiceInstanceList) DeepCopyObject() runtime.Object {
 	if l == nil {
 		return nil
 	}
 
-	return deepcopy.Copy(l).(*InstanceList)
+	return deepcopy.Copy(l).(*DNSSDServiceInstanceList)
 }
 
 // SchemeBuilder is the scheme builder for the CRD.
@@ -74,11 +72,14 @@ var SchemeBuilder = &scheme.Builder{
 }
 
 func init() {
-	SchemeBuilder.Register(&Instance{}, &InstanceList{})
+	SchemeBuilder.Register(
+		&DNSSDServiceInstance{},
+		&DNSSDServiceInstanceList{},
+	)
 }
 
 // newInstanceFromSpec returns a dnssd.Instance from a specification.
-func newInstanceFromSpec(spec InstanceSpec) dnssd.ServiceInstance {
+func newInstanceFromSpec(spec Spec) dnssd.ServiceInstance {
 	result := dnssd.ServiceInstance{
 		Instance:    spec.Name,
 		ServiceType: spec.Service,

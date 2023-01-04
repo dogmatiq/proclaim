@@ -27,7 +27,7 @@ func main() {
 
 	if err := runtime.
 		NewControllerManagedBy(m).
-		For(&proclaim.Instance{}).
+		For(&proclaim.DNSSDServiceInstance{}).
 		Complete(&proclaim.Reconciler{
 			Client: m.GetClient(),
 			Drivers: []proclaim.Driver{

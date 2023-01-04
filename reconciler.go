@@ -26,7 +26,7 @@ func (r *Reconciler) Reconcile(
 	ctx context.Context,
 	req reconcile.Request,
 ) (reconcile.Result, error) {
-	obj := &Instance{}
+	obj := &DNSSDServiceInstance{}
 	if err := r.Client.Get(ctx, req.NamespacedName, obj); err != nil {
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
@@ -100,7 +100,7 @@ func (r *Reconciler) advertise(
 	ctx context.Context,
 	adv Advertiser,
 	logger logr.Logger,
-	obj *Instance,
+	obj *DNSSDServiceInstance,
 	inst dnssd.ServiceInstance,
 ) error {
 	// Only advertise the instance if the finalizer has already been added.
@@ -127,7 +127,7 @@ func (r *Reconciler) unadvertise(
 	ctx context.Context,
 	adv Advertiser,
 	logger logr.Logger,
-	obj *Instance,
+	obj *DNSSDServiceInstance,
 	inst dnssd.ServiceInstance,
 ) error {
 	if err := adv.Unadvertise(ctx, logger, inst); err != nil {
