@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
-	"github.com/dogmatiq/proclaim"
+	"github.com/dogmatiq/proclaim/driver"
 	"github.com/go-logr/logr"
 )
 
@@ -30,7 +30,7 @@ func (d *Driver) AdvertiserForDomain(
 	ctx context.Context,
 	logger logr.Logger,
 	domain string,
-) (_ proclaim.Advertiser, ok bool, _ error) {
+) (_ driver.Advertiser, ok bool, _ error) {
 	domain += "."
 
 	res, err := d.API.ListHostedZonesByNameWithContext(

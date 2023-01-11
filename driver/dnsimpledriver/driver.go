@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
-	"github.com/dogmatiq/proclaim"
+	"github.com/dogmatiq/proclaim/driver"
 	"github.com/go-logr/logr"
 )
 
@@ -29,7 +29,7 @@ func (d *Driver) AdvertiserForDomain(
 	ctx context.Context,
 	logger logr.Logger,
 	domain string,
-) (adv proclaim.Advertiser, ok bool, _ error) {
+) (adv driver.Advertiser, ok bool, _ error) {
 	err := forEach(
 		ctx,
 		func(opts dnsimple.ListOptions) ([]dnsimple.Account, error) {

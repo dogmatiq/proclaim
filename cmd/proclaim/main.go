@@ -3,9 +3,13 @@ package main
 import (
 	"context"
 
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/dnsimple/dnsimple-go/dnsimple"
 	"github.com/dogmatiq/proclaim"
+	"github.com/dogmatiq/proclaim/driver"
 	"github.com/dogmatiq/proclaim/driver/dnsimpledriver"
+	"github.com/dogmatiq/proclaim/driver/route53driver"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	runtime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -40,12 +44,12 @@ func main() {
 		Complete(&proclaim.Reconciler{
 			Client:        m.GetClient(),
 			EventRecorder: m.GetEventRecorderFor("dogmatiq/proclaim"),
-			Drivers: []proclaim.Driver{
-				// &route53driver.Driver{
-				// 	API: route53.New(
-				// 		session.Must(session.NewSession()),
-				// 	),
-				// },
+			Drivers: []driver.Driver{
+				&route53driver.Driver{
+					API: route53.New(
+						session.Must(session.NewSession()),
+					),
+				},
 				&dnsimpledriver.Driver{
 					API: api,
 				},

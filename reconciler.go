@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/dogmatiq/dissolve/dnssd"
+	"github.com/dogmatiq/proclaim/driver"
 	"github.com/go-logr/logr"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -17,7 +18,7 @@ import (
 type Reconciler struct {
 	Client        client.Client
 	EventRecorder record.EventRecorder
-	Drivers       []Driver
+	Drivers       []driver.Driver
 }
 
 // Reconcile performs a full reconciliation for the object referred to by the
@@ -90,7 +91,7 @@ func (r *Reconciler) advertiser(
 	ctx context.Context,
 	logger logr.Logger,
 	obj *DNSSDServiceInstance,
-) (Driver, Advertiser, bool, error) {
+) (driver.Driver, driver.Advertiser, bool, error) {
 	for _, d := range r.Drivers {
 		adv, ok, err := d.AdvertiserForDomain(ctx, logger, obj.Spec.Domain)
 		if err != nil {
@@ -107,7 +108,7 @@ func (r *Reconciler) advertiser(
 
 func (r *Reconciler) advertise(
 	ctx context.Context,
-	adv Advertiser,
+	adv driver.Advertiser,
 	logger logr.Logger,
 	obj *DNSSDServiceInstance,
 	inst dnssd.ServiceInstance,
@@ -139,7 +140,7 @@ func (r *Reconciler) advertise(
 
 func (r *Reconciler) unadvertise(
 	ctx context.Context,
-	adv Advertiser,
+	adv driver.Advertiser,
 	logger logr.Logger,
 	obj *DNSSDServiceInstance,
 	inst dnssd.ServiceInstance,
