@@ -8,9 +8,17 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/dogmatiq/proclaim"
 	"github.com/miekg/dns"
 )
+
+// enumerationRecordTTL is the TTL of PTR records that enumerate service
+// instances.
+//
+// Normally we'd use each service's TTL for its respective PTR record, but with
+// Route 53 the only way to return an unlimited number of PTR records with the
+// same name is to put them in the same "record set", which means they all share
+// a TTL.
+const enumerationRecordTTL = 30 * time.Second
 
 func addInstanceToPTRChanges(
 	current *route53.ResourceRecordSet,
@@ -21,7 +29,7 @@ func addInstanceToPTRChanges(
 		Weight:        aws.Int64(0),
 		Type:          aws.String("PTR"),
 		Name:          serviceName,
-		TTL:           aws.Int64(int64(proclaim.EnumerationRecordTTL / time.Second)),
+		TTL:           aws.Int64(int64(enumerationRecordTTL.Seconds())),
 		ResourceRecords: []*route53.ResourceRecord{
 			{Value: instanceName},
 		},
@@ -91,7 +99,7 @@ func removeInstanceFromPTRChanges(
 		Weight:        aws.Int64(0),
 		Type:          aws.String("PTR"),
 		Name:          serviceName,
-		TTL:           aws.Int64(int64(proclaim.EnumerationRecordTTL / time.Second)),
+		TTL:           aws.Int64(int64(enumerationRecordTTL.Seconds())),
 	}
 
 	for _, rec := range current.ResourceRecords {

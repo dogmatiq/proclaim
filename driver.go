@@ -2,15 +2,10 @@ package proclaim
 
 import (
 	"context"
-	"time"
 
 	"github.com/dogmatiq/dissolve/dnssd"
 	"github.com/go-logr/logr"
 )
-
-// EnumerationRecordTTL is the TTL of PTR records that enumerate service
-// instances.
-const EnumerationRecordTTL = 60 * time.Second
 
 // Driver is an interface for advertising DNS-SD service instances on domains
 // hosted by a specific hosting provider.
