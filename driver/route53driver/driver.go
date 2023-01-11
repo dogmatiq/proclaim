@@ -11,8 +11,8 @@ import (
 	"github.com/go-logr/logr"
 )
 
-// Driver is an implementation of proclaim.Driver that advertised DNS-SD
-// services on domains hosted on Amazon Route 53.
+// Driver is an implementation of proclaim.Driver that advertises DNS-SD
+// services on domains hosted by Amazon Route 53.
 type Driver struct {
 	API route53iface.Route53API
 }

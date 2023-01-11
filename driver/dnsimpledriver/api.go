@@ -1,8 +1,7 @@
-package proclaim
+package dnsimpledriver
 
 import (
 	"context"
-	"fmt"
 	"sort"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
@@ -45,11 +44,11 @@ func recordHasMatchingAttributes(
 	attr dnsimple.ZoneRecordAttributes,
 ) bool {
 	if rec.Type != attr.Type {
-		panic(fmt.Sprintf("record type mismatch (%s != %s)", rec.Type, attr.Type))
+		return false
 	}
 
 	if rec.Name != *attr.Name {
-		panic(fmt.Sprintf("record name mismatch (%s != %s)", rec.Name, *attr.Name))
+		return false
 	}
 
 	if rec.Content != attr.Content {
@@ -64,20 +63,20 @@ func recordHasMatchingAttributes(
 		return false
 	}
 
-	currentRegions := slices.Clone(rec.Regions)
-	sort.Strings(currentRegions)
+	recRegions := slices.Clone(rec.Regions)
+	sort.Strings(recRegions)
 
-	desiredRegions := slices.Clone(attr.Regions)
-	sort.Strings(desiredRegions)
+	attrRegions := slices.Clone(attr.Regions)
+	sort.Strings(attrRegions)
 
 	// Treat an empty slice as equivalent to "global", as this is what is
 	// returned by the API when a record is created via a plan that does not
 	// support regions.
-	if len(desiredRegions) == 0 {
-		desiredRegions = []string{"global"}
+	if len(attrRegions) == 0 {
+		attrRegions = []string{"global"}
 	}
 
-	return slices.Equal(currentRegions, desiredRegions)
+	return slices.Equal(recRegions, attrRegions)
 }
 
 // recordName returns the record name to use for advertising a DNS-SD
