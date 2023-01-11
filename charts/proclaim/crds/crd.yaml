@@ -1,0 +1,73 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: dnssd-service-instances.proclaim.dogmatiq.io
+  labels:
+  {{- include "proclaim.labels" . | nindent 4 }}
+spec:
+  group: proclaim.dogmatiq.io
+  names:
+    categories:
+    - dnssd
+    kind: DNSSDServiceInstance
+    plural: dnssd-service-instances
+    singular: dnssd-service-instance
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            properties:
+              attributes:
+                items:
+                  additionalProperties:
+                    type: string
+                  type: object
+                type: array
+              domain:
+                type: string
+              name:
+                type: string
+              priority:
+                format: uint16
+                type: integer
+              service:
+                type: string
+              targetHost:
+                type: string
+              targetPort:
+                format: uint16
+                type: integer
+              ttl:
+                format: uint16
+                type: integer
+              weight:
+                format: uint16
+                type: integer
+            required:
+            - name
+            - service
+            - domain
+            - targetHost
+            - targetPort
+            type: object
+          status:
+            properties:
+              driver:
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

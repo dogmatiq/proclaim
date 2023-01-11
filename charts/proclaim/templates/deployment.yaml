@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+  {{- include "proclaim.labels" . | nindent 4 }}
+  {{- with .Values.deploymentAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: proclaim
+    {{- include "proclaim.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: proclaim
+      {{- include "proclaim.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: proclaim
+          image: ghcr.io/dogmatiq/proclaim:{{ .Chart.AppVersion }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          serviceAccountName: {{ include "proclaim.fullname" . }}
+          {{- with .Values.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

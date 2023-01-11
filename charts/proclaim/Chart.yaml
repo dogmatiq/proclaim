@@ -1,0 +1,19 @@
+apiVersion: v2
+name: proclaim
+description: A Kubernetes controller that advertises DNS-SD service instances via unicast DNS.
+type: application
+version: "0.1.0"
+appVersion: "0.1.0"
+keywords:
+  - kubernetes
+  - dnssd
+  - dns-sd
+  - service
+  - discovery
+  - ingress
+home: https://github.com/dogmatiq/proclaim
+sources:
+  - https://github.com/dogmatiq/proclaim
+maintainers:
+  - name: James Harris
+    email: contact@jamesharris.id.au

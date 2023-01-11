@@ -22,3 +22,10 @@ spec:
         - name: proclaim
           image: ghcr.io/dogmatiq/proclaim:dev # TODO: remove tag
           imagePullPolicy: Never # TODO: remove
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              value: ---
+            - name: AWS_SECRET_ACCESS_KEY
+              value: ---
+            - name: AWS_DEFAULT_REGION
+              value: ap-southeast-2
