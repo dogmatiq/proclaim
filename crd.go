@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/dogmatiq/dissolve/dnssd"
-	"github.com/mohae/deepcopy"
+	"github.com/dogmatiq/dyad"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -49,7 +49,7 @@ func (i *DNSSDServiceInstance) DeepCopyObject() runtime.Object {
 		return nil
 	}
 
-	return deepcopy.Copy(i).(*DNSSDServiceInstance)
+	return dyad.Clone(i)
 }
 
 // DNSSDServiceInstanceList is a list of DNS-SD service instances.
@@ -66,7 +66,7 @@ func (l *DNSSDServiceInstanceList) DeepCopyObject() runtime.Object {
 		return nil
 	}
 
-	return deepcopy.Copy(l).(*DNSSDServiceInstanceList)
+	return dyad.Clone(l)
 }
 
 // SchemeBuilder is the scheme builder for the CRD.

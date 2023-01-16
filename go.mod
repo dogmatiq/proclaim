@@ -6,9 +6,9 @@ require (
 	github.com/aws/aws-sdk-go v1.44.179
 	github.com/dnsimple/dnsimple-go v1.0.0
 	github.com/dogmatiq/dissolve v0.1.2
+	github.com/dogmatiq/dyad v0.1.0
 	github.com/go-logr/logr v1.2.3
 	github.com/miekg/dns v1.1.50
-	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 	golang.org/x/exp v0.0.0-20230108222341-4b8118a2686a
 	k8s.io/apimachinery v0.26.0
 	k8s.io/client-go v0.26.0
