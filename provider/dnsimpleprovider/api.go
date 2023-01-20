@@ -1,4 +1,4 @@
-package dnsimpledriver
+package dnsimpleprovider
 
 import (
 	"context"

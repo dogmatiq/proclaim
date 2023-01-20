@@ -64,5 +64,7 @@ spec:
             status:
               type: object
               properties:
-                driver:
+                provider:
+                  type: string
+                advertiser:
                   type: string

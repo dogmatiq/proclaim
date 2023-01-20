@@ -1,4 +1,4 @@
-package route53driver
+package route53provider
 
 import (
 	"fmt"

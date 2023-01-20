@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/name: proclaim.dogmatiq.io
     app.kubernetes.io/part-of: proclaim
 spec:
-  replicas: 2
+  replicas: 1
   strategy:
     type: Recreate
   selector:
@@ -22,3 +22,15 @@ spec:
         - name: proclaim
           image: ghcr.io/dogmatiq/proclaim:dev # TODO: remove tag
           imagePullPolicy: Never # TODO: remove
+          env:
+            - name: DEBUG
+              value: "true"
+            - name: DNSIMPLE_ENABLED
+              value: "true"
+            - name: DNSIMPLE_API_URL
+              value: "https://api.sandbox.dnsimple.com"
+            - name: DNSIMPLE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: proclaim-secret
+                  key: DNSIMPLE_TOKEN

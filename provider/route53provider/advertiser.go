@@ -1,4 +1,4 @@
-package route53driver
+package route53provider
 
 import (
 	"context"
@@ -9,17 +9,20 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 	"github.com/dogmatiq/dissolve/dnssd"
-	"github.com/go-logr/logr"
 )
 
 type advertiser struct {
-	API    route53iface.Route53API
-	ZoneID *string
+	API          route53iface.Route53API
+	AdvertiserID string
+	ZoneID       *string
+}
+
+func (a *advertiser) ID() string {
+	return a.AdvertiserID
 }
 
 func (a *advertiser) Advertise(
 	ctx context.Context,
-	logger logr.Logger,
 	inst dnssd.ServiceInstance,
 ) error {
 	instanceName := aws.String(
@@ -87,7 +90,6 @@ func (a *advertiser) Advertise(
 
 func (a *advertiser) Unadvertise(
 	ctx context.Context,
-	logger logr.Logger,
 	inst dnssd.ServiceInstance,
 ) error {
 	instanceName := aws.String(
@@ -145,7 +147,6 @@ func (a *advertiser) Unadvertise(
 	}
 
 	if len(changes) == 0 {
-		logger.Info("no DNS changes to be made")
 		return nil
 	}
 

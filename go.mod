@@ -7,6 +7,7 @@ require (
 	github.com/dnsimple/dnsimple-go v1.0.0
 	github.com/dogmatiq/dissolve v0.1.2
 	github.com/dogmatiq/dyad v0.2.2
+	github.com/dogmatiq/imbue v0.6.2
 	github.com/go-logr/logr v1.2.3
 	github.com/miekg/dns v1.1.50
 	golang.org/x/exp v0.0.0-20230108222341-4b8118a2686a
@@ -49,13 +50,14 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/xlab/treeprint v1.1.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/mod v0.6.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
+	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde // indirect
 	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/term v0.3.0 // indirect
 	golang.org/x/text v0.5.0 // indirect

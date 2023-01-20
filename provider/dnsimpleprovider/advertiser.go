@@ -1,4 +1,4 @@
-package dnsimpledriver
+package dnsimpleprovider
 
 import (
 	"context"
@@ -7,19 +7,22 @@ import (
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
 	"github.com/dogmatiq/dissolve/dnssd"
-	"github.com/go-logr/logr"
 	"golang.org/x/exp/slices"
 )
 
 type advertiser struct {
-	API       *dnsimple.ZonesService
-	AccountID string
-	ZoneID    string
+	API          *dnsimple.ZonesService
+	AdvertiserID string
+	AccountID    string
+	ZoneID       string
+}
+
+func (a *advertiser) ID() string {
+	return a.AdvertiserID
 }
 
 func (a *advertiser) Advertise(
 	ctx context.Context,
-	logger logr.Logger,
 	inst dnssd.ServiceInstance,
 ) error {
 	qualifiedInstanceName := dnssd.ServiceInstanceName(inst.Instance, inst.ServiceType, inst.Domain)
@@ -150,7 +153,6 @@ func (a *advertiser) Advertise(
 
 func (a *advertiser) Unadvertise(
 	ctx context.Context,
-	logger logr.Logger,
 	inst dnssd.ServiceInstance,
 ) error {
 	qualifiedInstanceName := dnssd.ServiceInstanceName(inst.Instance, inst.ServiceType, inst.Domain)

@@ -2,65 +2,50 @@ package main
 
 import (
 	"context"
+	"log"
 
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/dnsimple/dnsimple-go/dnsimple"
-	"github.com/dogmatiq/proclaim"
-	"github.com/dogmatiq/proclaim/driver"
-	"github.com/dogmatiq/proclaim/driver/dnsimpledriver"
-	"github.com/dogmatiq/proclaim/driver/route53driver"
+	"github.com/dogmatiq/imbue"
+	"github.com/dogmatiq/proclaim/crd"
+	"github.com/dogmatiq/proclaim/reconciler"
+	"github.com/go-logr/logr"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	runtime "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	controller "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
+var container = imbue.New()
+
 func main() {
-	m, err := runtime.NewManager(
-		runtime.GetConfigOrDie(),
-		runtime.Options{
-			Logger: zap.New(zap.UseDevMode(true)),
+	ctx := controller.SetupSignalHandler()
+
+	if err := imbue.Invoke3(
+		ctx,
+		container,
+		func(
+			ctx context.Context,
+			m manager.Manager,
+			r *reconciler.Reconciler,
+			l logr.Logger,
+		) error {
+			err := builder.
+				ControllerManagedBy(m).
+				For(&crd.DNSSDServiceInstance{}).
+				Complete(r)
+			if err != nil {
+				return err
+			}
+
+			for _, p := range r.Providers {
+				l.Info(
+					"provider enabled",
+					"id", p.ID(),
+				)
+			}
+
+			return m.Start(ctx)
 		},
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	if err := proclaim.SchemeBuilder.AddToScheme(m.GetScheme()); err != nil {
-		panic(err)
-	}
-
-	api := dnsimple.NewClient(
-		dnsimple.StaticTokenHTTPClient(
-			context.Background(),
-			"---",
-		),
-	)
-	api.BaseURL = "https://api.sandbox.dnsimple.com"
-
-	if err := runtime.
-		NewControllerManagedBy(m).
-		For(&proclaim.DNSSDServiceInstance{}).
-		Complete(&proclaim.Reconciler{
-			Client:        m.GetClient(),
-			EventRecorder: m.GetEventRecorderFor("dogmatiq/proclaim"),
-			Drivers: []driver.Driver{
-				&route53driver.Driver{
-					API: route53.New(
-						session.Must(session.NewSession()),
-					),
-				},
-				&dnsimpledriver.Driver{
-					API: api,
-				},
-			},
-		}); err != nil {
-		panic(err)
-	}
-
-	ctx := runtime.SetupSignalHandler()
-
-	if err := m.Start(ctx); err != nil {
-		panic(err)
+	); err != nil {
+		log.Fatal(err)
 	}
 }
