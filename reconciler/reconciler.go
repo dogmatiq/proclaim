@@ -28,6 +28,9 @@ func (r *Reconciler) Reconcile(
 	ctx context.Context,
 	req reconcile.Request,
 ) (reconcile.Result, error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
 	res := &crd.DNSSDServiceInstance{}
 	if err := r.Client.Get(ctx, req.NamespacedName, res); err != nil {
 		return reconcile.Result{}, client.IgnoreNotFound(err)
@@ -78,14 +81,15 @@ func (r *Reconciler) advertise(
 			},
 			"Warning",
 			"ProviderError",
-			"unable to advertise the service instance using the %q provider: %w",
+			"%s: %w",
 			res.Status.Provider,
 			err.Error(),
 		)
 
-		return false, nil
+		return false, ctx.Err()
 	}
 
+	// TODO: only record this event if Advertise() actually did anything.
 	r.EventRecorder.AnnotatedEventf(
 		res,
 		map[string]string{
@@ -94,8 +98,7 @@ func (r *Reconciler) advertise(
 		},
 		"Normal",
 		"Advertised",
-		"service instance advertised using the %q provider",
-		res.Status.Provider,
+		"service instance advertised successfully",
 	)
 
 	return true, nil
@@ -112,46 +115,41 @@ func (r *Reconciler) unadvertise(
 		return true, nil
 	}
 
-	if res.Status.Provider == "" {
-		// The resource was never assigned to any provider, so there's nothing
-		// to unadvertise.
-		return true, nil
-	}
+	if res.Status.Provider != "" {
+		a, ok, err := r.getAssignedAdvertiser(ctx, res)
+		if !ok || err != nil {
+			// The assigned provider is not known to this reconciler.
+			return true, err
+		}
 
-	adv, ok := r.getAssignedAdvertiser(ctx, res)
-	if !ok {
-		// The assigned provider is not known to this reconciler.
-		return true, nil
-	}
+		if err := a.Unadvertise(ctx, inst); err != nil {
+			r.EventRecorder.AnnotatedEventf(
+				res,
+				map[string]string{
+					"provider":   res.Status.Provider,
+					"advertiser": res.Status.Advertiser,
+				},
+				"Warning",
+				"ProviderError",
+				"%s: %w",
+				res.Status.Provider,
+				err.Error(),
+			)
 
-	if err := adv.Unadvertise(ctx, inst); err != nil {
+			return false, ctx.Err()
+		}
+
 		r.EventRecorder.AnnotatedEventf(
 			res,
 			map[string]string{
 				"provider":   res.Status.Provider,
 				"advertiser": res.Status.Advertiser,
 			},
-			"Warning",
-			"ProviderError",
-			"unable to un-advertise service instance using the %q provider: %w",
-			res.Status.Provider,
-			err.Error(),
+			"Normal",
+			"Unadvertised",
+			"service instance un-advertised successfully",
 		)
-
-		return false, nil
 	}
-
-	r.EventRecorder.AnnotatedEventf(
-		res,
-		map[string]string{
-			"provider":   res.Status.Provider,
-			"advertiser": res.Status.Advertiser,
-		},
-		"Normal",
-		"Unadvertised",
-		"service instance un-advertised using the %q provider",
-		res.Status.Provider,
-	)
 
 	controllerutil.RemoveFinalizer(res, crd.FinalizerName)
 	if err := r.Client.Update(ctx, res); err != nil {

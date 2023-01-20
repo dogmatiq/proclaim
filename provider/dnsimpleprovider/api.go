@@ -2,12 +2,26 @@ package dnsimpleprovider
 
 import (
 	"context"
+	"errors"
+	"net/http"
 	"sort"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
 	"github.com/dogmatiq/dissolve/dnssd"
 	"golang.org/x/exp/slices"
 )
+
+// isNotFound returns true if err is an error response from dnsimple.com that
+// indicates that the requested resource does not exist.
+func isNotFound(err error) bool {
+	var res *dnsimple.ErrorResponse
+
+	if errors.As(err, &res) {
+		return res.HTTPResponse.StatusCode == http.StatusNotFound
+	}
+
+	return false
+}
 
 func forEach[T any](
 	ctx context.Context,

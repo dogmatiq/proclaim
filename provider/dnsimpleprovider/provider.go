@@ -33,9 +33,13 @@ func (p *Provider) ID() string {
 				panic(err)
 			}
 
-			if u.Host != "api.dnsimple.com" {
-				p.id += "/" + u.Host
+			if u.Host == "api.dnsimple.com" {
+				return
 			}
+
+			environment := strings.TrimPrefix(u.Host, "api.")
+			environment = strings.TrimSuffix(environment, ".dnsimple.com")
+			p.id += "/" + environment
 		}
 	})
 
@@ -44,12 +48,11 @@ func (p *Provider) ID() string {
 
 // AdvertiserByID returns the Advertiser with the given ID.
 func (p *Provider) AdvertiserByID(ctx context.Context, id string) (provider.Advertiser, error) {
-	parts := strings.SplitN(id, "/", 2)
-	if len(parts) != 2 {
-		return nil, errors.New("invalid advertiser ID")
+	accountID, domain, err := parseAdvertiserID(id)
+	if err != nil {
+		return nil, err
 	}
 
-	accountID, domain := parts[0], parts[1]
 	res, err := p.API.Zones.GetZone(ctx, accountID, domain)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -57,14 +60,6 @@ func (p *Provider) AdvertiserByID(ctx context.Context, id string) (provider.Adve
 			domain,
 			accountID,
 			err,
-		)
-	}
-
-	if res.Data == nil {
-		return nil, fmt.Errorf(
-			"unable to get %q zone on account %q: no such zone",
-			domain,
-			accountID,
 		)
 	}
 
@@ -90,16 +85,16 @@ func (p *Provider) AdvertiserByDomain(ctx context.Context, domain string) (adv p
 			accountID := strconv.FormatInt(a.ID, 10)
 			res, err := p.API.Zones.GetZone(ctx, accountID, domain)
 			if err != nil {
+				if isNotFound(err) {
+					return true, nil
+				}
+
 				return false, fmt.Errorf(
 					"unable to get %q zone on account %q: %w",
 					domain,
 					accountID,
 					err,
 				)
-			}
-
-			if res.Data == nil {
-				return true, nil
 			}
 
 			ok = true
@@ -118,8 +113,32 @@ func (p *Provider) newAdvertiser(
 ) provider.Advertiser {
 	return &advertiser{
 		API:          p.API.Zones,
-		AdvertiserID: fmt.Sprintf("%s/%s", accountID, domain),
+		AdvertiserID: buildAdvertiserID(accountID, domain),
 		AccountID:    accountID,
 		ZoneID:       strconv.FormatInt(zone.Data.ID, 10),
 	}
+}
+
+func buildAdvertiserID(accountID, domain string) string {
+	return fmt.Sprintf("%s/%s", accountID, domain)
+}
+
+func parseAdvertiserID(id string) (accountID, domain string, err error) {
+	parts := strings.Split(id, "/")
+	if len(parts) != 2 {
+		return "", "", errors.New("invalid advertiser ID")
+	}
+
+	accountID = parts[0]
+	domain = parts[1]
+
+	if accountID == "" {
+		return "", "", errors.New("invalid advertiser ID")
+	}
+
+	if domain == "" {
+		return "", "", errors.New("invalid advertiser ID")
+	}
+
+	return accountID, domain, nil
 }

@@ -2,7 +2,11 @@ package provider
 
 import (
 	"context"
+	"time"
 )
+
+// Timeout is the timeout for all provider operations.
+const Timeout = 10 * time.Second
 
 // Provider is an interface for advertising DNS-SD service instances on domains
 // hosted by a specific hosting provider.

@@ -10,6 +10,8 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// advertiserForResource returns the advertiser used to advertise/un-advertise
+// the given DNS-SD service instance.
 func (r *Reconciler) advertiserForResource(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
@@ -18,23 +20,22 @@ func (r *Reconciler) advertiserForResource(
 		return r.assignAdvertiser(ctx, res)
 	}
 
-	a, ok := r.getAssignedAdvertiser(ctx, res)
-	return a, ok, nil
+	return r.getAssignedAdvertiser(ctx, res)
 }
 
+// assignAdvertiser finds the appropriate advertiser for the given DNS-SD
+// service instance from all available providers and assigns it to the resource.
 func (r *Reconciler) assignAdvertiser(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (provider.Advertiser, bool, error) {
-	var providers []string
+	hasProviderError := false
 
-	hasProvideError := false
 	for _, p := range r.Providers {
-		providers = append(providers, p.ID())
-
 		a, ok, err := p.AdvertiserByDomain(ctx, res.Spec.Domain)
 		if err != nil {
-			hasProvideError = true
+			hasProviderError = true
+
 			r.EventRecorder.AnnotatedEventf(
 				res,
 				map[string]string{
@@ -42,11 +43,14 @@ func (r *Reconciler) assignAdvertiser(
 				},
 				"Warning",
 				"ProviderError",
-				"unable to check whether the %q provider can advertise on %q: %s",
+				"%s: %s",
 				p.ID(),
-				res.Spec.Domain,
 				err.Error(),
 			)
+
+			if ctx.Err() != nil {
+				return nil, false, ctx.Err()
+			}
 
 			continue
 		}
@@ -70,20 +74,24 @@ func (r *Reconciler) assignAdvertiser(
 			},
 			"Normal",
 			"ProviderAssigned",
-			"assigned the service instance to the %q provider",
+			"assigned the %q provider to manage this service instance",
 			p.ID(),
 		)
 
 		return a, true, nil
 	}
 
-	// If any of the providers returned an error, we do not want to emit a
-	// DomainIgnored event because haven't checked that all of the providers
+	// If any of the providers returned an error, we do not want to emit an
+	// Ignored event because we don't know that all of the providers
 	// definitevely do not advertise for this domain.
-	if hasProvideError {
+	if hasProviderError {
 		return nil, false, nil
 	}
 
+	var providers []string
+	for _, p := range r.Providers {
+		providers = append(providers, p.ID())
+	}
 	slices.Sort(providers)
 
 	r.EventRecorder.AnnotatedEventf(
@@ -103,7 +111,7 @@ func (r *Reconciler) assignAdvertiser(
 func (r *Reconciler) getAssignedAdvertiser(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
-) (provider.Advertiser, bool) {
+) (provider.Advertiser, bool, error) {
 	for _, p := range r.Providers {
 		if p.ID() != res.Status.Provider {
 			continue
@@ -119,20 +127,19 @@ func (r *Reconciler) getAssignedAdvertiser(
 				},
 				"Warning",
 				"ProviderError",
-				"unable to obtain advertiser %q from the %q provider: %s",
-				res.Status.Advertiser,
+				"%s: %s",
 				p.ID(),
 				err.Error(),
 			)
 
-			return nil, false
+			return nil, false, ctx.Err()
 		}
 
-		return a, true
+		return a, true, nil
 	}
 
 	// This reconciler does not know about the provider that was assigned to the
 	// resource. This is likely because the resource is managed by some other
 	// instance of Proclaim.
-	return nil, false
+	return nil, false, nil
 }

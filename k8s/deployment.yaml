@@ -34,3 +34,5 @@ spec:
                 secretKeyRef:
                   name: proclaim-secret
                   key: DNSIMPLE_TOKEN
+            - name: ROUTE53_ENABLED
+              value: "true"
