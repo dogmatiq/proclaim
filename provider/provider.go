@@ -14,6 +14,9 @@ type Provider interface {
 	// ID returns a unique identifier for the provider.
 	ID() string
 
+	// Describe returns a human-readable description of the provider.
+	Describe() string
+
 	// AdvertiserByID returns the Advertiser with the given ID.
 	AdvertiserByID(ctx context.Context, id string) (Advertiser, error)
 

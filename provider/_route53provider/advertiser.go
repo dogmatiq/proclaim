@@ -24,7 +24,7 @@ func (a *advertiser) ID() string {
 func (a *advertiser) Advertise(
 	ctx context.Context,
 	inst dnssd.ServiceInstance,
-) error {
+) (bool, error) {
 	instanceName := aws.String(
 		dnssd.ServiceInstanceName(inst.Instance, inst.ServiceType, inst.Domain) + ".",
 	)
@@ -37,12 +37,12 @@ func (a *advertiser) Advertise(
 
 	ptr, err := a.getResourceRecordSet(ctx, serviceName, "PTR")
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	changes, err := addInstanceToPTRChanges(ptr, instanceName, serviceName)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	changes = append(
@@ -85,13 +85,13 @@ func (a *advertiser) Advertise(
 			},
 		},
 	)
-	return err
+	return true, err
 }
 
 func (a *advertiser) Unadvertise(
 	ctx context.Context,
 	inst dnssd.ServiceInstance,
-) error {
+) (bool, error) {
 	instanceName := aws.String(
 		dnssd.ServiceInstanceName(inst.Instance, inst.ServiceType, inst.Domain) + ".",
 	)
@@ -102,12 +102,12 @@ func (a *advertiser) Unadvertise(
 
 	ptr, err := a.getResourceRecordSet(ctx, serviceName, "PTR")
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	changes, err := removeInstanceFromPTRChanges(ptr, instanceName, serviceName)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if err := a.API.ListResourceRecordSetsPagesWithContext(
@@ -143,11 +143,11 @@ func (a *advertiser) Unadvertise(
 			return true
 		},
 	); err != nil {
-		return fmt.Errorf("unable to list resource record sets: %w", err)
+		return false, fmt.Errorf("unable to list resource record sets: %w", err)
 	}
 
 	if len(changes) == 0 {
-		return nil
+		return false, nil
 	}
 
 	_, err = a.API.ChangeResourceRecordSetsWithContext(
@@ -164,7 +164,7 @@ func (a *advertiser) Unadvertise(
 			},
 		},
 	)
-	return err
+	return true, err
 }
 
 func (a *advertiser) getResourceRecordSet(

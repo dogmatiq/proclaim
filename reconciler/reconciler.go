@@ -2,7 +2,6 @@ package reconciler
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/dogmatiq/dissolve/dnssd"
@@ -10,7 +9,6 @@ import (
 	"github.com/dogmatiq/proclaim/provider"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -31,11 +29,14 @@ func (r *Reconciler) Reconcile(
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
+	// Lookup the resource so we know whether to advertise or unadvertise.
 	res := &crd.DNSSDServiceInstance{}
 	if err := r.Client.Get(ctx, req.NamespacedName, res); err != nil {
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// Advertise the service, unless its deletion timestamp is set, in which
+	// case we unadvertise it.
 	op := r.advertise
 	if !res.ObjectMeta.DeletionTimestamp.IsZero() {
 		op = r.unadvertise
@@ -44,123 +45,21 @@ func (r *Reconciler) Reconcile(
 	ok, err := op(
 		ctx,
 		res,
-		newInstanceFromSpec(res.Spec),
+		instanceFromSpec(res.Spec),
 	)
 
-	return reconcile.Result{Requeue: !ok}, err
+	// Requeue on failure. Note that we only return an error if there's a
+	// problem interacting with kubernetes itself. If err == nil and ok == false
+	// then there was an issue with at least one of the providers so we need to
+	// requeue.
+	return reconcile.Result{
+		Requeue: !ok,
+	}, err
 }
 
-func (r *Reconciler) advertise(
-	ctx context.Context,
-	res *crd.DNSSDServiceInstance,
-	inst dnssd.ServiceInstance,
-) (bool, error) {
-	if !controllerutil.ContainsFinalizer(res, crd.FinalizerName) {
-		controllerutil.AddFinalizer(res, crd.FinalizerName)
-
-		if err := r.Client.Update(ctx, res); err != nil {
-			return false, fmt.Errorf("unable to add finalizer: %w", err)
-		}
-
-		// The update to the finalizer will cause the object to be requeued, at
-		// which point we actually attempt to advertise it.
-		return true, nil
-	}
-
-	a, ok, err := r.advertiserForResource(ctx, res)
-	if !ok || err != nil {
-		return false, err
-	}
-
-	if err := a.Advertise(ctx, inst); err != nil {
-		r.EventRecorder.AnnotatedEventf(
-			res,
-			map[string]string{
-				"provider":   res.Status.Provider,
-				"advertiser": res.Status.Advertiser,
-			},
-			"Warning",
-			"ProviderError",
-			"%s: %w",
-			res.Status.Provider,
-			err.Error(),
-		)
-
-		return false, ctx.Err()
-	}
-
-	// TODO: only record this event if Advertise() actually did anything.
-	r.EventRecorder.AnnotatedEventf(
-		res,
-		map[string]string{
-			"provider":   res.Status.Provider,
-			"advertiser": res.Status.Advertiser,
-		},
-		"Normal",
-		"Advertised",
-		"service instance advertised successfully",
-	)
-
-	return true, nil
-}
-
-func (r *Reconciler) unadvertise(
-	ctx context.Context,
-	res *crd.DNSSDServiceInstance,
-	inst dnssd.ServiceInstance,
-) (bool, error) {
-	if !controllerutil.ContainsFinalizer(res, crd.FinalizerName) {
-		// The proclaim finalizer has already been removed so we've already
-		// unadvertised, if it was necessary.
-		return true, nil
-	}
-
-	if res.Status.Provider != "" {
-		a, ok, err := r.getAssignedAdvertiser(ctx, res)
-		if !ok || err != nil {
-			// The assigned provider is not known to this reconciler.
-			return true, err
-		}
-
-		if err := a.Unadvertise(ctx, inst); err != nil {
-			r.EventRecorder.AnnotatedEventf(
-				res,
-				map[string]string{
-					"provider":   res.Status.Provider,
-					"advertiser": res.Status.Advertiser,
-				},
-				"Warning",
-				"ProviderError",
-				"%s: %w",
-				res.Status.Provider,
-				err.Error(),
-			)
-
-			return false, ctx.Err()
-		}
-
-		r.EventRecorder.AnnotatedEventf(
-			res,
-			map[string]string{
-				"provider":   res.Status.Provider,
-				"advertiser": res.Status.Advertiser,
-			},
-			"Normal",
-			"Unadvertised",
-			"service instance un-advertised successfully",
-		)
-	}
-
-	controllerutil.RemoveFinalizer(res, crd.FinalizerName)
-	if err := r.Client.Update(ctx, res); err != nil {
-		return false, fmt.Errorf("unable to remove finalizer: %w", err)
-	}
-
-	return true, nil
-}
-
-// newInstanceFromSpec returns a dnssd.Instance from a specification.
-func newInstanceFromSpec(spec crd.DNSSDServiceInstanceSpec) dnssd.ServiceInstance {
+// instanceFromSpec returns a dnssd.Instance from a CRD service instance
+// specification.
+func instanceFromSpec(spec crd.DNSSDServiceInstanceSpec) dnssd.ServiceInstance {
 	result := dnssd.ServiceInstance{
 		Instance:    spec.Name,
 		ServiceType: spec.Service,

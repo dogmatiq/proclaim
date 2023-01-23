@@ -3,13 +3,11 @@ module github.com/dogmatiq/proclaim
 go 1.19
 
 require (
-	github.com/aws/aws-sdk-go v1.44.215
 	github.com/dnsimple/dnsimple-go v1.2.0
 	github.com/dogmatiq/dissolve v0.1.2
 	github.com/dogmatiq/dyad v0.2.2
 	github.com/dogmatiq/imbue v0.6.2
 	github.com/go-logr/logr v1.2.3
-	github.com/miekg/dns v1.1.51
 	golang.org/x/exp v0.0.0-20230108222341-4b8118a2686a
 	k8s.io/apimachinery v0.26.2
 	k8s.io/client-go v0.26.2
@@ -36,11 +34,11 @@ require (
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/google/uuid v1.1.2 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2 // indirect
+	github.com/miekg/dns v1.1.51 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
