@@ -59,8 +59,8 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/dnsimple/dnsimple-go v1.0.0 h1:x9UalQ0tHR68+sQxJYJmq746LdJou4OLTK+cZLR2Z9I=
-github.com/dnsimple/dnsimple-go v1.0.0/go.mod h1:oaAtPP8bIROK3QXUdc8rMlTN7SyvCBAogw2I31WVNnU=
+github.com/dnsimple/dnsimple-go v1.0.1 h1:ueDji5xvz6+hLA4JPNvOXGYGHelex0TT7uXdN5ZEWnQ=
+github.com/dnsimple/dnsimple-go v1.0.1/go.mod h1:iw/53UDs5RV4ptHVyNrBBr7GHKnndETsP0J/n/JVnA4=
 github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815/go.mod h1:WwZ+bS3ebgob9U8Nd0kOddGdZWjyMGR8Wziv+TBNwSE=
 github.com/dogmatiq/dissolve v0.1.2 h1:KV/UPb28+irvWqKqVLYhGA9kNiTpxG3fM+1UK3YRiEY=
 github.com/dogmatiq/dissolve v0.1.2/go.mod h1:dMHn6r9osaxsZFjw9mFXEe/nCparhNapvYCdThCROAA=
@@ -280,7 +280,7 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
+github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKsk=
 github.com/xlab/treeprint v1.1.0 h1:G/1DjNkPpfZCFt9CSh6b5/nY4VimlbHF3Rh4obvtzDk=
 github.com/xlab/treeprint v1.1.0/go.mod h1:gj5Gd3gPdKtR1ikdDK6fnFLdmIS0X30kTTuNd/WEJu0=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
