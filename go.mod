@@ -9,7 +9,7 @@ require (
 	github.com/dogmatiq/dyad v0.2.2
 	github.com/dogmatiq/imbue v0.6.2
 	github.com/go-logr/logr v1.2.3
-	github.com/miekg/dns v1.1.50
+	github.com/miekg/dns v1.1.51
 	golang.org/x/exp v0.0.0-20230108222341-4b8118a2686a
 	k8s.io/apimachinery v0.26.1
 	k8s.io/client-go v0.26.1
@@ -54,15 +54,15 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/mod v0.6.0 // indirect
+	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
-	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde // indirect
+	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/term v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.2.0 // indirect
+	golang.org/x/tools v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
