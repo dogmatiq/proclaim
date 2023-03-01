@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/aws/aws-sdk-go v1.44.210
-	github.com/dnsimple/dnsimple-go v1.0.1
+	github.com/dnsimple/dnsimple-go v1.1.0
 	github.com/dogmatiq/dissolve v0.1.2
 	github.com/dogmatiq/dyad v0.2.2
 	github.com/dogmatiq/imbue v0.6.2
