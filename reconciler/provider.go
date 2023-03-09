@@ -117,7 +117,8 @@ func (r *Reconciler) getAssignedAdvertiser(
 			continue
 		}
 
-		a, err := p.AdvertiserByID(ctx, res.Status.Advertiser)
+		a, ok, err := p.AdvertiserByDomain(ctx, res.Spec.Domain)
+		// a, err := p.AdvertiserByID(ctx, res.Status.Advertiser)
 		if err != nil {
 			r.EventRecorder.AnnotatedEventf(
 				res,
@@ -133,6 +134,9 @@ func (r *Reconciler) getAssignedAdvertiser(
 			)
 
 			return nil, false, ctx.Err()
+		}
+		if !ok {
+			panic("could not find provider that is apparently already in use")
 		}
 
 		return a, true, nil
