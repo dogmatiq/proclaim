@@ -9,7 +9,7 @@ require (
 	github.com/dogmatiq/dyad v0.2.2
 	github.com/dogmatiq/imbue v0.6.2
 	github.com/go-logr/logr v1.2.3
-	github.com/miekg/dns v1.1.51
+	github.com/miekg/dns v1.1.52
 	golang.org/x/exp v0.0.0-20230108222341-4b8118a2686a
 	k8s.io/apimachinery v0.26.2
 	k8s.io/client-go v0.26.2
