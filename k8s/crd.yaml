@@ -37,10 +37,19 @@ spec:
               properties:
                 name:
                   type: string
+                  x-kubernetes-validations:
+                    - message: name is immutable
+                      rule: self == oldSelf
                 service:
                   type: string
+                  x-kubernetes-validations:
+                    - message: service is immutable
+                      rule: self == oldSelf
                 domain:
                   type: string
+                  x-kubernetes-validations:
+                    - message: domain is immutable
+                      rule: self == oldSelf
                 targetHost:
                   type: string
                 targetPort:
