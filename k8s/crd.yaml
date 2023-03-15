@@ -20,6 +20,28 @@ spec:
       storage: true
       subresources:
         status: {}
+      additionalPrinterColumns:
+        - name: Instance Name
+          type: string
+          description: The name of the DNS-SD service instance
+          jsonPath: .spec.name
+        - name: Service Type
+          type: string
+          jsonPath: .spec.service
+        - name: Domain
+          type: string
+          description: The domain number under which the DNS-SD service instance is advertised
+          jsonPath: .spec.domain
+        - name: Target Host
+          type: string
+          jsonPath: .spec.targetHost
+        - name: Target Port
+          type: integer
+          jsonPath: .spec.targetPort
+        - name: Provider
+          type: string
+          description: The provider used to publish the DNS-SD service instance
+          jsonPath: .status.providerDescription
       schema:
         openAPIV3Schema:
           type: object
@@ -55,6 +77,7 @@ spec:
                 ttl:
                   type: integer
                   format: uint16
+                  default: 60
                 attributes:
                   type: array
                   items:
@@ -64,7 +87,9 @@ spec:
             status:
               type: object
               properties:
-                provider:
+                providerId:
                   type: string
-                advertiser:
+                providerDescription:
+                  type: string
+                advertiserId:
                   type: string

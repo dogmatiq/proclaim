@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/dogmatiq/ferrite"
 	"github.com/dogmatiq/imbue"
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/reconciler"
@@ -17,6 +18,8 @@ import (
 var container = imbue.New()
 
 func main() {
+	ferrite.Init()
+
 	ctx := controller.SetupSignalHandler()
 
 	if err := imbue.Invoke3(

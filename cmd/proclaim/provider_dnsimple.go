@@ -1,14 +1,26 @@
 package main
 
 import (
-	"errors"
-	"os"
-
 	"github.com/dnsimple/dnsimple-go/dnsimple"
+	"github.com/dogmatiq/ferrite"
 	"github.com/dogmatiq/imbue"
 	"github.com/dogmatiq/proclaim/provider/dnsimpleprovider"
 	"github.com/dogmatiq/proclaim/reconciler"
 )
+
+var dnsimpleEnabled = ferrite.
+	Bool("DNSIMPLE_ENABLED", "enable the DNSimple provider").
+	WithDefault(false).
+	Required()
+
+var dnsimpleToken = ferrite.
+	String("DNSIMPLE_TOKEN", "enable the DNSimple provider").
+	Required(ferrite.RelevantIf(dnsimpleEnabled))
+
+var dnsimpleURL = ferrite.
+	URL("DNSIMPLE_API_URL", "the URL of the DNSimple API").
+	WithDefault("https://api.dnsimple.com").
+	Required(ferrite.RelevantIf(dnsimpleEnabled))
 
 func init() {
 	imbue.Decorate0(
@@ -17,22 +29,17 @@ func init() {
 			ctx imbue.Context,
 			r *reconciler.Reconciler,
 		) (*reconciler.Reconciler, error) {
-			if os.Getenv("DNSIMPLE_ENABLED") == "" {
+			if !dnsimpleEnabled.Value() {
 				return r, nil
 			}
 
-			token := os.Getenv("DNSIMPLE_TOKEN")
-			if token == "" {
-				return nil, errors.New("DNSIMPLE_TOKEN must be set")
-			}
-
 			client := dnsimple.NewClient(
-				dnsimple.StaticTokenHTTPClient(ctx, token),
+				dnsimple.StaticTokenHTTPClient(
+					ctx,
+					dnsimpleToken.Value(),
+				),
 			)
-
-			if u := os.Getenv("DNSIMPLE_API_URL"); u != "" {
-				client.BaseURL = u
-			}
+			client.BaseURL = dnsimpleURL.Value().String()
 
 			r.Providers = append(
 				r.Providers,

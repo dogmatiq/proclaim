@@ -1,14 +1,15 @@
 package main
 
 import (
-	"os"
-
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/dogmatiq/ferrite"
 	"github.com/dogmatiq/imbue"
-	"github.com/dogmatiq/proclaim/provider/route53provider"
 	"github.com/dogmatiq/proclaim/reconciler"
 )
+
+var route53Enabled = ferrite.
+	Bool("ROUTE53_ENABLED", "enable the AWS Route 53 provider").
+	WithDefault(false).
+	Required()
 
 func init() {
 	imbue.Decorate0(
@@ -17,21 +18,21 @@ func init() {
 			ctx imbue.Context,
 			r *reconciler.Reconciler,
 		) (*reconciler.Reconciler, error) {
-			if os.Getenv("ROUTE53_ENABLED") == "" {
+			if !route53Enabled.Value() {
 				return r, nil
 			}
 
-			s, err := session.NewSession()
-			if err != nil {
-				return nil, err
-			}
+			// 		s, err := session.NewSession()
+			// 		if err != nil {
+			// 			return nil, err
+			// 		}
 
-			r.Providers = append(
-				r.Providers,
-				&route53provider.Provider{
-					API: route53.New(s),
-				},
-			)
+			// 		r.Providers = append(
+			// 			r.Providers,
+			// 			&route53provider.Provider{
+			// 				API: route53.New(s),
+			// 			},
+			// 		)
 
 			return r, nil
 		},
