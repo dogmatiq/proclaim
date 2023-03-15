@@ -2,142 +2,140 @@ package dnsimpleprovider
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
 	"github.com/dogmatiq/proclaim/provider"
+	"github.com/dogmatiq/proclaim/provider/dnsimpleprovider/internal/dnsimplex"
 )
 
 // Provider is an implementation of provider.Provider that advertises DNS-SD
 // services on domains hosted by dnsimple.com.
 type Provider struct {
 	API *dnsimple.Client
-
-	once sync.Once
-	id   string
 }
 
 // ID returns a short unique identifier for the provider.
 func (p *Provider) ID() string {
-	p.once.Do(func() {
-		p.id = "dnsimple"
+	return base64.RawURLEncoding.EncodeToString(
+		[]byte(p.API.BaseURL),
+	)
+}
 
-		if p.API.BaseURL != "" {
-			u, err := url.Parse(p.API.BaseURL)
-			if err != nil {
-				panic(err)
-			}
+// Describe returns a human-readable description of the provider.
+func (p *Provider) Describe() string {
+	u, err := url.Parse(p.API.BaseURL)
+	if err != nil {
+		panic(err)
+	}
 
-			if u.Host == "api.dnsimple.com" {
-				return
-			}
+	if u.Host == "api.dnsimple.com" {
+		return "dnsimple"
+	}
 
-			environment := strings.TrimPrefix(u.Host, "api.")
-			environment = strings.TrimSuffix(environment, ".dnsimple.com")
-			p.id += "/" + environment
-		}
-	})
+	environment := strings.TrimPrefix(u.Host, "api.")
+	environment = strings.TrimSuffix(environment, ".dnsimple.com")
 
-	return p.id
+	return fmt.Sprintf("dnsimple (%s)", environment)
 }
 
 // AdvertiserByID returns the Advertiser with the given ID.
-func (p *Provider) AdvertiserByID(ctx context.Context, id string) (provider.Advertiser, error) {
-	accountID, domain, err := parseAdvertiserID(id)
+func (p *Provider) AdvertiserByID(
+	ctx context.Context,
+	id string,
+) (provider.Advertiser, error) {
+	accountID, domain, err := unmarshalAdvertiserID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := p.API.Zones.GetZone(ctx, accountID, domain)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"unable to get %q zone on account %q: %w",
-			domain,
-			accountID,
-			err,
-		)
-	}
-
-	return p.newAdvertiser(accountID, domain, res), nil
+	return p.advertiserByDomain(ctx, accountID, domain)
 }
 
 // AdvertiserByDomain returns the Advertiser used to advertise services on the
 // given domain.
 //
 // ok is false if this provider does not manage the given domain.
-func (p *Provider) AdvertiserByDomain(ctx context.Context, domain string) (adv provider.Advertiser, ok bool, _ error) {
-	err := forEach(
+func (p *Provider) AdvertiserByDomain(
+	ctx context.Context,
+	domain string,
+) (provider.Advertiser, bool, error) {
+	return dnsimplex.Find(
 		ctx,
-		func(opts dnsimple.ListOptions) ([]dnsimple.Account, error) {
+		func(opts dnsimple.ListOptions) (*dnsimple.Pagination, []dnsimple.Account, error) {
 			res, err := p.API.Accounts.ListAccounts(ctx, &opts)
 			if err != nil {
-				return nil, fmt.Errorf("unable to list accounts: %w", err)
+				return nil, nil, fmt.Errorf("unable to list accounts: %w", err)
 			}
-
-			return res.Data, nil
+			return res.Pagination, res.Data, err
 		},
-		func(a dnsimple.Account) (bool, error) {
-			accountID := strconv.FormatInt(a.ID, 10)
-			res, err := p.API.Zones.GetZone(ctx, accountID, domain)
-			if err != nil {
-				if isNotFound(err) {
-					return true, nil
-				}
-
-				return false, fmt.Errorf(
-					"unable to get %q zone on account %q: %w",
-					domain,
-					accountID,
-					err,
-				)
-			}
-
-			ok = true
-			adv = p.newAdvertiser(accountID, domain, res)
-
-			return false, nil
+		func(acc dnsimple.Account) (provider.Advertiser, bool, error) {
+			a, err := p.advertiserByDomain(ctx, acc.ID, domain)
+			return a, err == nil, dnsimplex.IgnoreNotFound(err)
 		},
 	)
-
-	return adv, ok, err
 }
 
-func (p *Provider) newAdvertiser(
-	accountID, domain string,
-	zone *dnsimple.ZoneResponse,
-) provider.Advertiser {
+// advertiserByDomain returns the Advertiser used to advertise services on the
+// given domain under the given account.
+func (p *Provider) advertiserByDomain(
+	ctx context.Context,
+	accountID int64,
+	domain string,
+) (provider.Advertiser, error) {
+	res, err := p.API.Zones.GetZone(
+		ctx,
+		strconv.FormatInt(accountID, 10),
+		domain,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"unable to get %q zone on account %d: %w",
+			domain,
+			accountID,
+			err,
+		)
+	}
+
 	return &advertiser{
-		API:          p.API.Zones,
-		AdvertiserID: buildAdvertiserID(accountID, domain),
-		AccountID:    accountID,
-		ZoneID:       strconv.FormatInt(zone.Data.ID, 10),
-	}
+		API:  p.API.Zones,
+		Zone: res.Data,
+	}, nil
 }
 
-func buildAdvertiserID(accountID, domain string) string {
-	return fmt.Sprintf("%s/%s", accountID, domain)
+// marshalAdvertiserID returns the ID of the advertiser for the given zone.
+func marshalAdvertiserID(z *dnsimple.Zone) string {
+	var data []byte
+	data = binary.BigEndian.AppendUint64(data, uint64(z.AccountID))
+	data = append(data, z.Name...)
+	return base64.RawURLEncoding.EncodeToString(data)
 }
 
-func parseAdvertiserID(id string) (accountID, domain string, err error) {
-	parts := strings.Split(id, "/")
-	if len(parts) != 2 {
-		return "", "", errors.New("invalid advertiser ID")
+// unmarshalAdvertiserID parses an advertiser ID into its constituent parts.
+func unmarshalAdvertiserID(id string) (accountID int64, domain string, err error) {
+	data, err := base64.RawURLEncoding.DecodeString(id)
+	if err != nil {
+		return 0, "", fmt.Errorf("invalid advertiser ID: %w", err)
 	}
 
-	accountID = parts[0]
-	domain = parts[1]
-
-	if accountID == "" {
-		return "", "", errors.New("invalid advertiser ID")
+	if len(data) < 8 {
+		return 0, "", errors.New("invalid advertiser ID: too short")
 	}
 
+	accountID = int64(binary.BigEndian.Uint64(data))
+	if accountID <= 0 {
+		return 0, "", errors.New("invalid advertiser ID: account ID component must be positive")
+	}
+
+	domain = string(data[8:])
 	if domain == "" {
-		return "", "", errors.New("invalid advertiser ID")
+		return 0, "", errors.New("invalid advertiser ID: domain component must not be empty")
 	}
 
 	return accountID, domain, nil

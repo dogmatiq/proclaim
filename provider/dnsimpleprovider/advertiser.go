@@ -3,230 +3,146 @@ package dnsimpleprovider
 import (
 	"context"
 	"fmt"
-	"strings"
+	"strconv"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
 	"github.com/dogmatiq/dissolve/dnssd"
-	"golang.org/x/exp/slices"
+	"github.com/dogmatiq/proclaim/provider"
+	"github.com/dogmatiq/proclaim/provider/dnsimpleprovider/internal/dnsimplex"
 )
 
 type advertiser struct {
-	API          *dnsimple.ZonesService
-	AdvertiserID string
-	AccountID    string
-	ZoneID       string
+	API  *dnsimple.ZonesService
+	Zone *dnsimple.Zone
 }
 
 func (a *advertiser) ID() string {
-	return a.AdvertiserID
+	return marshalAdvertiserID(a.Zone)
 }
 
 func (a *advertiser) Advertise(
 	ctx context.Context,
 	inst dnssd.ServiceInstance,
-) error {
-	qualifiedInstanceName := dnssd.ServiceInstanceName(inst.Instance, inst.ServiceType, inst.Domain)
+) (provider.AdvertiseResult, error) {
+	cs := &changeSet{}
 
-	instanceName := dnsimple.String(
-		dnssd.EscapeInstance(inst.Instance) + "." + inst.ServiceType,
-	)
-
-	serviceName := dnsimple.String(
-		inst.ServiceType,
-	)
-
-	create := []dnsimple.ZoneRecordAttributes{
-		{
-			ZoneID:  a.ZoneID,
-			Type:    "PTR",
-			Name:    serviceName,
-			Content: qualifiedInstanceName,
-			TTL:     int(inst.TTL.Seconds()),
-		},
-		{
-			ZoneID: a.ZoneID,
-			Type:   "SRV",
-			Name:   instanceName,
-			Content: fmt.Sprintf(
-				"%d %d %s",
-				inst.Weight,
-				inst.TargetPort,
-				inst.TargetHost,
-			),
-			TTL:      int(inst.TTL.Seconds()),
-			Priority: int(inst.Priority),
-		},
+	if err := a.syncPTR(ctx, inst, cs); err != nil {
+		return provider.AdvertiseError, err
 	}
 
-	for _, r := range dnssd.NewTXTRecords(inst) {
-		create = append(
-			create,
-			dnsimple.ZoneRecordAttributes{
-				ZoneID:  a.ZoneID,
-				Type:    "TXT",
-				Name:    instanceName,
-				Content: strings.TrimPrefix(r.String(), r.Hdr.String()),
-				TTL:     int(inst.TTL.Seconds()),
-			},
-		)
+	if err := a.syncSRV(ctx, inst, cs); err != nil {
+		return provider.AdvertiseError, err
 	}
 
-	if err := forEach(
-		ctx,
-		func(opts dnsimple.ListOptions) ([]dnsimple.ZoneRecord, error) {
-			res, err := a.API.ListRecords(
-				ctx,
-				a.AccountID,
-				a.ZoneID,
-				&dnsimple.ZoneRecordListOptions{
-					ListOptions: opts,
-					Name:        serviceName,
-					Type:        dnsimple.String("PTR"),
-				},
-			)
-			if err != nil {
-				return nil, fmt.Errorf("unable to list zone records: %w", err)
-			}
-
-			return res.Data, nil
-		},
-		func(r dnsimple.ZoneRecord) (bool, error) {
-			for i, attr := range create {
-				if r.Content != qualifiedInstanceName {
-					continue
-				}
-
-				if recordHasMatchingAttributes(r, attr) {
-					create = slices.Delete(create, i, i+1)
-					return false, nil
-				}
-
-				return false, a.deleteRecord(ctx, r)
-			}
-
-			return true, nil
-		},
-	); err != nil {
-		return err
+	if err := a.syncTXT(ctx, inst, cs); err != nil {
+		return provider.AdvertiseError, err
 	}
 
-	if err := forEach(
-		ctx,
-		func(opts dnsimple.ListOptions) ([]dnsimple.ZoneRecord, error) {
-			res, err := a.API.ListRecords(
-				ctx,
-				a.AccountID,
-				a.ZoneID,
-				&dnsimple.ZoneRecordListOptions{
-					ListOptions: opts,
-					Name:        instanceName,
-				},
-			)
-			if err != nil {
-				return nil, fmt.Errorf("unable to list zone records: %w", err)
-			}
-
-			return res.Data, nil
-		},
-		func(r dnsimple.ZoneRecord) (bool, error) {
-			for i, attr := range create {
-				if recordHasMatchingAttributes(r, attr) {
-					create = slices.Delete(create, i, i+1)
-					return true, nil
-				}
-			}
-
-			return true, a.deleteRecord(ctx, r)
-		},
-	); err != nil {
-		return err
+	creates, updates, deletes, err := a.applyChangeSet(ctx, cs)
+	if err != nil {
+		return provider.AdvertiseError, err
 	}
 
-	for _, r := range create {
-		if _, err := a.API.CreateRecord(ctx, a.AccountID, a.ZoneID, r); err != nil {
-			return fmt.Errorf("unable to create zone record: %w", err)
-		}
+	switch {
+	case updates != 0 || deletes != 0:
+		return provider.UpdatedExistingInstance, nil
+	case creates == 0:
+		return provider.InstanceAlreadyAdvertised, nil
+	case creates == 2+len(inst.Attributes): // PTR + SRV + count(TXT)
+		return provider.AdvertisedNewInstance, nil
+	default:
+		return provider.UpdatedExistingInstance, nil
 	}
-
-	return nil
 }
 
 func (a *advertiser) Unadvertise(
 	ctx context.Context,
 	inst dnssd.ServiceInstance,
-) error {
-	qualifiedInstanceName := dnssd.ServiceInstanceName(inst.Instance, inst.ServiceType, inst.Domain)
+) (provider.UnadvertiseResult, error) {
+	cs := &changeSet{}
 
-	instanceName := dnsimple.String(
-		dnssd.EscapeInstance(inst.Instance) + "." + inst.ServiceType,
-	)
-
-	serviceName := dnsimple.String(
-		inst.ServiceType,
-	)
-
-	if err := forEach(
-		ctx,
-		func(opts dnsimple.ListOptions) ([]dnsimple.ZoneRecord, error) {
-			res, err := a.API.ListRecords(
-				ctx,
-				a.AccountID,
-				a.ZoneID,
-				&dnsimple.ZoneRecordListOptions{
-					ListOptions: opts,
-					Name:        serviceName,
-					Type:        dnsimple.String("PTR"),
-				},
-			)
-			if err != nil {
-				return nil, fmt.Errorf("unable to list zone records: %w", err)
-			}
-
-			return res.Data, nil
-		},
-		func(r dnsimple.ZoneRecord) (bool, error) {
-			if r.Content == qualifiedInstanceName {
-				return false, a.deleteRecord(ctx, r)
-			}
-
-			return true, nil
-		},
-	); err != nil {
-		return err
+	if err := a.deletePTR(ctx, inst, cs); err != nil {
+		return provider.UnadvertiseError, err
 	}
 
-	if err := forEach(
-		ctx,
-		func(opts dnsimple.ListOptions) ([]dnsimple.ZoneRecord, error) {
-			res, err := a.API.ListRecords(
-				ctx,
-				a.AccountID,
-				a.ZoneID,
-				&dnsimple.ZoneRecordListOptions{
-					ListOptions: opts,
-					Name:        instanceName,
-				},
-			)
-			if err != nil {
-				return nil, fmt.Errorf("unable to list zone records: %w", err)
-			}
-
-			return res.Data, nil
-		},
-		func(r dnsimple.ZoneRecord) (bool, error) {
-			return true, a.deleteRecord(ctx, r)
-		},
-	); err != nil {
-		return err
+	if err := a.deleteSRV(ctx, inst, cs); err != nil {
+		return provider.UnadvertiseError, err
 	}
 
-	return nil
+	if err := a.deleteTXT(ctx, inst, cs); err != nil {
+		return provider.UnadvertiseError, err
+	}
+
+	_, _, deletes, err := a.applyChangeSet(ctx, cs)
+	if err != nil {
+		return provider.UnadvertiseError, err
+	}
+
+	switch deletes {
+	case 0:
+		return provider.InstanceNotAdvertised, nil
+	default:
+		return provider.UnadvertisedExistingInstance, nil
+	}
 }
 
-func (a *advertiser) deleteRecord(ctx context.Context, r dnsimple.ZoneRecord) error {
-	if _, err := a.API.DeleteRecord(ctx, a.AccountID, a.ZoneID, r.ID); err != nil {
-		return fmt.Errorf("unable to delete zone record: %w", err)
+// changeSet encapsulates a set of DNS record changes that must be applied to
+// reconcile the DNS zone with the desired state.
+type changeSet struct {
+	create []dnsimple.ZoneRecordAttributes
+	update []struct {
+		Before dnsimple.ZoneRecord
+		After  dnsimple.ZoneRecordAttributes
+	}
+	delete []dnsimple.ZoneRecord
+}
+
+func (d *changeSet) Create(attr dnsimple.ZoneRecordAttributes) {
+	d.create = append(d.create, attr)
+}
+
+func (d *changeSet) Update(rec dnsimple.ZoneRecord, attr dnsimple.ZoneRecordAttributes) {
+	if !dnsimplex.RecordHasAttributes(rec, attr) {
+		d.update = append(
+			d.update,
+			struct {
+				Before dnsimple.ZoneRecord
+				After  dnsimple.ZoneRecordAttributes
+			}{
+				rec,
+				attr,
+			},
+		)
+	}
+}
+
+func (d *changeSet) Delete(rec dnsimple.ZoneRecord) {
+	d.delete = append(d.delete, rec)
+}
+
+func (a *advertiser) applyChangeSet(
+	ctx context.Context,
+	cs *changeSet,
+) (creates, updates, deletes int, err error) {
+	accountID := strconv.FormatInt(a.Zone.AccountID, 10)
+
+	for _, rec := range cs.delete {
+		if _, err := a.API.DeleteRecord(ctx, accountID, a.Zone.Name, rec.ID); err != nil {
+			return 0, 0, 0, fmt.Errorf("unable to delete %s record: %w", rec.Type, err)
+		}
 	}
 
-	return nil
+	for _, up := range cs.update {
+		if _, err := a.API.UpdateRecord(ctx, accountID, a.Zone.Name, up.Before.ID, up.After); err != nil {
+			return 0, 0, 0, fmt.Errorf("unable to update %s record: %w", up.Before.Type, err)
+		}
+	}
+
+	for _, attr := range cs.create {
+		if _, err := a.API.CreateRecord(ctx, accountID, a.Zone.Name, attr); err != nil {
+			return 0, 0, 0, fmt.Errorf("unable to create %s record: %w", attr.Type, err)
+		}
+	}
+
+	return len(cs.create), len(cs.update), len(cs.delete), nil
 }
