@@ -25,6 +25,7 @@ spec:
           env:
             - name: DEBUG
               value: "true"
+
             - name: DNSIMPLE_ENABLED
               value: "true"
             - name: DNSIMPLE_API_URL
@@ -34,5 +35,18 @@ spec:
                 secretKeyRef:
                   name: proclaim-secret
                   key: DNSIMPLE_TOKEN
+
             - name: ROUTE53_ENABLED
               value: "true"
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-1"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: proclaim-secret
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: proclaim-secret
+                  key: AWS_SECRET_ACCESS_KEY

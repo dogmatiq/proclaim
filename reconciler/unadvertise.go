@@ -45,7 +45,7 @@ func (r *Reconciler) unadvertise(
 				res,
 				"Warning",
 				"Error",
-				"%s: %w",
+				"%s: %s",
 				res.Status.ProviderDescription,
 				err.Error(),
 			)
@@ -65,7 +65,7 @@ func (r *Reconciler) unadvertise(
 				res,
 				"Normal",
 				"Unadvertised",
-				"service instance un-advertised successfully",
+				"service instance unadvertised successfully",
 			)
 		}
 

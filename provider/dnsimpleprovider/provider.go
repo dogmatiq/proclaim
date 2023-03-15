@@ -2,8 +2,6 @@ package dnsimpleprovider
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"net/url"
@@ -23,26 +21,32 @@ type Provider struct {
 
 // ID returns a short unique identifier for the provider.
 func (p *Provider) ID() string {
-	return base64.RawURLEncoding.EncodeToString(
-		[]byte(p.API.BaseURL),
-	)
+	return fmt.Sprintf("dnsimple/%s", p.environment())
 }
 
-// Describe returns a human-readable description of the provider.
-func (p *Provider) Describe() string {
+func (p *Provider) environment() string {
 	u, err := url.Parse(p.API.BaseURL)
 	if err != nil {
 		panic(err)
 	}
 
 	if u.Host == "api.dnsimple.com" {
-		return "dnsimple"
+		return "production"
 	}
 
 	environment := strings.TrimPrefix(u.Host, "api.")
 	environment = strings.TrimSuffix(environment, ".dnsimple.com")
+	return environment
+}
 
-	return fmt.Sprintf("dnsimple (%s)", environment)
+// Describe returns a human-readable description of the provider.
+func (p *Provider) Describe() string {
+	environment := p.environment()
+	if environment == "production" {
+		return "DNSimple"
+	}
+
+	return fmt.Sprintf("DNSimple (%s)", environment)
 }
 
 // AdvertiserByID returns the Advertiser with the given ID.
@@ -111,29 +115,22 @@ func (p *Provider) advertiserByDomain(
 
 // marshalAdvertiserID returns the ID of the advertiser for the given zone.
 func marshalAdvertiserID(z *dnsimple.Zone) string {
-	var data []byte
-	data = binary.BigEndian.AppendUint64(data, uint64(z.AccountID))
-	data = append(data, z.Name...)
-	return base64.RawURLEncoding.EncodeToString(data)
+	return fmt.Sprintf("%d/%s", z.AccountID, z.Name)
 }
 
 // unmarshalAdvertiserID parses an advertiser ID into its constituent parts.
 func unmarshalAdvertiserID(id string) (accountID int64, domain string, err error) {
-	data, err := base64.RawURLEncoding.DecodeString(id)
-	if err != nil {
-		return 0, "", fmt.Errorf("invalid advertiser ID: %w", err)
+	i := strings.IndexByte(id, '/')
+	if i == -1 {
+		return 0, "", fmt.Errorf("invalid advertiser ID: missing slash character")
 	}
 
-	if len(data) < 8 {
-		return 0, "", errors.New("invalid advertiser ID: too short")
-	}
-
-	accountID = int64(binary.BigEndian.Uint64(data))
+	accountID, _ = strconv.ParseInt(id[:i], 10, 64)
 	if accountID <= 0 {
-		return 0, "", errors.New("invalid advertiser ID: account ID component must be positive")
+		return 0, "", errors.New("invalid advertiser ID: account ID component must be a positive number")
 	}
 
-	domain = string(data[8:])
+	domain = id[i+1:]
 	if domain == "" {
 		return 0, "", errors.New("invalid advertiser ID: domain component must not be empty")
 	}

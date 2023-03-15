@@ -10,7 +10,7 @@ import (
 )
 
 // getOrAssociateAdvertiser returns the advertiser used to
-// advertise/un-advertise the given DNS-SD service instance.
+// advertise/unadvertise the given DNS-SD service instance.
 func (r *Reconciler) getOrAssociateAdvertiser(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
@@ -100,6 +100,16 @@ func (r *Reconciler) getAdvertiser(
 	for _, p := range r.Providers {
 		if p.ID() != res.Status.ProviderID {
 			continue
+		}
+
+		// Make sure the provider's description is up-to-date.
+		desc := p.Describe()
+		if res.Status.ProviderDescription != desc {
+			res.Status.ProviderDescription = desc
+
+			if err := r.Client.Status().Update(ctx, res); err != nil {
+				return nil, false, fmt.Errorf("unable to update resource status: %w", err)
+			}
 		}
 
 		a, err := p.AdvertiserByID(ctx, res.Status.AdvertiserID)

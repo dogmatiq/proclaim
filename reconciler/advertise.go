@@ -57,7 +57,7 @@ func (r *Reconciler) advertise(
 			res,
 			"Warning",
 			"Error",
-			"%s: %w",
+			"%s: %s",
 			res.Status.ProviderDescription,
 			err,
 		)

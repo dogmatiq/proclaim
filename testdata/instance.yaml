@@ -13,28 +13,28 @@ spec:
       baz: "qux"
       flag: ""
     - more: attrs
-# ---
-# apiVersion: proclaim.dogmatiq.io/v1alpha1
-# kind: DNSSDServiceInstance
-# metadata:
-#   name: test-2
-# spec:
-#   name: "yyy"
-#   service: "_foo._tcp"
-#   domain: "dnssd.example.org"
-#   targetHost: "host300.example.org"
-#   targetPort: 4321
-# ---
-# apiVersion: proclaim.dogmatiq.io/v1alpha1
-# kind: DNSSDServiceInstance
-# metadata:
-#   name: test-3
-# spec:
-#   name: "zzz"
-#   service: "_foo._tcp"
-#   domain: "dnssd.example.org"
-#   targetHost: "host300.example.org"
-#   targetPort: 4321
+---
+apiVersion: proclaim.dogmatiq.io/v1alpha1
+kind: DNSSDServiceInstance
+metadata:
+  name: test-2
+spec:
+  name: "yyy"
+  service: "_foo._tcp"
+  domain: "proclaim-test.example.org"
+  targetHost: "host300.example.org"
+  targetPort: 4321
+---
+apiVersion: proclaim.dogmatiq.io/v1alpha1
+kind: DNSSDServiceInstance
+metadata:
+  name: test-3
+spec:
+  name: "zzz-changed"
+  service: "_foo._tcp"
+  domain: "proclaim-test.example.org"
+  targetHost: "host300.example.org"
+  targetPort: 10
 # ---
 # apiVersion: proclaim.dogmatiq.io/v1alpha1
 # kind: DNSSDServiceInstance
