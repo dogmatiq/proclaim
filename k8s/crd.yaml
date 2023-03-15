@@ -20,38 +20,6 @@ spec:
       storage: true
       subresources:
         status: {}
-      additionalPrinterColumns:
-        - name: Instance Name
-          description: The name of the instance to advertise
-          type: string
-          jsonPath: .spec.name
-        - name: Service Type
-          description: The type of service that the instance provides
-          type: string
-          jsonPath: .spec.service
-        - name: Domain
-          description: The domain name under which the DNS-SD records are created
-          type: string
-          jsonPath: .spec.domain
-        - name: Target Host
-          description: The host name at which the service can be contacted
-          type: string
-          jsonPath: .spec.targetHost
-        - name: Target Port
-          description: The port number at which the service can be contacted
-          type: integer
-          jsonPath: .spec.targetPort
-        - name: Status
-          description: The current status of the DNS-SD service instance object
-          type: string
-          jsonPath: .status.status
-        - name: Provider
-          description: The provider used to publish the DNS records
-          type: string
-          jsonPath: .status.providerDescription
-        - name: Age
-          type: date
-          jsonPath: .metadata.creationTimestamp
       schema:
         openAPIV3Schema:
           type: object
@@ -89,11 +57,51 @@ spec:
                   format: uint16
                   default: 60
                 attributes:
+                  # Note that attributes is an ARRAY of objects, not a SINGLE
+                  # OBJECT as you might expect.
+                  #
+                  # This is because DNS-SD allows for multiple sets of
+                  # attributes, each having its own TXT record.
+                  #
+                  # Instances should almost always have exactly one TXT record,
+                  # and therefore one item in this array. The meaning of
+                  # multiple TXT records is protocol specific, it MUST NOT be
+                  # assumed that clients will merge the attributes from
+                  # different sets.
+                  #
+                  # See https://www.rfc-editor.org/rfc/rfc6763#section-6.8
+                  #
+                  # ----------------------------------------------------------
+                  #
+                  # The objects within the array are key/value pairs of
+                  # attributes.
+                  #
+                  # A key with an empty string value in the YAML is treated as
+                  # a boolean attribute in the TXT record.
+                  #
+                  # See https://www.rfc-editor.org/rfc/rfc6763#section-6.4
+                  #
+                  # This means it is impossible to represent an associative
+                  # attribute with an empty string value in the TXT record.
+                  #
+                  # ----------------------------------------------------------
+                  #
+                  # This approach is a compromise taken due to a limition
+                  # within Kubernetes CRDs schema; it is not possible to
+                  # STRICTLY define an object with additional properties that
+                  # are either strings or booleans.
+                  #
+                  # We believe this compromise will still allow for the most
+                  # common use cases, while keeping the schema as simple as
+                  # possible.
+                  #
+                  # See https://kubernetes.io/blog/2019/06/20/crd-structural-schema/
                   type: array
                   items:
                     type: object
                     additionalProperties:
                       type: string
+
             status:
               type: object
               properties:
@@ -106,3 +114,36 @@ spec:
                 status:
                   type: string
                   default: "Pending"
+
+      additionalPrinterColumns:
+        - name: Instance Name
+          description: The name of the instance to advertise
+          type: string
+          jsonPath: .spec.name
+        - name: Service Type
+          description: The type of service that the instance provides
+          type: string
+          jsonPath: .spec.service
+        - name: Domain
+          description: The domain name under which the DNS-SD records are created
+          type: string
+          jsonPath: .spec.domain
+        - name: Target Host
+          description: The host name at which the service can be contacted
+          type: string
+          jsonPath: .spec.targetHost
+        - name: Target Port
+          description: The port number at which the service can be contacted
+          type: integer
+          jsonPath: .spec.targetPort
+        - name: Status
+          description: The current status of the DNS-SD service instance object
+          type: string
+          jsonPath: .status.status
+        - name: Provider
+          description: The provider used to publish the DNS records
+          type: string
+          jsonPath: .status.providerDescription
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
