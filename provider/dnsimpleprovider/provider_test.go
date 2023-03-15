@@ -19,7 +19,7 @@ import (
 // environment.
 const (
 	testAccountID = "1946"
-	testDomain    = "dogmatiq.io"
+	testDomain    = "proclaim-test.dogmatiq.io"
 )
 
 var _ = Describe("type advertiser", func() {
