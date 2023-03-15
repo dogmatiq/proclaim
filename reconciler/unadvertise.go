@@ -29,8 +29,12 @@ func (r *Reconciler) unadvertise(
 	if res.Status.ProviderID != "" {
 		a, ok, err := r.getAdvertiser(ctx, res)
 		if !ok || err != nil {
-			// The assigned provider is not known to this reconciler.
+			// The associated provider is not known to this reconciler.
 			return true, err
+		}
+
+		if err := r.setStatus(ctx, res, crd.StatusUnadvertising); err != nil {
+			return false, err
 		}
 
 		result, err := a.Unadvertise(ctx, inst)
@@ -42,9 +46,14 @@ func (r *Reconciler) unadvertise(
 				"Warning",
 				"Error",
 				"%s: %w",
-				res.Status.ProviderID,
+				res.Status.ProviderDescription,
 				err.Error(),
 			)
+
+			if err := r.setStatus(ctx, res, crd.StatusUnadvertiseError); err != nil {
+				return false, err
+			}
+
 			return false, ctx.Err()
 
 		case provider.InstanceNotAdvertised:
@@ -60,6 +69,10 @@ func (r *Reconciler) unadvertise(
 			)
 		}
 
+	}
+
+	if err := r.setStatus(ctx, res, crd.StatusUnadvertised); err != nil {
+		return false, err
 	}
 
 	controllerutil.RemoveFinalizer(res, crd.FinalizerName)

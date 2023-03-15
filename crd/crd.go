@@ -19,6 +19,40 @@ const (
 	Version = "v1alpha1"
 )
 
+// Status is an enumeration of the possible states of a service instance.
+type Status string
+
+const (
+	// StatusPending indicates that none of the Proclaim controllers that have
+	// reconciled the resource have been configured to advertise on its domain.
+	StatusPending Status = "Pending"
+
+	// StatusAdvertising indicates that a controller has identified where to
+	// create/update the DNS records and will soon attempt to do so.
+	StatusAdvertising Status = "Advertising"
+
+	// StatusAdvertiseError indicates that there was an upstream problem with
+	// the provider while attempting to advertise the service instance.
+	StatusAdvertiseError Status = "AdvertiseError"
+
+	// StatusAdvertised indicates that the service instance has been advertised
+	// successfully.
+	StatusAdvertised Status = "Advertised"
+
+	// StatusUnadvertising indicates that a controller has begin to remove
+	// the DNS records for the service instance.
+	StatusUnadvertising Status = "Unadvertising"
+
+	// StatusUnadvertiseError indicates that there was an upstream problem with
+	// the provider while attempting to unadvertise the service instance.
+	StatusUnadvertiseError Status = "UnadvertiseError"
+
+	// StatusUnadvertised indicates that the service instance has been
+	// unadvertised successfully. This status will rarely be seen as it is set
+	// shortly before Kubernetes deletes the resource entirely.
+	StatusUnadvertised Status = "Unadvertised"
+)
+
 // DNSSDServiceInstanceSpec is the specification for a service instance.
 type DNSSDServiceInstanceSpec struct {
 	Name       string              `json:"name"`
@@ -37,6 +71,7 @@ type DNSSDServiceInstanceStatus struct {
 	ProviderID          string `json:"providerId,omitempty"`
 	ProviderDescription string `json:"providerDescription,omitempty"`
 	AdvertiserID        string `json:"advertiserId,omitempty"`
+	Status              Status `json:"status,omitempty"`
 }
 
 // DNSSDServiceInstance is a resource that represents a DNS-SD service instance.

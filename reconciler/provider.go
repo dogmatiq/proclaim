@@ -57,6 +57,7 @@ func (r *Reconciler) associateAdvertiser(
 		res.Status.ProviderID = p.ID()
 		res.Status.ProviderDescription = p.Describe()
 		res.Status.AdvertiserID = a.ID()
+		res.Status.Status = crd.StatusAdvertising
 
 		if err := r.Client.Status().Update(ctx, res); err != nil {
 			return nil, false, fmt.Errorf("unable to update resource status: %w", err)
@@ -108,7 +109,7 @@ func (r *Reconciler) getAdvertiser(
 				"Warning",
 				"Error",
 				"%s: %s",
-				res.Status.ProviderID,
+				res.Status.ProviderDescription,
 				err.Error(),
 			)
 
@@ -118,8 +119,8 @@ func (r *Reconciler) getAdvertiser(
 		return a, true, nil
 	}
 
-	// This reconciler does not know about the provider that was assigned to the
-	// resource. This is likely because the resource is managed by some other
-	// instance of Proclaim.
+	// This reconciler does not know about the provider that is associated with
+	// the resource. This is likely because the resource is managed by some
+	// other instance of Proclaim.
 	return nil, false, nil
 }

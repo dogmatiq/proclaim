@@ -22,26 +22,36 @@ spec:
         status: {}
       additionalPrinterColumns:
         - name: Instance Name
+          description: The name of the instance to advertise
           type: string
-          description: The name of the DNS-SD service instance
           jsonPath: .spec.name
         - name: Service Type
+          description: The type of service that the instance provides
           type: string
           jsonPath: .spec.service
         - name: Domain
+          description: The domain name under which the DNS-SD records are created
           type: string
-          description: The domain number under which the DNS-SD service instance is advertised
           jsonPath: .spec.domain
         - name: Target Host
+          description: The host name at which the service can be contacted
           type: string
           jsonPath: .spec.targetHost
         - name: Target Port
+          description: The port number at which the service can be contacted
           type: integer
           jsonPath: .spec.targetPort
-        - name: Provider
+        - name: Status
+          description: The current status of the DNS-SD service instance object
           type: string
-          description: The provider used to publish the DNS-SD service instance
+          jsonPath: .status.status
+        - name: Provider
+          description: The provider used to publish the DNS records
+          type: string
           jsonPath: .status.providerDescription
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
       schema:
         openAPIV3Schema:
           type: object
@@ -93,3 +103,6 @@ spec:
                   type: string
                 advertiserId:
                   type: string
+                status:
+                  type: string
+                  default: "Pending"

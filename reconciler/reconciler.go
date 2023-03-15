@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/dogmatiq/dissolve/dnssd"
@@ -55,6 +56,23 @@ func (r *Reconciler) Reconcile(
 	return reconcile.Result{
 		Requeue: !ok,
 	}, err
+}
+
+func (r *Reconciler) setStatus(
+	ctx context.Context,
+	res *crd.DNSSDServiceInstance,
+	status crd.Status,
+) error {
+	if res.Status.Status == status {
+		return nil
+	}
+
+	res.Status.Status = status
+	if err := r.Client.Status().Update(ctx, res); err != nil {
+		return fmt.Errorf("unable to update resource status: %w", err)
+	}
+
+	return nil
 }
 
 // instanceFromSpec returns a dnssd.Instance from a CRD service instance

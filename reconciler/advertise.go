@@ -20,12 +20,17 @@ func (r *Reconciler) advertise(
 	res *crd.DNSSDServiceInstance,
 	inst dnssd.ServiceInstance,
 ) (bool, error) {
+	// If the resource does not have a status, set one immediately.
+	if res.Status.Status == "" {
+		if err := r.setStatus(ctx, res, crd.StatusPending); err != nil {
+			return false, err
+		}
+	}
+
 	// If the resource does not have a finalizer, add one. This ensures that
 	// we are notified on deletion and have an opportunity to unadvertise the
 	// service.
-	if !controllerutil.ContainsFinalizer(res, crd.FinalizerName) {
-		controllerutil.AddFinalizer(res, crd.FinalizerName)
-
+	if controllerutil.AddFinalizer(res, crd.FinalizerName) {
 		if err := r.Client.Update(ctx, res); err != nil {
 			return false, fmt.Errorf("unable to add finalizer: %w", err)
 		}
@@ -53,9 +58,14 @@ func (r *Reconciler) advertise(
 			"Warning",
 			"Error",
 			"%s: %w",
-			res.Status.ProviderID,
+			res.Status.ProviderDescription,
 			err,
 		)
+
+		if err := r.setStatus(ctx, res, crd.StatusAdvertiseError); err != nil {
+			return false, err
+		}
+
 		return false, ctx.Err()
 
 	case provider.InstanceAlreadyAdvertised:
@@ -77,6 +87,10 @@ func (r *Reconciler) advertise(
 			"Updated",
 			"updating existing service instance",
 		)
+	}
+
+	if err := r.setStatus(ctx, res, crd.StatusAdvertised); err != nil {
+		return false, err
 	}
 
 	return true, nil
