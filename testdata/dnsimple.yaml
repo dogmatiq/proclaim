@@ -1,4 +1,4 @@
-apiVersion: proclaim.dogmatiq.io/v1alpha1
+apiVersion: proclaim.dogmatiq.io/v1
 kind: DNSSDServiceInstance
 metadata:
   name: dnsimple-one

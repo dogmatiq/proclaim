@@ -16,7 +16,7 @@ const (
 	FinalizerName = GroupName + "/unadvertise"
 
 	// Version is the version of the API/CRDs.
-	Version = "v1alpha1"
+	Version = "v1"
 )
 
 // Status is an enumeration of the possible states of a service instance.
