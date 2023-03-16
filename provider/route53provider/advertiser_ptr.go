@@ -113,6 +113,14 @@ func (a *advertiser) deletePTR(
 		return err
 	}
 
+	cs.Changes = append(
+		cs.Changes,
+		types.Change{
+			Action:            types.ChangeActionDelete,
+			ResourceRecordSet: &current,
+		},
+	)
+
 	desired := types.ResourceRecordSet{
 		SetIdentifier: marshalGeneration(gen + 1),
 		Weight:        aws.Int64(0),
@@ -126,17 +134,15 @@ func (a *advertiser) deletePTR(
 		),
 	}
 
-	cs.Changes = append(
-		cs.Changes,
-		types.Change{
-			Action:            types.ChangeActionCreate,
-			ResourceRecordSet: &desired,
-		},
-		types.Change{
-			Action:            types.ChangeActionDelete,
-			ResourceRecordSet: &current,
-		},
-	)
+	if len(desired.ResourceRecords) != 0 {
+		cs.Changes = append(
+			cs.Changes,
+			types.Change{
+				Action:            types.ChangeActionCreate,
+				ResourceRecordSet: &desired,
+			},
+		)
+	}
 
 	return nil
 }
