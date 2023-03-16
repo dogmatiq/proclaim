@@ -33,8 +33,10 @@ func (r *Reconciler) unadvertise(
 			return true, err
 		}
 
-		if err := r.setStatus(ctx, res, crd.StatusUnadvertising); err != nil {
-			return false, err
+		if res.Status.Status != crd.StatusUnadvertiseError {
+			if err := r.setStatus(ctx, res, crd.StatusUnadvertising); err != nil {
+				return false, err
+			}
 		}
 
 		result, err := a.Unadvertise(ctx, inst)
