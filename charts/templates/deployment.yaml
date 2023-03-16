@@ -58,9 +58,9 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: ROUTE53_ENABLED
-              value: {{ .Values.proclaim.providers.route53.enabled }}
+              value: {{ toYaml (.Values.proclaim.providers.route53.enabled | toString) }}
             - name: DNSIMPLE_ENABLED
-              value: {{ .Values.proclaim.providers.dnsimple.enabled }}
+              value: {{ toYaml (.Values.proclaim.providers.dnsimple.enabled | toString) }}
             {{- if .Values.proclaim.providers.dnsimple.enabled }}
             - name: DNSIMPLE_TOKEN
               valueFrom:
