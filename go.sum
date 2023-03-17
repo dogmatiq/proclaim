@@ -90,8 +90,8 @@ github.com/dogmatiq/dissolve v0.2.0 h1:8RjOIBJCw14qee+GQcVDbO3wGb6OqJdqe+WU2AeeH
 github.com/dogmatiq/dissolve v0.2.0/go.mod h1:3Y+3YJoIwLP3FNiEvw9ZVXB2ioj/mqs2PKaR87aOIz4=
 github.com/dogmatiq/dyad v0.2.2 h1:gKBvCbJD11r5sHtsU0U2FuCwqxWQOZ37Q6cXO5Srbn4=
 github.com/dogmatiq/dyad v0.2.2/go.mod h1:d646/q0Ufks+xfJm3jGXpobX/VMdjTHP1bSIhy4jDp4=
-github.com/dogmatiq/ferrite v0.6.0 h1:Wo0uisWX6Tmp5rOKciGfVe6bdQD7rgeO69msJmFGCUw=
-github.com/dogmatiq/ferrite v0.6.0/go.mod h1:H4e118gA91FXe+pmB3FHkNkwOZaM/k5+hqco5J+O4nI=
+github.com/dogmatiq/ferrite v1.0.0 h1:7xqjrCiV/Q9TYfhTlxgQaAQZvNNbV5237N/KSXtp+LQ=
+github.com/dogmatiq/ferrite v1.0.0/go.mod h1:H4e118gA91FXe+pmB3FHkNkwOZaM/k5+hqco5J+O4nI=
 github.com/dogmatiq/iago v0.4.0 h1:57nZqVT34IZxtCZEW/RFif7DNUEjMXgevfr/Mmd0N8I=
 github.com/dogmatiq/iago v0.4.0/go.mod h1:fishMWBtzYcjgis6d873VTv9kFm/wHYLOzOyO9ECBDc=
 github.com/dogmatiq/imbue v0.6.2 h1:vjeZ9st4peutl3tuyntReUjLbZOE1HjFMdOgYYc7Gzo=
