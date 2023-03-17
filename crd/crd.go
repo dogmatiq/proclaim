@@ -55,15 +55,15 @@ const (
 
 // DNSSDServiceInstanceSpec is the specification for a service instance.
 type DNSSDServiceInstanceSpec struct {
-	Name       string              `json:"name"`
-	Service    string              `json:"service"`
-	Domain     string              `json:"domain"`
-	TargetHost string              `json:"targetHost"`
-	TargetPort uint16              `json:"targetPort"`
-	Priority   uint16              `json:"priority,omitempty"`
-	Weight     uint16              `json:"weight,omitempty"`
-	Attributes []map[string]string `json:"attributes,omitempty"`
-	TTL        uint16              `json:"ttl,omitempty"`
+	InstanceName string              `json:"instanceName"`
+	ServiceType  string              `json:"serviceType"`
+	Domain       string              `json:"domain"`
+	TargetHost   string              `json:"targetHost"`
+	TargetPort   uint16              `json:"targetPort"`
+	Priority     uint16              `json:"priority,omitempty"`
+	Weight       uint16              `json:"weight,omitempty"`
+	Attributes   []map[string]string `json:"attributes,omitempty"`
+	TTL          uint16              `json:"ttl,omitempty"`
 }
 
 // DNSSDServiceInstanceStatus contains the status of a service instance.

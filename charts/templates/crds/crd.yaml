@@ -29,21 +29,21 @@ spec:
             spec:
               type: object
               required:
-                - name
-                - service
+                - instanceName
+                - serviceType
                 - domain
                 - targetHost
                 - targetPort
               properties:
-                name:
+                instanceName:
                   type: string
                   x-kubernetes-validations:
-                    - message: name is immutable
+                    - message: instance name is immutable
                       rule: self == oldSelf
-                service:
+                serviceType:
                   type: string
                   x-kubernetes-validations:
-                    - message: service is immutable
+                    - message: service type is immutable
                       rule: self == oldSelf
                 domain:
                   type: string
@@ -127,11 +127,11 @@ spec:
         - name: Instance Name
           description: The name of the instance to advertise
           type: string
-          jsonPath: .spec.name
+          jsonPath: .spec.instanceName
         - name: Service Type
           description: The type of service that the instance provides
           type: string
-          jsonPath: .spec.service
+          jsonPath: .spec.serviceType
         - name: Domain
           description: The domain name under which the DNS-SD records are created
           type: string

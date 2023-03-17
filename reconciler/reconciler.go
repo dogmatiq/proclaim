@@ -79,8 +79,8 @@ func (r *Reconciler) setStatus(
 // specification.
 func instanceFromSpec(spec crd.DNSSDServiceInstanceSpec) dnssd.ServiceInstance {
 	result := dnssd.ServiceInstance{
-		Instance:    spec.Name,
-		ServiceType: spec.Service,
+		Instance:    spec.InstanceName,
+		ServiceType: spec.ServiceType,
 		Domain:      spec.Domain,
 		TargetHost:  spec.TargetHost,
 		TargetPort:  spec.TargetPort,
