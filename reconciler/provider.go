@@ -6,6 +6,7 @@ import (
 
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
+	"github.com/dogmatiq/proclaim/reconciler/internal/payload"
 	"golang.org/x/exp/slices"
 )
 
@@ -15,7 +16,7 @@ func (r *Reconciler) getOrAssociateAdvertiser(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (provider.Advertiser, bool, error) {
-	if res.Status.ProviderID == "" {
+	if len(res.Status.ProviderPayload) == 0 {
 		return r.associateAdvertiser(ctx, res)
 	}
 
@@ -54,9 +55,8 @@ func (r *Reconciler) associateAdvertiser(
 			continue
 		}
 
-		res.Status.ProviderID = p.ID()
 		res.Status.ProviderDescription = p.Describe()
-		res.Status.AdvertiserID = a.ID()
+		res.Status.ProviderPayload = payload.Marshal(p, a)
 		res.Status.Status = crd.StatusAdvertising
 
 		if err := r.Client.Status().Update(ctx, res); err != nil {
@@ -97,8 +97,13 @@ func (r *Reconciler) getAdvertiser(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (provider.Advertiser, bool, error) {
+	payload, err := payload.Unmarshal(res.Status.ProviderPayload)
+	if err != nil {
+		return nil, false, err
+	}
+
 	for _, p := range r.Providers {
-		if p.ID() != res.Status.ProviderID {
+		if p.ID() != payload.GetProviderId() {
 			continue
 		}
 
@@ -112,7 +117,7 @@ func (r *Reconciler) getAdvertiser(
 			}
 		}
 
-		a, err := p.AdvertiserByID(ctx, res.Status.AdvertiserID)
+		a, err := p.AdvertiserByID(ctx, payload.GetAdvertiserId())
 		if err != nil {
 			r.EventRecorder.Eventf(
 				res,

@@ -41,8 +41,7 @@ var _ = Describe("type Provider", func() {
 
 			return providertest.TestContext{
 				Provider: &Provider{
-					PartitionID: "aws", // TODO: obtain this dynamically
-					Client:      client,
+					Client: client,
 				},
 				Domain: domain,
 				NameServers: func(ctx context.Context) ([]string, error) {

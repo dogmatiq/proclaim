@@ -26,7 +26,7 @@ func (r *Reconciler) unadvertise(
 		return true, nil
 	}
 
-	if res.Status.ProviderID != "" {
+	if len(res.Status.ProviderPayload) != 0 {
 		a, ok, err := r.getAdvertiser(ctx, res)
 		if !ok || err != nil {
 			// The associated provider is not known to this reconciler.
@@ -70,7 +70,6 @@ func (r *Reconciler) unadvertise(
 				"service instance unadvertised successfully",
 			)
 		}
-
 	}
 
 	if err := r.setStatus(ctx, res, crd.StatusUnadvertised); err != nil {

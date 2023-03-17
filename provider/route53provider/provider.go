@@ -9,23 +9,28 @@ import (
 	"github.com/dogmatiq/proclaim/provider"
 )
 
+const defaultPartition = "aws"
+
 // Provider is an implementation of provider.Provider that advertises DNS-SD
 // services on domains hosted by Amazon Route 53.
 type Provider struct {
-	PartitionID string
 	Client      *route53.Client
+	PartitionID string
 }
 
 // ID returns a short unique identifier for the provider.
 func (p *Provider) ID() string {
-	if p.PartitionID == "" {
-		panic("partition must not be empty")
+	if id := p.partitionID(); id != defaultPartition {
+		return fmt.Sprintf("route53/%s", id)
 	}
-	return fmt.Sprintf("route53/%s", p.PartitionID)
+	return "route53"
 }
 
 // Describe returns a human-readable description of the provider.
 func (p *Provider) Describe() string {
+	if id := p.partitionID(); id != defaultPartition {
+		return fmt.Sprintf("Amazon Route 53 (%s)", id)
+	}
 	return "Amazon Route 53"
 }
 
@@ -43,9 +48,8 @@ func (p *Provider) AdvertiserByID(
 	}
 
 	return &advertiser{
-		PartitionID: p.PartitionID,
-		Client:      p.Client,
-		ZoneID:      id,
+		Client: p.Client,
+		ZoneID: id,
 	}, nil
 }
 
@@ -81,8 +85,14 @@ func (p *Provider) AdvertiserByDomain(
 	}
 
 	return &advertiser{
-		PartitionID: p.PartitionID,
-		Client:      p.Client,
-		ZoneID:      *zone.Id,
+		Client: p.Client,
+		ZoneID: *zone.Id,
 	}, true, nil
+}
+
+func (p *Provider) partitionID() string {
+	if p.PartitionID == "" {
+		return defaultPartition
+	}
+	return p.PartitionID
 }

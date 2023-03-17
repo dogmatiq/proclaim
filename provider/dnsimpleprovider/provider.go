@@ -115,14 +115,14 @@ func (p *Provider) advertiserByDomain(
 
 // marshalAdvertiserID returns the ID of the advertiser for the given zone.
 func marshalAdvertiserID(z *dnsimple.Zone) string {
-	return fmt.Sprintf("%d/%s", z.AccountID, z.Name)
+	return fmt.Sprintf("%d %s", z.AccountID, z.Name)
 }
 
 // unmarshalAdvertiserID parses an advertiser ID into its constituent parts.
 func unmarshalAdvertiserID(id string) (accountID int64, domain string, err error) {
-	i := strings.IndexByte(id, '/')
+	i := strings.IndexByte(id, ' ')
 	if i == -1 {
-		return 0, "", fmt.Errorf("invalid advertiser ID: missing slash character")
+		return 0, "", fmt.Errorf("invalid advertiser ID: missing separator")
 	}
 
 	accountID, _ = strconv.ParseInt(id[:i], 10, 64)

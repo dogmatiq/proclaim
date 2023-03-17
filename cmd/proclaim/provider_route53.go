@@ -35,8 +35,7 @@ func init() {
 			r.Providers = append(
 				r.Providers,
 				&route53provider.Provider{
-					PartitionID: "aws", // TODO: obtain this dynamically
-					Client:      cli,
+					Client: cli,
 				},
 			)
 

@@ -114,12 +114,11 @@ spec:
             status:
               type: object
               properties:
-                providerId:
-                  type: string
                 providerDescription:
                   type: string
-                advertiserId:
+                providerPayload:
                   type: string
+                  format: byte
                 status:
                   type: string
                   default: "Pending"

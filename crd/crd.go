@@ -68,9 +68,8 @@ type DNSSDServiceInstanceSpec struct {
 
 // DNSSDServiceInstanceStatus contains the status of a service instance.
 type DNSSDServiceInstanceStatus struct {
-	ProviderID          string `json:"providerId,omitempty"`
 	ProviderDescription string `json:"providerDescription,omitempty"`
-	AdvertiserID        string `json:"advertiserId,omitempty"`
+	ProviderPayload     []byte `json:"providerPayload,omitempty"`
 	Status              Status `json:"status,omitempty"`
 }
 

@@ -10,6 +10,16 @@ The format is based on [Keep a Changelog], and this project adheres to
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## Unreleased
+
+### Fixed
+
+- Marked `DNSIMPLE_TOKEN` environment variable as "sensitive" to avoid showing its value in validation output
+
+### Changed
+
+- **[BC]** Changed the format of the CRDs `status` sub-resource to better encapsulate internal data
+
 ## [0.1.0] - 2023-03-16
 
 - Initial release

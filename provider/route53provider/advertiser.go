@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/dogmatiq/dissolve/dnssd"
@@ -15,17 +14,12 @@ import (
 )
 
 type advertiser struct {
-	PartitionID string
-	Client      *route53.Client
-	ZoneID      string
+	Client *route53.Client
+	ZoneID string
 }
 
 func (a *advertiser) ID() string {
-	return arn.ARN{
-		Partition: a.PartitionID,
-		Service:   "route53",
-		Resource:  fmt.Sprintf("hostedzone/%s", a.ZoneID),
-	}.String()
+	return a.ZoneID
 }
 
 func (a *advertiser) Advertise(
