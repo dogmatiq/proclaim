@@ -42,10 +42,10 @@ func (a *advertiser) syncSRV(
 	ctx context.Context,
 	inst dnssd.ServiceInstance,
 	cs *changeSet,
-) error {
+) (bool, error) {
 	current, ok, err := a.findSRV(ctx, inst)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	desired := dnsimple.ZoneRecordAttributes{
@@ -66,11 +66,11 @@ func (a *advertiser) syncSRV(
 
 	if ok {
 		cs.Update(current, desired)
-	} else {
-		cs.Create(desired)
+		return true, nil
 	}
 
-	return nil
+	cs.Create(desired)
+	return false, nil
 }
 
 func (a *advertiser) deleteSRV(

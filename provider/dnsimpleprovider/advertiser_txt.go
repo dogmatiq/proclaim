@@ -44,10 +44,10 @@ func (a *advertiser) syncTXT(
 	ctx context.Context,
 	inst dnssd.ServiceInstance,
 	cs *changeSet,
-) error {
+) (bool, error) {
 	current, err := a.findTXT(ctx, inst)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	var desired []dnsimple.ZoneRecordAttributes
@@ -86,7 +86,7 @@ next:
 		cs.Create(attr)
 	}
 
-	return nil
+	return len(current) != 0, nil
 }
 
 func (a *advertiser) deleteTXT(

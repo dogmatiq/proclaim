@@ -3,7 +3,6 @@ package dnsimpleprovider_test
 import (
 	"context"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
@@ -11,28 +10,95 @@ import (
 	"github.com/dogmatiq/proclaim/provider"
 	. "github.com/dogmatiq/proclaim/provider/dnsimpleprovider"
 	"github.com/dogmatiq/proclaim/provider/dnsimpleprovider/internal/dnsimplex"
+	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"golang.org/x/exp/slices"
 )
 
 // testDomain is the domain name used for testing in the DNSimple SANDBOX
 // environment.
 const (
-	testAccountID = "1946"
+	testAccountID = "12018"
 	testDomain    = "proclaim-test.dogmatiq.io"
 )
 
 var _ = Describe("type advertiser", func() {
 	var (
-		ctx    context.Context
-		client *dnsimple.Client
-		prov   *Provider
+		ctx      context.Context
+		resolver dnssd.UnicastResolver
+		client   *dnsimple.Client
+		prov     *Provider
 	)
+
+	expectInstanceToExist := func(expect dnssd.ServiceInstance) {
+		for {
+			time.Sleep(100 * time.Millisecond)
+
+			actual, ok, err := resolver.LookupInstance(ctx, expect.Instance, expect.ServiceType, expect.Domain)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			if ok {
+				Expect(actual).To(Equal(expect))
+				return
+			}
+		}
+	}
+
+	expectInstanceNotToExist := func(expect dnssd.ServiceInstance) {
+		for {
+			time.Sleep(100 * time.Millisecond)
+
+			_, ok, err := resolver.LookupInstance(ctx, expect.Instance, expect.ServiceType, expect.Domain)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			if !ok {
+				return
+			}
+		}
+	}
+
+	expectEnumerableInstances := func(service string, expect ...dnssd.ServiceInstance) {
+		var names []string
+		for _, inst := range expect {
+			names = append(names, inst.Instance)
+		}
+
+		slices.Sort(names)
+
+		for {
+			time.Sleep(100 * time.Millisecond)
+
+			instances, err := resolver.EnumerateInstances(ctx, service, testDomain)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			slices.Sort(instances)
+
+			if slices.Equal(instances, names) {
+				return
+			}
+		}
+	}
 
 	BeforeEach(func() {
 		token := os.Getenv("DOGMATIQ_TEST_DNSIMPLE_TOKEN")
 		if token == "" {
 			Skip("DOGMATIQ_TEST_DNSIMPLE_TOKEN is not defined")
+		}
+
+		resolver = dnssd.UnicastResolver{
+			Config: &dns.ClientConfig{
+				Port:     "53",
+				Ndots:    1,
+				Timeout:  5,
+				Attempts: 10,
+				Servers: []string{
+					"ns1.dnsimple.com",
+					"ns2.dnsimple.com",
+					"ns3.dnsimple.com",
+					"ns4.dnsimple-edge.org",
+				},
+			},
 		}
 
 		var cancel context.CancelFunc
@@ -45,7 +111,6 @@ var _ = Describe("type advertiser", func() {
 				token,
 			),
 		)
-		client.BaseURL = "https://api.sandbox.dnsimple.com"
 
 		prov = &Provider{
 			API: client,
@@ -54,172 +119,7 @@ var _ = Describe("type advertiser", func() {
 		deleteAllRecords(client)
 	})
 
-	AfterEach(func() {
-		deleteAllRecords(client)
-	})
-
-	When("the domain exists", func() {
-		var (
-			inst1, inst2 dnssd.ServiceInstance
-			adv          provider.Advertiser
-		)
-
-		BeforeEach(func() {
-			attr1 := dnssd.Attributes{}
-			attr1.Set("key", []byte("value"))
-			attr2 := dnssd.Attributes{}
-			attr2.SetFlag("flag")
-
-			inst1 = dnssd.ServiceInstance{
-				Instance:    "instance-1",
-				ServiceType: "_proclaim._udp",
-				Domain:      testDomain,
-				TargetHost:  "host1.example.com",
-				TargetPort:  443,
-				Priority:    10,
-				Weight:      20,
-				Attributes:  []dnssd.Attributes{attr1, attr2},
-				TTL:         1 * time.Minute,
-			}
-
-			inst2 = dnssd.ServiceInstance{
-				Instance:    "instance-2",
-				ServiceType: "_proclaim._udp",
-				Domain:      testDomain,
-				TargetHost:  "host2.example.com",
-				TargetPort:  8080,
-				Priority:    100,
-				Weight:      200,
-				Attributes:  []dnssd.Attributes{attr1},
-				TTL:         2 * time.Minute,
-			}
-
-			var ok bool
-			var err error
-			adv, ok, err = prov.AdvertiserByDomain(ctx, testDomain)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(ok).To(BeTrue())
-		})
-
-		It("can advertise an instance", func() {
-			res, err := adv.Advertise(ctx, inst1)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(res).To(Equal(provider.AdvertisedNewInstance))
-
-			expectRecords(
-				ctx,
-				client,
-				`_proclaim._udp.dogmatiq.io. 60 IN PTR instance-1._proclaim._udp.dogmatiq.io.`,
-				`instance-1._proclaim._udp.dogmatiq.io. 60 IN SRV 10 20 443 host1.example.com`,
-				`instance-1._proclaim._udp.dogmatiq.io. 60 IN TXT "\"key=value\""`,
-				`instance-1._proclaim._udp.dogmatiq.io. 60 IN TXT "\"flag\""`,
-			)
-		})
-
-		It("can advertise multiple instances of the same service type", func() {
-			res, err := adv.Advertise(ctx, inst1)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(res).To(Equal(provider.AdvertisedNewInstance))
-
-			res, err = adv.Advertise(ctx, inst2)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(res).To(Equal(provider.AdvertisedNewInstance))
-
-			expectRecords(
-				ctx,
-				client,
-				`_proclaim._udp.dogmatiq.io. 60 IN PTR instance-1._proclaim._udp.dogmatiq.io.`,
-				`instance-1._proclaim._udp.dogmatiq.io. 60 IN SRV 10 20 443 host1.example.com`,
-				`instance-1._proclaim._udp.dogmatiq.io. 60 IN TXT "\"key=value\""`,
-				`instance-1._proclaim._udp.dogmatiq.io. 60 IN TXT "\"flag\""`,
-
-				`_proclaim._udp.dogmatiq.io. 120 IN PTR instance-2._proclaim._udp.dogmatiq.io.`,
-				`instance-2._proclaim._udp.dogmatiq.io. 120 IN SRV 100 200 8080 host2.example.com`,
-				`instance-2._proclaim._udp.dogmatiq.io. 120 IN TXT "\"key=value\""`,
-			)
-		})
-
-		It("can unadvertise the only instance of a service", func() {
-			_, err := adv.Advertise(ctx, inst1)
-			Expect(err).ShouldNot(HaveOccurred())
-
-			res, err := adv.Unadvertise(ctx, inst1)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(res).To(Equal(provider.UnadvertisedExistingInstance))
-
-			expectRecords(
-				ctx,
-				client,
-			)
-		})
-
-		It("can unadvertise the an instance", func() {
-			_, err := adv.Advertise(ctx, inst1)
-			Expect(err).ShouldNot(HaveOccurred())
-
-			_, err = adv.Advertise(ctx, inst2)
-			Expect(err).ShouldNot(HaveOccurred())
-
-			res, err := adv.Unadvertise(ctx, inst1)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(res).To(Equal(provider.UnadvertisedExistingInstance))
-
-			expectRecords(
-				ctx,
-				client,
-				`_proclaim._udp.dogmatiq.io. 120 IN PTR instance-2._proclaim._udp.dogmatiq.io.`,
-				`instance-2._proclaim._udp.dogmatiq.io. 120 IN SRV 100 200 8080 host2.example.com`,
-				`instance-2._proclaim._udp.dogmatiq.io. 120 IN TXT "\"key=value\""`,
-			)
-		})
-
-		It("can update an existing instance", func() {
-			res, err := adv.Advertise(ctx, inst1)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(res).To(Equal(provider.AdvertisedNewInstance))
-
-			inst1.TargetHost = "updated.example.com"
-			inst1.TargetPort = 8443
-			inst1.Priority = 1000
-			inst1.Weight = 2000
-			inst1.TTL = 45 * time.Second
-			inst1.Attributes[0].Set("key", []byte("updated"))
-
-			res, err = adv.Advertise(ctx, inst1)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(res).To(Equal(provider.UpdatedExistingInstance))
-
-			expectRecords(
-				ctx,
-				client,
-				`_proclaim._udp.dogmatiq.io. 45 IN PTR instance-1._proclaim._udp.dogmatiq.io.`,
-				`instance-1._proclaim._udp.dogmatiq.io. 45 IN SRV 1000 2000 8443 updated.example.com`,
-				`instance-1._proclaim._udp.dogmatiq.io. 45 IN TXT "\"key=updated\""`,
-				`instance-1._proclaim._udp.dogmatiq.io. 45 IN TXT "\"flag\""`,
-			)
-		})
-
-		It("ignores an existing identical instance", func() {
-			res, err := adv.Advertise(ctx, inst1)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(res).To(Equal(provider.AdvertisedNewInstance))
-
-			res, err = adv.Advertise(ctx, inst1)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(res).To(Equal(provider.InstanceAlreadyAdvertised))
-
-			expectRecords(
-				ctx,
-				client,
-				`_proclaim._udp.dogmatiq.io. 60 IN PTR instance-1._proclaim._udp.dogmatiq.io.`,
-				`instance-1._proclaim._udp.dogmatiq.io. 60 IN SRV 10 20 443 host1.example.com`,
-				`instance-1._proclaim._udp.dogmatiq.io. 60 IN TXT "\"key=value\""`,
-				`instance-1._proclaim._udp.dogmatiq.io. 60 IN TXT "\"flag\""`,
-			)
-		})
-	})
-
-	When("the domain does not exist", func() {
+	When("the provider can not advertise on the domain", func() {
 		Describe("func AdvertiserByDomain()", func() {
 			It("returns false", func() {
 				_, ok, err := prov.AdvertiserByDomain(ctx, "non-existent."+testDomain)
@@ -228,13 +128,152 @@ var _ = Describe("type advertiser", func() {
 			})
 		})
 	})
+
+	When("the provider can advertise on the domain", func() {
+		var advertiser provider.Advertiser
+
+		BeforeEach(func() {
+			var (
+				ok  bool
+				err error
+			)
+			advertiser, ok, err = prov.AdvertiserByDomain(ctx, testDomain)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(ok).To(BeTrue())
+
+			deleteAllRecords(client)
+		})
+
+		It("can advertise and unadvertise a single instance", func() {
+			expect := dnssd.ServiceInstance{
+				Instance:    "instance",
+				ServiceType: "_proclaim._udp",
+				Domain:      testDomain,
+				TargetHost:  "host.example.com",
+				TargetPort:  443,
+				Priority:    10,
+				Weight:      20,
+				TTL:         5 * time.Second,
+			}
+
+			a, err := advertiser.Advertise(ctx, expect)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(a).To(Equal(provider.AdvertisedNewInstance))
+			expectInstanceToExist(expect)
+			expectEnumerableInstances(expect.ServiceType, expect)
+
+			u, err := advertiser.Unadvertise(ctx, expect)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(u).To(Equal(provider.UnadvertisedExistingInstance))
+			expectInstanceNotToExist(expect)
+			expectEnumerableInstances(expect.ServiceType)
+		})
+
+		It("can advertise multiple instances of the same service type", func() {
+			expect := []dnssd.ServiceInstance{
+				{
+					Instance:    "instance-1",
+					ServiceType: "_proclaim._udp",
+					Domain:      testDomain,
+					TargetHost:  "host1.example.com",
+					TargetPort:  1000,
+					Priority:    100,
+					Weight:      10,
+					TTL:         1 * time.Second,
+				},
+				{
+					Instance:    "instance-2",
+					ServiceType: "_proclaim._udp",
+					Domain:      testDomain,
+					TargetHost:  "host2.example.com",
+					TargetPort:  2000,
+					Priority:    200,
+					Weight:      20,
+					TTL:         2 * time.Second,
+				},
+			}
+
+			for _, inst := range expect {
+				res, err := advertiser.Advertise(ctx, inst)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(res).To(Equal(provider.AdvertisedNewInstance))
+			}
+
+			for _, inst := range expect {
+				expectInstanceToExist(inst)
+			}
+
+			expectEnumerableInstances("_proclaim._udp", expect...)
+		})
+
+		It("can update an existing instance", func() {
+			expect := dnssd.ServiceInstance{
+				Instance:    "instance",
+				ServiceType: "_proclaim._udp",
+				Domain:      testDomain,
+				TargetHost:  "host.example.com",
+				TargetPort:  443,
+				Priority:    10,
+				Weight:      20,
+				TTL:         5 * time.Second,
+				Attributes: []dnssd.Attributes{
+					*dnssd.
+						NewAttributes().
+						Set("key", []byte("value")),
+				},
+			}
+
+			_, err := advertiser.Advertise(ctx, expect)
+			Expect(err).ShouldNot(HaveOccurred())
+			expectInstanceToExist(expect)
+
+			expect.TargetHost = "updated.example.com"
+			expect.TargetPort = 8443
+			expect.Priority = 1000
+			expect.Weight = 2000
+			expect.TTL = 45 * time.Second
+			expect.Attributes[0].Set("key", []byte("updated"))
+
+			res, err := advertiser.Advertise(ctx, expect)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(res).To(Equal(provider.UpdatedExistingInstance))
+			expectInstanceToExist(expect)
+		})
+
+		It("ignores an existing identical instance", func() {
+			expect := dnssd.ServiceInstance{
+				Instance:    "instance",
+				ServiceType: "_proclaim._udp",
+				Domain:      testDomain,
+				TargetHost:  "host.example.com",
+				TargetPort:  443,
+				Priority:    10,
+				Weight:      20,
+				TTL:         5 * time.Second,
+				Attributes: []dnssd.Attributes{
+					*dnssd.
+						NewAttributes().
+						Set("key", []byte("value")),
+				},
+			}
+
+			_, err := advertiser.Advertise(ctx, expect)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			res, err := advertiser.Advertise(ctx, expect)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(res).To(Equal(provider.InstanceAlreadyAdvertised))
+			expectInstanceToExist(expect)
+		})
+	})
+
 })
 
 func deleteAllRecords(client *dnsimple.Client) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	dnsimplex.Each(
+	err := dnsimplex.Each(
 		ctx,
 		func(opts dnsimple.ListOptions) (*dnsimple.Pagination, []dnsimple.ZoneRecord, error) {
 			res, err := client.Zones.ListRecords(
@@ -265,34 +304,5 @@ func deleteAllRecords(client *dnsimple.Client) {
 			}
 		},
 	)
-}
-
-// expectRecords asserts that the test domain's zone file contains the expected
-// lines. Note that there is currently a bug in DNSimple's zone export feature
-// that causes it to double-escape TXT record content.
-func expectRecords(ctx context.Context, client *dnsimple.Client, expect ...string) {
-	res, err := client.Zones.GetZoneFile(ctx, testAccountID, testDomain)
 	Expect(err).ShouldNot(HaveOccurred())
-
-	lines := strings.Split(
-		strings.TrimSpace(res.Data.Zone),
-		"\n",
-	)
-
-loop:
-	for len(lines) > 0 {
-		line := lines[0]
-
-		switch {
-		case strings.HasPrefix(line, "$"):
-		case strings.Contains(line, " IN SOA "):
-		case strings.Contains(line, " IN NS "):
-		default:
-			break loop
-		}
-
-		lines = lines[1:]
-	}
-
-	Expect(lines).To(ConsistOf(expect))
 }
