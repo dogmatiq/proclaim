@@ -15,6 +15,7 @@ var dnsimpleEnabled = ferrite.
 
 var dnsimpleToken = ferrite.
 	String("DNSIMPLE_TOKEN", "enable the DNSimple provider").
+	WithSensitiveContent().
 	Required(ferrite.RelevantIf(dnsimpleEnabled))
 
 var dnsimpleURL = ferrite.

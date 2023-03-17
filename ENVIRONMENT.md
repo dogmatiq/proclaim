@@ -73,9 +73,7 @@ export DNSIMPLE_ENABLED=false # (default)
 The `DNSIMPLE_TOKEN` variable **MAY** be left undefined if and only if
 [`DNSIMPLE_ENABLED`] is `false`.
 
-```bash
-export DNSIMPLE_TOKEN=foo # (non-normative)
-```
+⚠️ This variable is **sensitive**; its value may contain private information.
 
 #### See Also
 

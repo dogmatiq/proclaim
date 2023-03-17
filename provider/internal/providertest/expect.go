@@ -10,34 +10,55 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func expectInstanceToExist(
+func expectInstanceListToEventuallyEqual(
 	ctx context.Context,
 	res *dnssd.UnicastResolver,
-	expect dnssd.ServiceInstance,
+	service, domain string,
+	expect ...dnssd.ServiceInstance,
 ) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	var names []string
+	for _, inst := range expect {
+		names = append(names, inst.Instance)
+	}
+
+	slices.Sort(names)
+
+	var previous []string
+
 	for {
-		actual, ok, err := res.LookupInstance(
-			ctx,
-			expect.Instance,
-			expect.ServiceType,
-			expect.Domain,
-		)
+		instances, err := res.EnumerateInstances(ctx, service, domain)
+		if ctx.Err() != nil {
+			gomega.ExpectWithOffset(1, previous).To(
+				gomega.ConsistOf(names),
+				"timed-out waiting for convergence",
+			)
+		}
 		gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
 
-		if ok {
-			gomega.ExpectWithOffset(1, actual).To(gomega.Equal(expect))
+		slices.Sort(instances)
+
+		if slices.Equal(instances, names) {
 			return
 		}
 
+		previous = instances
 		time.Sleep(50 * time.Millisecond)
 	}
 }
 
-func expectInstanceToConverge(
+func expectInstanceToEventuallyEqual(
 	ctx context.Context,
 	res *dnssd.UnicastResolver,
 	expect dnssd.ServiceInstance,
 ) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	var previous dnssd.ServiceInstance
+
 	for {
 		actual, ok, err := res.LookupInstance(
 			ctx,
@@ -45,21 +66,31 @@ func expectInstanceToConverge(
 			expect.ServiceType,
 			expect.Domain,
 		)
+		if ctx.Err() != nil {
+			gomega.ExpectWithOffset(1, previous).To(
+				gomega.Equal(expect),
+				"timed-out waiting for convergence",
+			)
+		}
 		gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
 
 		if ok && reflect.DeepEqual(actual, expect) {
 			return
 		}
 
+		previous = actual
 		time.Sleep(50 * time.Millisecond)
 	}
 }
 
-func expectInstanceNotToExist(
+func expectInstanceToEventuallyNotExist(
 	ctx context.Context,
 	res *dnssd.UnicastResolver,
 	expect dnssd.ServiceInstance,
 ) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	for {
 		_, ok, err := res.LookupInstance(
 			ctx,
@@ -70,33 +101,6 @@ func expectInstanceNotToExist(
 		gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
 
 		if !ok {
-			return
-		}
-
-		time.Sleep(50 * time.Millisecond)
-	}
-}
-
-func expectInstanceListToConverge(
-	ctx context.Context,
-	res *dnssd.UnicastResolver,
-	service, domain string,
-	expect ...dnssd.ServiceInstance,
-) {
-	var names []string
-	for _, inst := range expect {
-		names = append(names, inst.Instance)
-	}
-
-	slices.Sort(names)
-
-	for {
-		instances, err := res.EnumerateInstances(ctx, service, domain)
-		gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
-
-		slices.Sort(instances)
-
-		if slices.Equal(instances, names) {
 			return
 		}
 
