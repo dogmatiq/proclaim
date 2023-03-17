@@ -1,20 +1,20 @@
+# apiVersion: proclaim.dogmatiq.io/v1
+# kind: DNSSDServiceInstance
+# metadata:
+#   name: dnsimple-one
+# spec:
+#   name: "instance-1"
+#   service: "_proclaim._tcp"
+#   domain: "proclaim-dnsimple.dogmatiq.io"
+#   targetHost: "host1.dnsimple.example.org"
+#   targetPort: 123
+#   attributes:
+#     - foo: "bar"
+#       baz: "qux"
+#       flag: ""
+#     - more: attrs
+# ---
 apiVersion: proclaim.dogmatiq.io/v1
-kind: DNSSDServiceInstance
-metadata:
-  name: dnsimple-one
-spec:
-  name: "instance-1"
-  service: "_proclaim._tcp"
-  domain: "proclaim-dnsimple.dogmatiq.io"
-  targetHost: "host1.dnsimple.example.org"
-  targetPort: 123
-  attributes:
-    - foo: "bar"
-      baz: "qux"
-      flag: ""
-    - more: attrs
----
-apiVersion: proclaim.dogmatiq.io/v1alpha1
 kind: DNSSDServiceInstance
 metadata:
   name: dnsimple-two
