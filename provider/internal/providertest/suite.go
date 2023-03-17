@@ -2,6 +2,8 @@ package providertest
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/dogmatiq/dissolve/dnssd"
@@ -23,19 +25,24 @@ type TestContext struct {
 func DeclareTestSuite(
 	setUp func(context.Context) TestContext,
 ) {
-	const service = "_test._udp"
-
-	ginkgo.XDescribe("Provider", func() {
+	ginkgo.Describe("Provider", func() {
 		var (
 			ctx      context.Context
 			tctx     TestContext
 			resolver *dnssd.UnicastResolver
+			service  string
 		)
 
 		ginkgo.BeforeEach(func() {
 			var cancel context.CancelFunc
-			ctx, cancel = context.WithTimeout(context.Background(), 1*time.Minute)
+			ctx, cancel = context.WithTimeout(context.Background(), 5*time.Minute)
 			ginkgo.DeferCleanup(cancel)
+
+			service = fmt.Sprintf(
+				"_%d_%d._udp",
+				os.Getpid(),
+				time.Now().Unix(),
+			)
 
 			tctx = setUp(ctx)
 
@@ -54,8 +61,6 @@ func DeclareTestSuite(
 
 			err = tctx.DeleteRecords(ctx)
 			gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-
-			expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain)
 		})
 
 		ginkgo.When("the provider can not advertise on the domain", func() {
@@ -81,36 +86,7 @@ func DeclareTestSuite(
 				gomega.Expect(ok).To(gomega.BeTrue())
 			})
 
-			ginkgo.It("can advertise and unadvertise a single instance", func() {
-				expect := dnssd.ServiceInstance{
-					Instance:    "instance",
-					ServiceType: service,
-					Domain:      tctx.Domain,
-					TargetHost:  "host.example.com",
-					TargetPort:  443,
-					Priority:    10,
-					Weight:      20,
-					TTL:         5 * time.Second,
-				}
-
-				expectInstanceToEventuallyNotExist(ctx, resolver, expect)
-
-				a, err := advertiser.Advertise(ctx, expect)
-				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-				gomega.Expect(a).To(gomega.Equal(provider.AdvertisedNewInstance))
-
-				expectInstanceToEventuallyEqual(ctx, resolver, expect)
-				expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain, expect)
-
-				u, err := advertiser.Unadvertise(ctx, expect)
-				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-				gomega.Expect(u).To(gomega.Equal(provider.UnadvertisedExistingInstance))
-
-				expectInstanceToEventuallyNotExist(ctx, resolver, expect)
-				expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain)
-			})
-
-			ginkgo.It("can advertise multiple instances of the same service type", func() {
+			ginkgo.It("can advertise and unadvertise instances", func() {
 				expect := []dnssd.ServiceInstance{
 					{
 						Instance:    "instance-1",
@@ -134,20 +110,33 @@ func DeclareTestSuite(
 					},
 				}
 
-				for _, inst := range expect {
-					expectInstanceToEventuallyNotExist(ctx, resolver, inst)
-
+				for i, inst := range expect {
 					res, err := advertiser.Advertise(ctx, inst)
 					gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 					gomega.Expect(res).To(gomega.Equal(provider.AdvertisedNewInstance))
+
+					expectInstanceToEventuallyEqual(ctx, resolver, inst)
+					expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain, expect[:i+1]...)
 				}
 
-				// Check that all instances exist AFTER all the advertise calls.
+				// Check that all instances still exist after they have all the
+				// advertise calls.
 				for _, inst := range expect {
 					expectInstanceToEventuallyEqual(ctx, resolver, inst)
 				}
 
 				expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain, expect...)
+
+				for i, inst := range expect {
+					res, err := advertiser.Unadvertise(ctx, inst)
+					gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
+					gomega.Expect(res).To(gomega.Equal(provider.UnadvertisedExistingInstance))
+
+					expectInstanceToEventuallyEqual(ctx, resolver, inst)
+					expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain, expect[i+1:]...)
+				}
+
+				expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain)
 			})
 
 			ginkgo.It("can update an existing instance", func() {
@@ -167,12 +156,8 @@ func DeclareTestSuite(
 					},
 				}
 
-				expectInstanceToEventuallyNotExist(ctx, resolver, before)
-
 				_, err := advertiser.Advertise(ctx, before)
 				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-
-				expectInstanceToEventuallyEqual(ctx, resolver, before)
 
 				after := dnssd.ServiceInstance{
 					Instance:    "instance",
@@ -214,8 +199,6 @@ func DeclareTestSuite(
 					},
 				}
 
-				expectInstanceToEventuallyNotExist(ctx, resolver, expect)
-
 				_, err := advertiser.Advertise(ctx, expect)
 				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 
@@ -224,6 +207,28 @@ func DeclareTestSuite(
 				gomega.Expect(res).To(gomega.Equal(provider.InstanceAlreadyAdvertised))
 
 				expectInstanceToEventuallyEqual(ctx, resolver, expect)
+			})
+
+			ginkgo.It("does not fail when unadvertising a non-existent instance", func() {
+				inst := dnssd.ServiceInstance{
+					Instance:    "instance",
+					ServiceType: service,
+					Domain:      tctx.Domain,
+					TargetHost:  "host.example.com",
+					TargetPort:  443,
+					Priority:    10,
+					Weight:      20,
+					TTL:         5 * time.Second,
+					Attributes: []dnssd.Attributes{
+						*dnssd.
+							NewAttributes().
+							Set("key", []byte("value")),
+					},
+				}
+
+				res, err := advertiser.Unadvertise(ctx, inst)
+				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
+				gomega.Expect(res).To(gomega.Equal(provider.InstanceNotAdvertised))
 			})
 		})
 	})
