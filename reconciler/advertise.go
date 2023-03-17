@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	probeInterval       = 10 * time.Second
-	readvertiseInterval = 1 * time.Minute
+	probeInterval     = 10 * time.Second
+	advertiseInterval = 1 * time.Minute
 )
 
 // advertise adds/updates DNS records to ensure the given service instance is
@@ -46,7 +46,7 @@ func (r *Reconciler) advertise(
 			return reconcile.Result{}, nil
 		}
 
-		if time.Since(res.Status.AdvertisedAt.Time) < readvertiseInterval {
+		if time.Since(res.Status.AdvertisedAt.Time) < advertiseInterval {
 			return reconcile.Result{
 				RequeueAfter: probeInterval,
 			}, nil

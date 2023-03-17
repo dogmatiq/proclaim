@@ -177,6 +177,14 @@ spec:
           type: string
           jsonPath: .status.discoverability
 
+        - name: Advertised
+          type: date
+          jsonPath: .status.advertisedAt
+
+        - name: Probed
+          type: date
+          jsonPath: .status.probedAt
+
         - name: Age
           type: date
           jsonPath: .metadata.creationTimestamp
