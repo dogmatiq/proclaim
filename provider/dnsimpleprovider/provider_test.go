@@ -19,8 +19,8 @@ import (
 // testDomain is the domain name used for testing in the DNSimple SANDBOX
 // environment.
 const (
-	testAccountID = "12018"
-	testDomain    = "proclaim-test.dogmatiq.io"
+	testService = "_test._udp"
+	testDomain  = "proclaim-test.dogmatiq.io"
 )
 
 var _ = Describe("type advertiser", func() {
@@ -33,8 +33,6 @@ var _ = Describe("type advertiser", func() {
 
 	expectInstanceToExist := func(expect dnssd.ServiceInstance) {
 		for {
-			time.Sleep(100 * time.Millisecond)
-
 			actual, ok, err := resolver.LookupInstance(ctx, expect.Instance, expect.ServiceType, expect.Domain)
 			Expect(err).ShouldNot(HaveOccurred())
 
@@ -42,23 +40,25 @@ var _ = Describe("type advertiser", func() {
 				Expect(actual).To(Equal(expect))
 				return
 			}
+
+			time.Sleep(50 * time.Millisecond)
 		}
 	}
 
 	expectInstanceNotToExist := func(expect dnssd.ServiceInstance) {
 		for {
-			time.Sleep(100 * time.Millisecond)
-
 			_, ok, err := resolver.LookupInstance(ctx, expect.Instance, expect.ServiceType, expect.Domain)
 			Expect(err).ShouldNot(HaveOccurred())
 
 			if !ok {
 				return
 			}
+
+			time.Sleep(50 * time.Millisecond)
 		}
 	}
 
-	expectEnumerableInstances := func(service string, expect ...dnssd.ServiceInstance) {
+	expectEnumerableInstances := func(expect ...dnssd.ServiceInstance) {
 		var names []string
 		for _, inst := range expect {
 			names = append(names, inst.Instance)
@@ -67,9 +67,7 @@ var _ = Describe("type advertiser", func() {
 		slices.Sort(names)
 
 		for {
-			time.Sleep(100 * time.Millisecond)
-
-			instances, err := resolver.EnumerateInstances(ctx, service, testDomain)
+			instances, err := resolver.EnumerateInstances(ctx, testService, testDomain)
 			Expect(err).ShouldNot(HaveOccurred())
 
 			slices.Sort(instances)
@@ -77,6 +75,8 @@ var _ = Describe("type advertiser", func() {
 			if slices.Equal(instances, names) {
 				return
 			}
+
+			time.Sleep(50 * time.Millisecond)
 		}
 	}
 
@@ -93,10 +93,7 @@ var _ = Describe("type advertiser", func() {
 				Timeout:  5,
 				Attempts: 10,
 				Servers: []string{
-					"ns1.dnsimple.com",
-					"ns2.dnsimple.com",
 					"ns3.dnsimple.com",
-					"ns4.dnsimple-edge.org",
 				},
 			},
 		}
@@ -117,6 +114,7 @@ var _ = Describe("type advertiser", func() {
 		}
 
 		deleteAllRecords(client)
+		expectEnumerableInstances()
 	})
 
 	When("the provider can not advertise on the domain", func() {
@@ -147,7 +145,7 @@ var _ = Describe("type advertiser", func() {
 		It("can advertise and unadvertise a single instance", func() {
 			expect := dnssd.ServiceInstance{
 				Instance:    "instance",
-				ServiceType: "_proclaim._udp",
+				ServiceType: testService,
 				Domain:      testDomain,
 				TargetHost:  "host.example.com",
 				TargetPort:  443,
@@ -156,24 +154,28 @@ var _ = Describe("type advertiser", func() {
 				TTL:         5 * time.Second,
 			}
 
+			expectInstanceNotToExist(expect)
+
 			a, err := advertiser.Advertise(ctx, expect)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(a).To(Equal(provider.AdvertisedNewInstance))
+
 			expectInstanceToExist(expect)
-			expectEnumerableInstances(expect.ServiceType, expect)
+			expectEnumerableInstances(expect)
 
 			u, err := advertiser.Unadvertise(ctx, expect)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(u).To(Equal(provider.UnadvertisedExistingInstance))
+
 			expectInstanceNotToExist(expect)
-			expectEnumerableInstances(expect.ServiceType)
+			expectEnumerableInstances()
 		})
 
 		It("can advertise multiple instances of the same service type", func() {
 			expect := []dnssd.ServiceInstance{
 				{
 					Instance:    "instance-1",
-					ServiceType: "_proclaim._udp",
+					ServiceType: testService,
 					Domain:      testDomain,
 					TargetHost:  "host1.example.com",
 					TargetPort:  1000,
@@ -183,7 +185,7 @@ var _ = Describe("type advertiser", func() {
 				},
 				{
 					Instance:    "instance-2",
-					ServiceType: "_proclaim._udp",
+					ServiceType: testService,
 					Domain:      testDomain,
 					TargetHost:  "host2.example.com",
 					TargetPort:  2000,
@@ -194,22 +196,25 @@ var _ = Describe("type advertiser", func() {
 			}
 
 			for _, inst := range expect {
+				expectInstanceNotToExist(inst)
+
 				res, err := advertiser.Advertise(ctx, inst)
 				Expect(err).ShouldNot(HaveOccurred())
 				Expect(res).To(Equal(provider.AdvertisedNewInstance))
 			}
 
+			// Check that all instances exist AFTER all the advertise calls.
 			for _, inst := range expect {
 				expectInstanceToExist(inst)
 			}
 
-			expectEnumerableInstances("_proclaim._udp", expect...)
+			expectEnumerableInstances(expect...)
 		})
 
 		It("can update an existing instance", func() {
 			expect := dnssd.ServiceInstance{
 				Instance:    "instance",
-				ServiceType: "_proclaim._udp",
+				ServiceType: testService,
 				Domain:      testDomain,
 				TargetHost:  "host.example.com",
 				TargetPort:  443,
@@ -223,8 +228,11 @@ var _ = Describe("type advertiser", func() {
 				},
 			}
 
+			expectInstanceNotToExist(expect)
+
 			_, err := advertiser.Advertise(ctx, expect)
 			Expect(err).ShouldNot(HaveOccurred())
+
 			expectInstanceToExist(expect)
 
 			expect.TargetHost = "updated.example.com"
@@ -237,13 +245,14 @@ var _ = Describe("type advertiser", func() {
 			res, err := advertiser.Advertise(ctx, expect)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(res).To(Equal(provider.UpdatedExistingInstance))
+
 			expectInstanceToExist(expect)
 		})
 
 		It("ignores an existing identical instance", func() {
 			expect := dnssd.ServiceInstance{
 				Instance:    "instance",
-				ServiceType: "_proclaim._udp",
+				ServiceType: testService,
 				Domain:      testDomain,
 				TargetHost:  "host.example.com",
 				TargetPort:  443,
@@ -257,12 +266,15 @@ var _ = Describe("type advertiser", func() {
 				},
 			}
 
+			expectInstanceNotToExist(expect)
+
 			_, err := advertiser.Advertise(ctx, expect)
 			Expect(err).ShouldNot(HaveOccurred())
 
 			res, err := advertiser.Advertise(ctx, expect)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(res).To(Equal(provider.InstanceAlreadyAdvertised))
+
 			expectInstanceToExist(expect)
 		})
 	})
@@ -270,6 +282,8 @@ var _ = Describe("type advertiser", func() {
 })
 
 func deleteAllRecords(client *dnsimple.Client) {
+	const testAccountID = "12018"
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
