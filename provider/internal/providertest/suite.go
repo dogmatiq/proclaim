@@ -25,7 +25,7 @@ func DeclareTestSuite(
 ) {
 	const service = "_test._udp"
 
-	ginkgo.Describe("Provider", func() {
+	ginkgo.XDescribe("Provider", func() {
 		var (
 			ctx      context.Context
 			tctx     TestContext

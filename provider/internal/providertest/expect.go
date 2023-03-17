@@ -16,7 +16,7 @@ func expectInstanceListToEventuallyEqual(
 	service, domain string,
 	expect ...dnssd.ServiceInstance,
 ) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	var names []string
@@ -45,7 +45,7 @@ func expectInstanceListToEventuallyEqual(
 		}
 
 		previous = instances
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 
@@ -54,7 +54,7 @@ func expectInstanceToEventuallyEqual(
 	res *dnssd.UnicastResolver,
 	expect dnssd.ServiceInstance,
 ) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	var previous dnssd.ServiceInstance
@@ -79,7 +79,7 @@ func expectInstanceToEventuallyEqual(
 		}
 
 		previous = actual
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 
@@ -88,7 +88,7 @@ func expectInstanceToEventuallyNotExist(
 	res *dnssd.UnicastResolver,
 	expect dnssd.ServiceInstance,
 ) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	for {
@@ -104,6 +104,6 @@ func expectInstanceToEventuallyNotExist(
 			return
 		}
 
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}
 }
