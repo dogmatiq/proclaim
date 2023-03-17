@@ -3,11 +3,18 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/dogmatiq/dissolve/dnssd"
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+const (
+	probeInterval       = 10 * time.Second
+	readvertiseInterval = 1 * time.Minute
 )
 
 // advertise adds/updates DNS records to ensure the given service instance is
@@ -18,37 +25,47 @@ import (
 func (r *Reconciler) advertise(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
-	inst dnssd.ServiceInstance,
-) (bool, error) {
-	// If the resource does not have a status, set one immediately.
-	if res.Status.Status == "" {
-		if err := r.setStatus(ctx, res, crd.StatusPending); err != nil {
-			return false, err
-		}
-	}
-
+) (reconcile.Result, error) {
 	// If the resource does not have a finalizer, add one. This ensures that
 	// we are notified on deletion and have an opportunity to unadvertise the
 	// service.
 	if controllerutil.AddFinalizer(res, crd.FinalizerName) {
 		if err := r.Client.Update(ctx, res); err != nil {
-			return false, fmt.Errorf("unable to add finalizer: %w", err)
+			return reconcile.Result{}, fmt.Errorf("unable to add finalizer: %w", err)
+		}
+	}
+
+	// If we've advertised this instance at its current generation *and* those
+	// records are reflected in actual DNS queries, there's nothing left to do.
+	if res.Status.AdvertiseGeneration == res.Generation {
+		if err := r.probe(ctx, res); err != nil {
+			return reconcile.Result{}, err
 		}
 
-		// Adding the finalizer will cause the object to be requeued, so rather
-		// than advertising it now we will do it on the next pass.
-		return true, nil
+		if res.Status.Discoverability == crd.DiscoverabilityComplete {
+			return reconcile.Result{}, nil
+		}
+
+		if time.Since(res.Status.AdvertisedAt.Time) < readvertiseInterval {
+			return reconcile.Result{
+				RequeueAfter: probeInterval,
+			}, nil
+		}
 	}
+
+	// Otherwise, we have to make sure the correct DNS records are in place.
+	// Maybe the service has never been advertised, or maybe the records have
+	// been manipulated by some other process or person.
 
 	// Get the advertiser used for this service instance's domain, looking it up
 	// by domain if necessary.
 	a, ok, err := r.getOrAssociateAdvertiser(ctx, res)
 	if !ok || err != nil {
-		return false, err
+		return reconcile.Result{Requeue: true}, err
 	}
 
 	// Update the DNS records to reflect the service instance's existence.
-	result, err := a.Advertise(ctx, inst)
+	result, err := a.Advertise(ctx, instanceFromSpec(res.Spec))
 
 	// Record an event about the result of the advertisement.
 	switch result {
@@ -62,11 +79,18 @@ func (r *Reconciler) advertise(
 			err,
 		)
 
-		if err := r.setStatus(ctx, res, crd.StatusAdvertiseError); err != nil {
-			return false, err
+		if err := r.updateStatus(
+			ctx,
+			res,
+			func(s *crd.DNSSDServiceInstanceStatus) {
+				s.Status = crd.StatusAdvertiseError
+			},
+		); err != nil {
+			return reconcile.Result{}, err
 		}
 
-		return false, ctx.Err()
+		// Requeue for retry.
+		return reconcile.Result{Requeue: true}, ctx.Err()
 
 	case provider.InstanceAlreadyAdvertised:
 		// The service instance is already advertised, so we don't need to do
@@ -89,9 +113,19 @@ func (r *Reconciler) advertise(
 		)
 	}
 
-	if err := r.setStatus(ctx, res, crd.StatusAdvertised); err != nil {
-		return false, err
+	if err := r.updateStatus(
+		ctx,
+		res,
+		func(s *crd.DNSSDServiceInstanceStatus) {
+			s.AdvertiseGeneration = res.Generation
+			s.Status = crd.StatusAdvertised
+			s.AdvertisedAt = metav1.Now()
+		},
+	); err != nil {
+		return reconcile.Result{}, err
 	}
 
-	return true, nil
+	return reconcile.Result{
+		RequeueAfter: probeInterval,
+	}, nil
 }

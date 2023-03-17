@@ -13,6 +13,7 @@ import (
 	controller "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 var container = imbue.New()
@@ -34,6 +35,7 @@ func main() {
 			err := builder.
 				ControllerManagedBy(m).
 				For(&crd.DNSSDServiceInstance{}).
+				WithEventFilter(predicate.GenerationChangedPredicate{}).
 				Complete(r)
 			if err != nil {
 				return err

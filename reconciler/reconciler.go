@@ -3,9 +3,11 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/dogmatiq/dissolve/dnssd"
+	"github.com/dogmatiq/dyad"
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
 	"k8s.io/client-go/tools/record"
@@ -18,6 +20,7 @@ import (
 type Reconciler struct {
 	Client        client.Client
 	EventRecorder record.EventRecorder
+	Resolver      *dnssd.UnicastResolver
 	Providers     []provider.Provider
 }
 
@@ -38,38 +41,28 @@ func (r *Reconciler) Reconcile(
 
 	// Advertise the service, unless its deletion timestamp is set, in which
 	// case we unadvertise it.
-	op := r.advertise
-	if !res.ObjectMeta.DeletionTimestamp.IsZero() {
-		op = r.unadvertise
+	if res.ObjectMeta.DeletionTimestamp.IsZero() {
+		return r.advertise(ctx, res)
 	}
-
-	ok, err := op(
-		ctx,
-		res,
-		instanceFromSpec(res.Spec),
-	)
-
-	// Requeue on failure. Note that we only return an error if there's a
-	// problem interacting with kubernetes itself. If err == nil and ok == false
-	// then there was an issue with at least one of the providers so we need to
-	// requeue.
-	return reconcile.Result{
-		Requeue: !ok,
-	}, err
+	return r.unadvertise(ctx, res)
 }
 
-func (r *Reconciler) setStatus(
+func (r *Reconciler) updateStatus(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
-	status crd.Status,
+	fn func(*crd.DNSSDServiceInstanceStatus),
 ) error {
-	if res.Status.Status == status {
+	updated := dyad.Clone(res.Status)
+	fn(&updated)
+
+	if reflect.DeepEqual(updated, res.Status) {
 		return nil
 	}
 
-	res.Status.Status = status
+	res.Status = updated
+
 	if err := r.Client.Status().Update(ctx, res); err != nil {
-		return fmt.Errorf("unable to update resource status: %w", err)
+		return fmt.Errorf("unable to update status sub-resource: %w", err)
 	}
 
 	return nil

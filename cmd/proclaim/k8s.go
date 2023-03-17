@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/dogmatiq/dissolve/dnssd"
 	"github.com/dogmatiq/imbue"
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/reconciler"
@@ -32,15 +33,17 @@ func init() {
 		},
 	)
 
-	imbue.With1(
+	imbue.With2(
 		container,
 		func(
 			ctx imbue.Context,
 			m manager.Manager,
+			r *dnssd.UnicastResolver,
 		) (*reconciler.Reconciler, error) {
 			return &reconciler.Reconciler{
 				Client:        m.GetClient(),
 				EventRecorder: m.GetEventRecorderFor(crd.GroupName),
+				Resolver:      r,
 			}, nil
 		},
 	)

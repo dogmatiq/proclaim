@@ -114,44 +114,69 @@ spec:
             status:
               type: object
               properties:
+                providerID:
+                  type: string
+                advertiserID:
+                  type: string
+                advertiseGeneration:
+                  type: integer
                 providerDescription:
                   type: string
-                providerPayload:
-                  type: string
-                  format: byte
+                  default: Unknown
                 status:
                   type: string
-                  default: "Pending"
+                  default: Pending
+                discoverability:
+                  type: string
+                  default: Unknown
+                advertisedAt:
+                  type: string
+                  format: datetime
+                probedAt:
+                  type: string
+                  format: datetime
 
       additionalPrinterColumns:
         - name: Instance Name
-          description: The name of the instance to advertise
+          description: The name of the DNS-SD instance to advertise
           type: string
           jsonPath: .spec.instanceName
+
         - name: Service Type
           description: The type of service that the instance provides
           type: string
           jsonPath: .spec.serviceType
+
         - name: Domain
-          description: The domain name under which the DNS-SD records are created
+          description: The domain name under which the DNS records are created
           type: string
           jsonPath: .spec.domain
-        - name: Target Host
-          description: The host name at which the service can be contacted
+
+        - name: Host
+          description: The host name at which the service can be reached
           type: string
           jsonPath: .spec.targetHost
-        - name: Target Port
-          description: The port number at which the service can be contacted
+
+        - name: Port
+          description: The port number at which the service can be reached
           type: integer
           jsonPath: .spec.targetPort
-        - name: Status
-          description: The current status of the DNS-SD service instance object
-          type: string
-          jsonPath: .status.status
+
         - name: Provider
           description: The provider used to publish the DNS records
           type: string
           jsonPath: .status.providerDescription
+
+        - name: Status
+          description: The state of the DNS-SD instance resource
+          type: string
+          jsonPath: .status.status
+
+        - name: Discoverability
+          description: The visiblity of the DNS-SD records when querying public internet nameservers
+          type: string
+          jsonPath: .status.discoverability
+
         - name: Age
           type: date
           jsonPath: .metadata.creationTimestamp

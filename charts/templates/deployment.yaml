@@ -57,6 +57,8 @@ spec:
           image: {{ include "proclaim.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            - name: DEBUG
+              value: "true"
             - name: ROUTE53_ENABLED
               value: {{ toYaml (.Values.proclaim.providers.route53.enabled | toString) }}
             - name: DNSIMPLE_ENABLED

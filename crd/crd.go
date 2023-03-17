@@ -53,6 +53,29 @@ const (
 	StatusUnadvertised Status = "Unadvertised"
 )
 
+// Discoverability is an enumeration of the possible discoverability outcomes (via
+// DNS-SD) for a service instance.
+type Discoverability string
+
+const (
+	// DiscoverabilityUnknown indicates that the discoverability of the service
+	// instance is unknown.
+	DiscoverabilityUnknown Discoverability = "Unknown"
+
+	// DiscoverabilityNone indicates that the service instance is not
+	// discoverable via DNS-SD.
+	DiscoverabilityNone Discoverability = "None"
+
+	// DiscoverabilityPartial indicates that the service instance is
+	// discoverable via DNS-SD, but its properties do not match the desired
+	// values.
+	DiscoverabilityPartial Discoverability = "Partial"
+
+	// DiscoverabilityComplete indicates that the service instance is
+	// discoverable via DNS-SD.
+	DiscoverabilityComplete Discoverability = "Complete"
+)
+
 // DNSSDServiceInstanceSpec is the specification for a service instance.
 type DNSSDServiceInstanceSpec struct {
 	InstanceName string              `json:"instanceName"`
@@ -68,9 +91,14 @@ type DNSSDServiceInstanceSpec struct {
 
 // DNSSDServiceInstanceStatus contains the status of a service instance.
 type DNSSDServiceInstanceStatus struct {
-	ProviderDescription string `json:"providerDescription,omitempty"`
-	ProviderPayload     []byte `json:"providerPayload,omitempty"`
-	Status              Status `json:"status,omitempty"`
+	ProviderDescription string          `json:"providerDescription,omitempty"`
+	ProviderID          string          `json:"providerID,omitempty"`
+	AdvertiserID        string          `json:"advertiserID,omitempty"`
+	AdvertiseGeneration int64           `json:"advertiseGeneration,omitempty"`
+	Status              Status          `json:"status,omitempty"`
+	Discoverability     Discoverability `json:"discoverability,omitempty"`
+	AdvertisedAt        metav1.Time     `json:"advertisedAt,omitempty"`
+	ProbedAt            metav1.Time     `json:"probedAt,omitempty"`
 }
 
 // DNSSDServiceInstance is a resource that represents a DNS-SD service instance.

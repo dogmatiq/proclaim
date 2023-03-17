@@ -2,11 +2,9 @@ package reconciler
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
-	"github.com/dogmatiq/proclaim/reconciler/internal/payload"
 	"golang.org/x/exp/slices"
 )
 
@@ -16,11 +14,10 @@ func (r *Reconciler) getOrAssociateAdvertiser(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (provider.Advertiser, bool, error) {
-	if len(res.Status.ProviderPayload) == 0 {
-		return r.associateAdvertiser(ctx, res)
+	if res.Status.ProviderID != "" {
+		return r.getAdvertiser(ctx, res)
 	}
-
-	return r.getAdvertiser(ctx, res)
+	return r.associateAdvertiser(ctx, res)
 }
 
 // associateAdvertiser finds the appropriate advertiser for the given DNS-SD
@@ -55,12 +52,17 @@ func (r *Reconciler) associateAdvertiser(
 			continue
 		}
 
-		res.Status.ProviderDescription = p.Describe()
-		res.Status.ProviderPayload = payload.Marshal(p, a)
-		res.Status.Status = crd.StatusAdvertising
-
-		if err := r.Client.Status().Update(ctx, res); err != nil {
-			return nil, false, fmt.Errorf("unable to update resource status: %w", err)
+		if err := r.updateStatus(
+			ctx,
+			res,
+			func(s *crd.DNSSDServiceInstanceStatus) {
+				s.ProviderDescription = p.Describe()
+				s.ProviderID = p.ID()
+				s.AdvertiserID = a.ID()
+				s.Status = crd.StatusAdvertising
+			},
+		); err != nil {
+			return nil, false, err
 		}
 
 		r.EventRecorder.Eventf(
@@ -97,27 +99,23 @@ func (r *Reconciler) getAdvertiser(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (provider.Advertiser, bool, error) {
-	payload, err := payload.Unmarshal(res.Status.ProviderPayload)
-	if err != nil {
-		return nil, false, err
-	}
-
 	for _, p := range r.Providers {
-		if p.ID() != payload.GetProviderId() {
+		if p.ID() != res.Status.ProviderID {
 			continue
 		}
 
 		// Make sure the provider's description is up-to-date.
-		desc := p.Describe()
-		if res.Status.ProviderDescription != desc {
-			res.Status.ProviderDescription = desc
-
-			if err := r.Client.Status().Update(ctx, res); err != nil {
-				return nil, false, fmt.Errorf("unable to update resource status: %w", err)
-			}
+		if err := r.updateStatus(
+			ctx,
+			res,
+			func(s *crd.DNSSDServiceInstanceStatus) {
+				s.ProviderDescription = p.Describe()
+			},
+		); err != nil {
+			return nil, false, err
 		}
 
-		a, err := p.AdvertiserByID(ctx, payload.GetAdvertiserId())
+		a, err := p.AdvertiserByID(ctx, res.Status.AdvertiserID)
 		if err != nil {
 			r.EventRecorder.Eventf(
 				res,

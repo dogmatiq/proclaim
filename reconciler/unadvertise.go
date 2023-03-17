@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/dogmatiq/dissolve/dnssd"
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // unadvertise removes DNS records to ensure the given service instance is no
@@ -18,28 +18,33 @@ import (
 func (r *Reconciler) unadvertise(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
-	inst dnssd.ServiceInstance,
-) (bool, error) {
+) (reconcile.Result, error) {
 	if !controllerutil.ContainsFinalizer(res, crd.FinalizerName) {
 		// The proclaim finalizer has already been removed so we've already
 		// unadvertised this service instance (if it was even necessary).
-		return true, nil
+		return reconcile.Result{}, nil
 	}
 
-	if len(res.Status.ProviderPayload) != 0 {
+	if res.Status.ProviderID != "" {
 		a, ok, err := r.getAdvertiser(ctx, res)
 		if !ok || err != nil {
 			// The associated provider is not known to this reconciler.
-			return true, err
+			return reconcile.Result{}, err
 		}
 
 		if res.Status.Status != crd.StatusUnadvertiseError {
-			if err := r.setStatus(ctx, res, crd.StatusUnadvertising); err != nil {
-				return false, err
+			if err := r.updateStatus(
+				ctx,
+				res,
+				func(s *crd.DNSSDServiceInstanceStatus) {
+					s.Status = crd.StatusUnadvertising
+				},
+			); err != nil {
+				return reconcile.Result{}, err
 			}
 		}
 
-		result, err := a.Unadvertise(ctx, inst)
+		result, err := a.Unadvertise(ctx, instanceFromSpec(res.Spec))
 
 		switch result {
 		case provider.UnadvertiseError:
@@ -52,11 +57,18 @@ func (r *Reconciler) unadvertise(
 				err.Error(),
 			)
 
-			if err := r.setStatus(ctx, res, crd.StatusUnadvertiseError); err != nil {
-				return false, err
+			if err := r.updateStatus(
+				ctx,
+				res,
+				func(s *crd.DNSSDServiceInstanceStatus) {
+					s.Status = crd.StatusUnadvertiseError
+				},
+			); err != nil {
+				return reconcile.Result{}, err
 			}
 
-			return false, ctx.Err()
+			// Requeue for retry.
+			return reconcile.Result{Requeue: true}, ctx.Err()
 
 		case provider.InstanceNotAdvertised:
 			// The service instance was not advertised, so we don't need to
@@ -72,14 +84,20 @@ func (r *Reconciler) unadvertise(
 		}
 	}
 
-	if err := r.setStatus(ctx, res, crd.StatusUnadvertised); err != nil {
-		return false, err
+	if err := r.updateStatus(
+		ctx,
+		res,
+		func(s *crd.DNSSDServiceInstanceStatus) {
+			s.Status = crd.StatusUnadvertised
+		},
+	); err != nil {
+		return reconcile.Result{}, err
 	}
 
 	controllerutil.RemoveFinalizer(res, crd.FinalizerName)
 	if err := r.Client.Update(ctx, res); err != nil {
-		return false, fmt.Errorf("unable to remove finalizer: %w", err)
+		return reconcile.Result{}, fmt.Errorf("unable to remove finalizer: %w", err)
 	}
 
-	return true, nil
+	return reconcile.Result{}, nil
 }
