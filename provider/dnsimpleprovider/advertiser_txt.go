@@ -26,7 +26,7 @@ func (a *advertiser) findTXT(
 				&dnsimple.ZoneRecordListOptions{
 					ListOptions: opts,
 					Name: dnsimple.String(
-						dnssd.EscapeInstance(inst.Instance) + "." + inst.ServiceType,
+						dnssd.EscapeInstance(inst.Name) + "." + inst.ServiceType,
 					),
 					Type: dnsimple.String("TXT"),
 				},
@@ -59,7 +59,7 @@ func (a *advertiser) syncTXT(
 				ZoneID: a.Zone.Name,
 				Type:   "TXT",
 				Name: dnsimple.String(
-					dnssd.EscapeInstance(inst.Instance) + "." + inst.ServiceType,
+					dnssd.EscapeInstance(inst.Name) + "." + inst.ServiceType,
 				),
 				Content: strings.TrimPrefix(r.String(), r.Hdr.String()),
 				TTL:     int(inst.TTL.Seconds()),

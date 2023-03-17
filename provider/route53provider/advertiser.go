@@ -30,7 +30,7 @@ func (a *advertiser) Advertise(
 		Comment: aws.String(fmt.Sprintf(
 			"dogmatiq/proclaim: advertising %s instance: %s ",
 			inst.ServiceType,
-			inst.Instance,
+			inst.Name,
 		)),
 	}
 
@@ -80,7 +80,7 @@ func (a *advertiser) Unadvertise(
 		Comment: aws.String(fmt.Sprintf(
 			"dogmatiq/proclaim: unadvertising %s instance: %s ",
 			inst.ServiceType,
-			inst.Instance,
+			inst.Name,
 		)),
 	}
 
@@ -150,7 +150,7 @@ func (a *advertiser) findResourceRecordSet(
 
 func instanceName(inst dnssd.ServiceInstance) *string {
 	return aws.String(
-		dnssd.ServiceInstanceName(inst.Instance, inst.ServiceType, inst.Domain) + ".",
+		dnssd.ServiceInstanceName(inst.Name, inst.ServiceType, inst.Domain) + ".",
 	)
 }
 

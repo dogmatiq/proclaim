@@ -34,7 +34,7 @@ func (a *advertiser) findPTR(
 			return res.Pagination, res.Data, nil
 		},
 		func(candidate dnsimple.ZoneRecord) bool {
-			return candidate.Content == dnssd.ServiceInstanceName(inst.Instance, inst.ServiceType, inst.Domain)
+			return candidate.Content == dnssd.ServiceInstanceName(inst.Name, inst.ServiceType, inst.Domain)
 		},
 	)
 }
@@ -53,7 +53,7 @@ func (a *advertiser) syncPTR(
 		ZoneID:  a.Zone.Name,
 		Type:    "PTR",
 		Name:    dnsimple.String(inst.ServiceType),
-		Content: dnssd.ServiceInstanceName(inst.Instance, inst.ServiceType, inst.Domain),
+		Content: dnssd.ServiceInstanceName(inst.Name, inst.ServiceType, inst.Domain),
 		TTL:     int(inst.TTL.Seconds()),
 	}
 

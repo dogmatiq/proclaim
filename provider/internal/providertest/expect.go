@@ -2,7 +2,6 @@ package providertest
 
 import (
 	"context"
-	"reflect"
 	"time"
 
 	"github.com/dogmatiq/dissolve/dnssd"
@@ -22,7 +21,7 @@ func expectInstanceListToEventuallyEqual(
 
 	var names []string
 	for _, inst := range expect {
-		names = append(names, inst.Instance)
+		names = append(names, inst.Name)
 	}
 
 	slices.Sort(names)
@@ -66,7 +65,7 @@ func expectInstanceToEventuallyEqual(
 	for {
 		actual, ok, err := res.LookupInstance(
 			ctx,
-			expect.Instance,
+			expect.Name,
 			expect.ServiceType,
 			expect.Domain,
 		)
@@ -81,7 +80,7 @@ func expectInstanceToEventuallyEqual(
 		default:
 			gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
 		case nil:
-			if ok && reflect.DeepEqual(actual, expect) {
+			if ok && actual.Equal(expect) {
 				return
 			}
 			previous = actual
@@ -102,7 +101,7 @@ func expectInstanceToEventuallyNotExist(
 	for {
 		_, ok, err := res.LookupInstance(
 			ctx,
-			expect.Instance,
+			expect.Name,
 			expect.ServiceType,
 			expect.Domain,
 		)

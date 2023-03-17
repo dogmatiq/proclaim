@@ -89,7 +89,7 @@ func DeclareTestSuite(
 			ginkgo.It("can advertise and unadvertise instances", func() {
 				expect := []dnssd.ServiceInstance{
 					{
-						Instance:    "instance-1",
+						Name:        "instance-1",
 						ServiceType: service,
 						Domain:      tctx.Domain,
 						TargetHost:  "host1.example.com",
@@ -99,7 +99,7 @@ func DeclareTestSuite(
 						TTL:         1 * time.Second,
 					},
 					{
-						Instance:    "instance-2",
+						Name:        "instance-2",
 						ServiceType: service,
 						Domain:      tctx.Domain,
 						TargetHost:  "host2.example.com",
@@ -141,7 +141,7 @@ func DeclareTestSuite(
 
 			ginkgo.It("can update an existing instance", func() {
 				before := dnssd.ServiceInstance{
-					Instance:    "instance",
+					Name:        "instance",
 					ServiceType: service,
 					Domain:      tctx.Domain,
 					TargetHost:  "host.example.com",
@@ -150,9 +150,9 @@ func DeclareTestSuite(
 					Weight:      20,
 					TTL:         5 * time.Second,
 					Attributes: []dnssd.Attributes{
-						*dnssd.
+						dnssd.
 							NewAttributes().
-							Set("key", []byte("value")),
+							WithPair("key", []byte("value")),
 					},
 				}
 
@@ -160,7 +160,7 @@ func DeclareTestSuite(
 				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 
 				after := dnssd.ServiceInstance{
-					Instance:    "instance",
+					Name:        "instance",
 					ServiceType: service,
 					Domain:      tctx.Domain,
 					TargetHost:  "updated.example.com",
@@ -169,9 +169,9 @@ func DeclareTestSuite(
 					Weight:      21,
 					TTL:         6 * time.Second,
 					Attributes: []dnssd.Attributes{
-						*dnssd.
+						dnssd.
 							NewAttributes().
-							Set("key", []byte("updated")),
+							WithPair("key", []byte("updated")),
 					},
 				}
 
@@ -184,7 +184,7 @@ func DeclareTestSuite(
 
 			ginkgo.It("ignores an existing identical instance", func() {
 				expect := dnssd.ServiceInstance{
-					Instance:    "instance",
+					Name:        "instance",
 					ServiceType: service,
 					Domain:      tctx.Domain,
 					TargetHost:  "host.example.com",
@@ -193,9 +193,9 @@ func DeclareTestSuite(
 					Weight:      20,
 					TTL:         5 * time.Second,
 					Attributes: []dnssd.Attributes{
-						*dnssd.
+						dnssd.
 							NewAttributes().
-							Set("key", []byte("value")),
+							WithPair("key", []byte("value")),
 					},
 				}
 
@@ -211,7 +211,7 @@ func DeclareTestSuite(
 
 			ginkgo.It("does not fail when unadvertising a non-existent instance", func() {
 				inst := dnssd.ServiceInstance{
-					Instance:    "instance",
+					Name:        "instance",
 					ServiceType: service,
 					Domain:      tctx.Domain,
 					TargetHost:  "host.example.com",
@@ -220,9 +220,9 @@ func DeclareTestSuite(
 					Weight:      20,
 					TTL:         5 * time.Second,
 					Attributes: []dnssd.Attributes{
-						*dnssd.
+						dnssd.
 							NewAttributes().
-							Set("key", []byte("value")),
+							WithPair("key", []byte("value")),
 					},
 				}
 

@@ -24,7 +24,7 @@ func (a *advertiser) findSRV(
 				&dnsimple.ZoneRecordListOptions{
 					ListOptions: opts,
 					Name: dnsimple.String(
-						dnssd.EscapeInstance(inst.Instance) + "." + inst.ServiceType,
+						dnssd.EscapeInstance(inst.Name) + "." + inst.ServiceType,
 					),
 					Type: dnsimple.String("SRV"),
 				},
@@ -52,7 +52,7 @@ func (a *advertiser) syncSRV(
 		ZoneID: a.Zone.Name,
 		Type:   "SRV",
 		Name: dnsimple.String(
-			dnssd.EscapeInstance(inst.Instance) + "." + inst.ServiceType,
+			dnssd.EscapeInstance(inst.Name) + "." + inst.ServiceType,
 		),
 		Content: fmt.Sprintf(
 			"%d %d %s",

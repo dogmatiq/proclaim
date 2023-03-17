@@ -79,7 +79,7 @@ func (r *Reconciler) setStatus(
 // specification.
 func instanceFromSpec(spec crd.DNSSDServiceInstanceSpec) dnssd.ServiceInstance {
 	result := dnssd.ServiceInstance{
-		Instance:    spec.InstanceName,
+		Name:        spec.InstanceName,
 		ServiceType: spec.ServiceType,
 		Domain:      spec.Domain,
 		TargetHost:  spec.TargetHost,
@@ -98,9 +98,9 @@ func instanceFromSpec(spec crd.DNSSDServiceInstanceSpec) dnssd.ServiceInstance {
 
 		for k, v := range src {
 			if v == "" {
-				dst.SetFlag(k)
+				dst = dst.WithFlag(k)
 			} else {
-				dst.Set(k, []byte(v))
+				dst = dst.WithPair(k, []byte(v))
 			}
 		}
 
