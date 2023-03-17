@@ -3,14 +3,12 @@ package dnsimpleprovider_test
 import (
 	"context"
 	"os"
-	"time"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
 	. "github.com/dogmatiq/proclaim/provider/dnsimpleprovider"
 	"github.com/dogmatiq/proclaim/provider/dnsimpleprovider/internal/dnsimplex"
 	"github.com/dogmatiq/proclaim/provider/internal/providertest"
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 const (
@@ -34,53 +32,72 @@ var _ = Describe("type Provider", func() {
 				),
 			)
 
-			deleteAllRecords(client)
-
 			return providertest.TestContext{
 				Provider: &Provider{
 					API: client,
 				},
-				Domain:     domain,
-				NameServer: nameServer,
+				Domain: domain,
+				NameServers: func(ctx context.Context) ([]string, error) {
+					var servers []string
+					err := dnsimplex.Each(
+						ctx,
+						func(opts dnsimple.ListOptions) (*dnsimple.Pagination, []dnsimple.ZoneRecord, error) {
+							res, err := client.Zones.ListRecords(
+								ctx,
+								accountID,
+								domain,
+								&dnsimple.ZoneRecordListOptions{
+									ListOptions: opts,
+									Type:        dnsimple.String("NS"),
+								},
+							)
+							if err != nil {
+								return nil, nil, err
+							}
+							return res.Pagination, res.Data, err
+						},
+						func(rec dnsimple.ZoneRecord) (bool, error) {
+							servers = append(servers, rec.Content)
+							return true, nil
+						},
+					)
+
+					return servers, err
+				},
+				DeleteRecords: func(ctx context.Context) error {
+					return dnsimplex.Each(
+						ctx,
+						func(opts dnsimple.ListOptions) (*dnsimple.Pagination, []dnsimple.ZoneRecord, error) {
+							res, err := client.Zones.ListRecords(
+								ctx,
+								accountID,
+								domain,
+								&dnsimple.ZoneRecordListOptions{
+									ListOptions: opts,
+								},
+							)
+							if err != nil {
+								return nil, nil, err
+							}
+							return res.Pagination, res.Data, err
+						},
+						func(rec dnsimple.ZoneRecord) (bool, error) {
+							switch rec.Type {
+							case "NS", "SOA":
+								return true, nil
+							default:
+								_, err := client.Zones.DeleteRecord(
+									ctx,
+									accountID,
+									domain,
+									rec.ID,
+								)
+								return true, err
+							}
+						},
+					)
+				},
 			}
 		},
 	)
 })
-
-func deleteAllRecords(client *dnsimple.Client) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	err := dnsimplex.Each(
-		ctx,
-		func(opts dnsimple.ListOptions) (*dnsimple.Pagination, []dnsimple.ZoneRecord, error) {
-			res, err := client.Zones.ListRecords(
-				ctx,
-				accountID,
-				domain,
-				&dnsimple.ZoneRecordListOptions{
-					ListOptions: opts,
-				},
-			)
-			if err != nil {
-				return nil, nil, err
-			}
-			return res.Pagination, res.Data, err
-		},
-		func(rec dnsimple.ZoneRecord) (bool, error) {
-			switch rec.Type {
-			case "NS", "SOA":
-				return true, nil
-			default:
-				_, err := client.Zones.DeleteRecord(
-					ctx,
-					accountID,
-					domain,
-					rec.ID,
-				)
-				return true, err
-			}
-		},
-	)
-	Expect(err).ShouldNot(HaveOccurred())
-}

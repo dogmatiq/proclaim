@@ -3,7 +3,6 @@ package route53provider_test
 import (
 	"context"
 	"os"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
@@ -11,13 +10,11 @@ import (
 	"github.com/dogmatiq/proclaim/provider/internal/providertest"
 	. "github.com/dogmatiq/proclaim/provider/route53provider"
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 const (
 	hostedZoneID = "Z06715307D3NWJ3JMTGQ"
 	domain       = "proclaim-test.dogmatiq.io"
-	nameServer   = "ns-1143.awsdns-14.org"
 	region       = "us-east-1"
 )
 
@@ -42,70 +39,96 @@ var _ = Describe("type Provider", func() {
 				},
 			)
 
-			deleteAllRecords(client)
-
 			return providertest.TestContext{
 				Provider: &Provider{
 					PartitionID: "aws", // TODO: obtain this dynamically
 					Client:      client,
 				},
-				Domain:     domain,
-				NameServer: nameServer,
+				Domain: domain,
+				NameServers: func(ctx context.Context) ([]string, error) {
+					var servers []string
+
+					in := &route53.ListResourceRecordSetsInput{
+						HostedZoneId: aws.String(hostedZoneID),
+					}
+
+					for {
+						out, err := client.ListResourceRecordSets(ctx, in)
+						if err != nil {
+							return nil, err
+						}
+
+						for _, rr := range out.ResourceRecordSets {
+							if rr.Type == types.RRTypeNs {
+								for _, r := range rr.ResourceRecords {
+									servers = append(servers, *r.Value)
+								}
+							}
+						}
+
+						if !out.IsTruncated {
+							return servers, nil
+						}
+
+						in.StartRecordIdentifier = out.NextRecordIdentifier
+						in.StartRecordName = out.NextRecordName
+						in.StartRecordType = out.NextRecordType
+					}
+				},
+				DeleteRecords: func(ctx context.Context) error {
+					cs := &types.ChangeBatch{}
+
+					in := &route53.ListResourceRecordSetsInput{
+						HostedZoneId: aws.String(hostedZoneID),
+					}
+
+					for {
+						out, err := client.ListResourceRecordSets(ctx, in)
+						if err != nil {
+							return err
+						}
+
+						for _, rr := range out.ResourceRecordSets {
+							rr := rr // capture loop variable
+
+							switch rr.Type {
+							case types.RRTypeNs, types.RRTypeSoa:
+								continue
+							default:
+								cs.Changes = append(
+									cs.Changes,
+									types.Change{
+										Action:            types.ChangeActionDelete,
+										ResourceRecordSet: &rr,
+									},
+								)
+							}
+						}
+
+						if !out.IsTruncated {
+							break
+						}
+
+						in.StartRecordIdentifier = out.NextRecordIdentifier
+						in.StartRecordName = out.NextRecordName
+						in.StartRecordType = out.NextRecordType
+					}
+
+					if len(cs.Changes) == 0 {
+						return nil
+					}
+
+					_, err := client.ChangeResourceRecordSets(
+						ctx,
+						&route53.ChangeResourceRecordSetsInput{
+							ChangeBatch:  cs,
+							HostedZoneId: aws.String(hostedZoneID),
+						},
+					)
+
+					return err
+				},
 			}
 		},
 	)
 })
-
-func deleteAllRecords(client *route53.Client) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	cs := &types.ChangeBatch{}
-
-	in := &route53.ListResourceRecordSetsInput{
-		HostedZoneId: aws.String(hostedZoneID),
-	}
-
-	for {
-		out, err := client.ListResourceRecordSets(ctx, in)
-		Expect(err).ShouldNot(HaveOccurred())
-
-		for _, rr := range out.ResourceRecordSets {
-			rr := rr // capture loop variable
-
-			switch rr.Type {
-			case types.RRTypeNs, types.RRTypeSoa:
-				continue
-			default:
-				cs.Changes = append(
-					cs.Changes,
-					types.Change{
-						Action:            types.ChangeActionDelete,
-						ResourceRecordSet: &rr,
-					},
-				)
-			}
-		}
-
-		if !out.IsTruncated {
-			break
-		}
-
-		in.StartRecordIdentifier = out.NextRecordIdentifier
-		in.StartRecordName = out.NextRecordName
-		in.StartRecordType = out.NextRecordType
-	}
-
-	if len(cs.Changes) == 0 {
-		return
-	}
-
-	_, err := client.ChangeResourceRecordSets(
-		ctx,
-		&route53.ChangeResourceRecordSetsInput{
-			ChangeBatch:  cs,
-			HostedZoneId: aws.String(hostedZoneID),
-		},
-	)
-	Expect(err).ShouldNot(HaveOccurred())
-}

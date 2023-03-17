@@ -13,9 +13,10 @@ import (
 
 // TestContext contains provider-specific testing-related information.
 type TestContext struct {
-	Provider   provider.Provider
-	Domain     string
-	NameServer string
+	Provider      provider.Provider
+	Domain        string
+	NameServers   func(ctx context.Context) ([]string, error)
+	DeleteRecords func(ctx context.Context) error
 }
 
 // DeclareTestSuite declares a Ginkgo test suite for a provider implementation.
@@ -38,15 +39,21 @@ func DeclareTestSuite(
 
 			tctx = setUp(ctx)
 
+			servers, err := tctx.NameServers(ctx)
+			gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
+
 			resolver = &dnssd.UnicastResolver{
 				Config: &dns.ClientConfig{
 					Port:     "53",
 					Ndots:    1,
 					Timeout:  5,
 					Attempts: 10,
-					Servers:  []string{tctx.NameServer},
+					Servers:  servers,
 				},
 			}
+
+			err = tctx.DeleteRecords(ctx)
+			gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 
 			expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain)
 		})
