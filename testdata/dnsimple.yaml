@@ -19,8 +19,9 @@ kind: DNSSDServiceInstance
 metadata:
   name: dnsimple-two
 spec:
-  instanceName: "instance-2"
-  serviceType: "_proclaim._tcp"
-  domain: "rinq.io"
-  targetHost: "host2.dnsimple.example.org"
-  targetPort: 456
+  instance:
+    name: "instance-2"
+    serviceType: "_proclaim._tcp"
+    domain: "rinq.io"
+    targetHost: "host2.dnsimple.example.org"
+    targetPort: 456

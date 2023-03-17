@@ -31,9 +31,9 @@ func (r *Reconciler) discover(
 ) crd.Discoverability {
 	discovered, exists, err := r.Resolver.LookupInstance(
 		ctx,
-		res.Spec.InstanceName,
-		res.Spec.ServiceType,
-		res.Spec.Domain,
+		res.Spec.Instance.Name,
+		res.Spec.Instance.ServiceType,
+		res.Spec.Instance.Domain,
 	)
 	if err != nil {
 		return crd.DiscoverabilityUnknown
@@ -56,8 +56,8 @@ func (r *Reconciler) discover(
 
 	names, err := r.Resolver.EnumerateInstances(
 		ctx,
-		res.Spec.ServiceType,
-		res.Spec.Domain,
+		res.Spec.Instance.ServiceType,
+		res.Spec.Instance.Domain,
 	)
 	if err != nil {
 		return crd.DiscoverabilityUnknown
@@ -66,7 +66,7 @@ func (r *Reconciler) discover(
 	enumerable := slices.ContainsFunc(
 		names,
 		func(v string) bool {
-			return strings.EqualFold(v, res.Spec.InstanceName)
+			return strings.EqualFold(v, res.Spec.Instance.Name)
 		},
 	)
 

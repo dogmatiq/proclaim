@@ -72,21 +72,21 @@ func (r *Reconciler) updateStatus(
 // specification.
 func instanceFromSpec(spec crd.DNSSDServiceInstanceSpec) dnssd.ServiceInstance {
 	result := dnssd.ServiceInstance{
-		Name:        spec.InstanceName,
-		ServiceType: spec.ServiceType,
-		Domain:      spec.Domain,
-		TargetHost:  spec.TargetHost,
-		TargetPort:  spec.TargetPort,
-		Priority:    spec.Priority,
-		Weight:      spec.Weight,
-		TTL:         time.Duration(spec.TTL) * time.Second,
+		Name:        spec.Instance.Name,
+		ServiceType: spec.Instance.ServiceType,
+		Domain:      spec.Instance.Domain,
+		TargetHost:  spec.Instance.TargetHost,
+		TargetPort:  spec.Instance.TargetPort,
+		Priority:    spec.Instance.Priority,
+		Weight:      spec.Instance.Weight,
+		TTL:         time.Duration(spec.Instance.TTL) * time.Second,
 	}
 
 	if result.TTL == 0 {
 		result.TTL = 60 * time.Second
 	}
 
-	for _, src := range spec.Attributes {
+	for _, src := range spec.Instance.Attributes {
 		var dst dnssd.Attributes
 
 		for k, v := range src {

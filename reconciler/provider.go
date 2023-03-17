@@ -30,7 +30,7 @@ func (r *Reconciler) associateAdvertiser(
 	exhaustive := true
 
 	for _, p := range r.Providers {
-		a, ok, err := p.AdvertiserByDomain(ctx, res.Spec.Domain)
+		a, ok, err := p.AdvertiserByDomain(ctx, res.Spec.Instance.Domain)
 		if err != nil {
 			exhaustive = false
 
@@ -88,7 +88,7 @@ func (r *Reconciler) associateAdvertiser(
 			"Warning",
 			"Ignored",
 			"none of the configured providers can advertise on %q",
-			res.Spec.Domain,
+			res.Spec.Instance.Domain,
 		)
 	}
 

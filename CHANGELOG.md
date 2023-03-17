@@ -18,8 +18,8 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 ### Changed
 
-- **[BC]** Changed the format of the CRD's `status` sub-resource to better encapsulate internal data
-- **[BC]** Renamed `name` and `service` CRD fields to `instanceName` and `serviceType` respectively (better alignment with the DNS-SD spec)
+- **[BC]** Moved DNS-SD properties in CRD into `instance` subkey of `spec`
+- **[BC]** Renamed `service` fields in CRD to `serviceType` for better alignment with the DNS-SD spec
 
 ## [0.1.0] - 2023-03-16
 
