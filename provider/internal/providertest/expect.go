@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/dogmatiq/dissolve/dnssd"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	"golang.org/x/exp/slices"
 )
@@ -30,21 +31,24 @@ func expectInstanceListToEventuallyEqual(
 
 	for {
 		instances, err := res.EnumerateInstances(ctx, service, domain)
-		if ctx.Err() != nil {
-			gomega.ExpectWithOffset(1, previous).To(
-				gomega.ConsistOf(names),
-				"timed-out waiting for convergence",
-			)
+		switch err {
+		case context.DeadlineExceeded:
+			if err == ctx.Err() {
+				gomega.ExpectWithOffset(1, previous).To(
+					gomega.ConsistOf(names),
+					"timed-out waiting for instance list to converge",
+				)
+			}
+		default:
+			gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
+		case nil:
+			slices.Sort(instances)
+			if slices.Equal(instances, names) {
+				return
+			}
+			previous = instances
 		}
-		gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
 
-		slices.Sort(instances)
-
-		if slices.Equal(instances, names) {
-			return
-		}
-
-		previous = instances
 		time.Sleep(10 * time.Millisecond)
 	}
 }
@@ -66,19 +70,23 @@ func expectInstanceToEventuallyEqual(
 			expect.ServiceType,
 			expect.Domain,
 		)
-		if ctx.Err() != nil {
-			gomega.ExpectWithOffset(1, previous).To(
-				gomega.Equal(expect),
-				"timed-out waiting for convergence",
-			)
+		switch err {
+		case context.DeadlineExceeded:
+			if err == ctx.Err() {
+				gomega.ExpectWithOffset(1, previous).To(
+					gomega.Equal(expect),
+					"timed-out waiting for instance to converge on positive result",
+				)
+			}
+		default:
+			gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
+		case nil:
+			if ok && reflect.DeepEqual(actual, expect) {
+				return
+			}
+			previous = actual
 		}
-		gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
 
-		if ok && reflect.DeepEqual(actual, expect) {
-			return
-		}
-
-		previous = actual
 		time.Sleep(10 * time.Millisecond)
 	}
 }
@@ -98,10 +106,17 @@ func expectInstanceToEventuallyNotExist(
 			expect.ServiceType,
 			expect.Domain,
 		)
-		gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
-
-		if !ok {
-			return
+		switch err {
+		case context.DeadlineExceeded:
+			if ctx.Err() == err {
+				ginkgo.Fail("timed-out wiating for instance to converge on negative result")
+			}
+		default:
+			gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
+		case nil:
+			if !ok {
+				return
+			}
 		}
 
 		time.Sleep(10 * time.Millisecond)
