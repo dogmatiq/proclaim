@@ -29,7 +29,7 @@ func (r *Reconciler) discover(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) crd.Discoverability {
-	current, present, err := r.Resolver.LookupInstance(
+	discovered, exists, err := r.Resolver.LookupInstance(
 		ctx,
 		res.Spec.InstanceName,
 		res.Spec.ServiceType,
@@ -40,9 +40,18 @@ func (r *Reconciler) discover(
 	}
 
 	synced := false
-	if present {
+	if exists {
 		desired := instanceFromSpec(res.Spec)
-		synced = current.Equal(desired)
+
+		// The TTL of the discovered record may be less than the desired TTL
+		// depending on when the DNS server cached the record. So long as the
+		// discovered TTL does not *exceed* the desired TTL, we consider the
+		// records to be in sync.
+		if discovered.TTL <= desired.TTL {
+			desired.TTL = discovered.TTL
+		}
+
+		synced = discovered.Equal(desired)
 	}
 
 	names, err := r.Resolver.EnumerateInstances(
@@ -65,7 +74,7 @@ func (r *Reconciler) discover(
 		return crd.DiscoverabilityComplete
 	}
 
-	if enumerable || present {
+	if enumerable || exists {
 		return crd.DiscoverabilityPartial
 	}
 
