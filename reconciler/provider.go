@@ -58,7 +58,6 @@ func (r *Reconciler) associateAdvertiser(
 				res.Status.ProviderDescription = p.Describe()
 				res.Status.ProviderID = p.ID()
 				res.Status.AdvertiserID = a.ID()
-				res.Status.Status = crd.StatusAdvertising
 			},
 		); err != nil {
 			return nil, false, err

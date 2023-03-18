@@ -6,6 +6,7 @@ import (
 
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -19,34 +20,20 @@ func (r *Reconciler) unadvertise(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (reconcile.Result, error) {
-	if !controllerutil.ContainsFinalizer(res, crd.FinalizerName) {
-		// The proclaim finalizer has already been removed so we've already
-		// unadvertised this service instance (if it was even necessary).
-		return reconcile.Result{}, nil
-	}
+	advertised := res.Condition(crd.ConditionTypeAdvertised)
 
-	if res.Status.ProviderID != "" {
+	if advertised.Status != metav1.ConditionFalse {
 		a, ok, err := r.getAdvertiser(ctx, res)
 		if !ok || err != nil {
 			// The associated provider is not known to this reconciler.
 			return reconcile.Result{}, err
 		}
 
-		if res.Status.Status != crd.StatusUnadvertiseError {
-			if err := r.updateStatus(
-				res,
-				func() {
-					res.Status.Status = crd.StatusUnadvertising
-				},
-			); err != nil {
-				return reconcile.Result{}, err
-			}
-		}
-
 		result, err := a.Unadvertise(ctx, instanceFromSpec(res.Spec))
 
 		switch result {
 		case provider.UnadvertiseError:
+			advertised = crd.AdvertisedConditionUnadvertiseError(err)
 			r.EventRecorder.Eventf(
 				res,
 				"Warning",
@@ -55,24 +42,12 @@ func (r *Reconciler) unadvertise(
 				res.Status.ProviderDescription,
 				err.Error(),
 			)
-
-			if err := r.updateStatus(
-				res,
-				func() {
-					res.Status.Status = crd.StatusUnadvertiseError
-				},
-			); err != nil {
-				return reconcile.Result{}, err
-			}
-
-			// Requeue for retry.
-			return reconcile.Result{Requeue: true}, ctx.Err()
-
 		case provider.InstanceNotAdvertised:
 			// The service instance was not advertised, so we don't need to
 			// push another event.
 
 		case provider.UnadvertisedExistingInstance:
+			advertised = crd.AdvertisedConditionRecordsRemoved()
 			r.EventRecorder.Eventf(
 				res,
 				"Normal",
@@ -80,15 +55,15 @@ func (r *Reconciler) unadvertise(
 				"service instance unadvertised successfully",
 			)
 		}
-	}
 
-	if err := r.updateStatus(
-		res,
-		func() {
-			res.Status.Status = crd.StatusUnadvertised
-		},
-	); err != nil {
-		return reconcile.Result{}, err
+		if err := r.updateStatus(
+			res,
+			func() {
+				res.MergeCondition(advertised)
+			},
+		); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
 	controllerutil.RemoveFinalizer(res, crd.FinalizerName)

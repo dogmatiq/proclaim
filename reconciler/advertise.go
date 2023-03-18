@@ -3,18 +3,12 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-)
-
-const (
-	probeInterval     = 10 * time.Second
-	advertiseInterval = 1 * time.Minute
 )
 
 // advertise adds/updates DNS records to ensure the given service instance is
@@ -35,34 +29,14 @@ func (r *Reconciler) advertise(
 		}
 	}
 
-	// If we've advertised this instance at its current generation *and* those
-	// records are reflected in actual DNS queries, there's nothing left to do.
-	if res.Status.AdvertiseGeneration == res.Generation {
-		ready := r.checkReadyCondition(ctx, res)
-
-		if err := r.updateStatus(
-			res,
-			func() {
-				res.Condition(ready)
-			},
-		); err != nil {
-			return reconcile.Result{}, err
-		}
-
-		if ready.Status == metav1.ConditionTrue {
-			return reconcile.Result{}, nil
-		}
-
-		if time.Since(res.Status.AdvertisedAt.Time) < advertiseInterval {
-			return reconcile.Result{
-				RequeueAfter: probeInterval,
-			}, nil
-		}
+	// Work out if we need to (re)advertise the instance and when.
+	needed, after, err := r.needsAdvertise(ctx, res)
+	if !needed || err != nil {
+		return reconcile.Result{}, err
 	}
-
-	// Otherwise, we have to make sure the correct DNS records are in place.
-	// Maybe the service has never been advertised, or maybe the records have
-	// been manipulated by some other process or person.
+	if after > 0 {
+		return reconcile.Result{RequeueAfter: after}, nil
+	}
 
 	// Get the advertiser used for this service instance's domain, looking it up
 	// by domain if necessary.
@@ -74,9 +48,12 @@ func (r *Reconciler) advertise(
 	// Update the DNS records to reflect the service instance's existence.
 	result, err := a.Advertise(ctx, instanceFromSpec(res.Spec))
 
+	advertised := res.Condition(crd.ConditionTypeAdvertised)
+
 	// Record an event about the result of the advertisement.
 	switch result {
 	case provider.AdvertiseError:
+		advertised = crd.AdvertisedConditionAdvertiseError(err)
 		r.EventRecorder.Eventf(
 			res,
 			"Warning",
@@ -85,56 +62,51 @@ func (r *Reconciler) advertise(
 			res.Status.ProviderDescription,
 			err,
 		)
-
-		if err := r.updateStatus(
-			res,
-			func() {
-				res.Status.Status = crd.StatusAdvertiseError
-			},
-		); err != nil {
-			return reconcile.Result{}, err
-		}
-
-		// Requeue for retry.
-		return reconcile.Result{Requeue: true}, ctx.Err()
-
 	case provider.InstanceAlreadyAdvertised:
-		// The service instance is already advertised, so we don't need to do
-		// push another event.
-
+		if advertised.Status != metav1.ConditionTrue {
+			advertised = crd.AdvertisedConditionRecordsCreated()
+		}
 	case provider.AdvertisedNewInstance:
+		advertised = crd.AdvertisedConditionRecordsCreated()
 		r.EventRecorder.Eventf(
 			res,
 			"Normal",
 			"Advertised",
 			"advertised new service instance",
 		)
-
 	case provider.UpdatedExistingInstance:
+		advertised = crd.AdvertisedConditionRecordsUpdated()
 		r.EventRecorder.Eventf(
 			res,
 			"Normal",
 			"Updated",
 			"updating existing service instance",
 		)
-
 	}
 
-	ready := r.checkReadyCondition(ctx, res)
+	discoverable, _ := r.computeDiscoverableCondition(ctx, res)
 
 	if err := r.updateStatus(
 		res,
 		func() {
-			res.Condition(ready)
-			res.Status.AdvertiseGeneration = res.Generation
-			res.Status.Status = crd.StatusAdvertised
-			res.Status.AdvertisedAt = metav1.Now()
+			res.MergeCondition(advertised)
+			res.MergeCondition(discoverable)
+
+			if result != provider.AdvertiseError {
+				res.Status.LastAdvertised = metav1.Now()
+			}
 		},
 	); err != nil {
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{
-		RequeueAfter: probeInterval,
-	}, nil
+	if advertised.Status != metav1.ConditionTrue {
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	if discoverable.Status != metav1.ConditionTrue {
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	return reconcile.Result{}, nil
 }

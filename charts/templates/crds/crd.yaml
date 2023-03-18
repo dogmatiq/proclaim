@@ -67,9 +67,9 @@ spec:
                       type: integer
                       format: uint16
                     ttl:
-                      type: integer
-                      format: uint16
-                      default: 60
+                      type: string
+                      format: duration
+                      default: "60s"
                     attributes:
                       # Note that attributes is an ARRAY of objects, not a SINGLE
                       # OBJECT as you might expect.
@@ -120,6 +120,9 @@ spec:
               type: object
               properties:
                 conditions:
+                  x-kubernetes-list-map-keys:
+                    - type
+                  x-kubernetes-list-type: map
                   description: List of conditions to indicate the status of the DNS-SD service instance.
                   type: array
                   items:
@@ -152,9 +155,10 @@ spec:
                         description: The time at which this condition was last changed.
                         type: string
                         format: date-time
-                  x-kubernetes-list-map-keys:
-                    - type
-                  x-kubernetes-list-type: map
+
+                lastAdvertised:
+                  type: string
+                  format: date-time
 
                 providerID:
                   type: string
@@ -165,12 +169,6 @@ spec:
                 providerDescription:
                   type: string
                   default: Unknown
-                status:
-                  type: string
-                  default: Pending
-                advertisedAt:
-                  type: string
-                  format: datetime
 
       additionalPrinterColumns:
         - name: Instance Name
@@ -206,16 +204,12 @@ spec:
         - name: Ready
           description: Indicates whether the DNS records are in sync with the desired state.
           type: string
-          jsonPath: .status.conditions[?(@.type=="Ready")].status
+          jsonPath: .status.conditions[?(@.type=="Discoverable")].status
 
         - name: Reason
-          description: The reason for the current readiness status.
+          description: The reason for the current ready status.
           type: string
-          jsonPath: .status.conditions[?(@.type=="Ready")].reason
-
-        - name: Advertised
-          type: date
-          jsonPath: .status.advertisedAt
+          jsonPath: .status.conditions[?(@.type=="Discoverable")].reason
 
         - name: Age
           type: date

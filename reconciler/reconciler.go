@@ -82,7 +82,7 @@ func instanceFromSpec(spec crd.DNSSDServiceInstanceSpec) dnssd.ServiceInstance {
 		TargetPort:  spec.Instance.TargetPort,
 		Priority:    spec.Instance.Priority,
 		Weight:      spec.Instance.Weight,
-		TTL:         time.Duration(spec.Instance.TTL) * time.Second,
+		TTL:         spec.Instance.TTL.Duration,
 	}
 
 	if result.TTL == 0 {

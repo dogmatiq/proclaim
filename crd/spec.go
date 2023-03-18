@@ -1,5 +1,7 @@
 package crd
 
+import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 // Instance is a DNS-SD service instance.
 type Instance struct {
 	Name        string              `json:"name"`
@@ -9,7 +11,7 @@ type Instance struct {
 	TargetPort  uint16              `json:"targetPort"`
 	Priority    uint16              `json:"priority,omitempty"`
 	Weight      uint16              `json:"weight,omitempty"`
-	TTL         uint16              `json:"ttl,omitempty"`
+	TTL         metav1.Duration     `json:"ttl,omitempty"`
 	Attributes  []map[string]string `json:"attributes,omitempty"`
 }
 
