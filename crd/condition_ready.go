@@ -55,24 +55,3 @@ func ReadyConditionError(err error) metav1.Condition {
 		Message: fmt.Sprintf("DNS-SD discovery failed: %s", err),
 	}
 }
-
-// Condition merges a new Condition into the resource's status.
-// )
-// If a Condition with the same type already exists, it is replaced with the new
-// Condition, otherwise the new Condition is appended.
-func (res *DNSSDServiceInstance) Condition(c metav1.Condition) {
-	c.ObservedGeneration = res.Generation
-	c.LastTransitionTime = metav1.Now()
-
-	for i, x := range res.Status.Conditions {
-		if x.Type == c.Type {
-			if x.Status == c.Status {
-				c.LastTransitionTime = x.LastTransitionTime
-			}
-			res.Status.Conditions[i] = c
-			return
-		}
-	}
-
-	res.Status.Conditions = append(res.Status.Conditions, c)
-}
