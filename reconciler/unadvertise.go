@@ -34,10 +34,9 @@ func (r *Reconciler) unadvertise(
 
 		if res.Status.Status != crd.StatusUnadvertiseError {
 			if err := r.updateStatus(
-				ctx,
 				res,
-				func(s *crd.DNSSDServiceInstanceStatus) {
-					s.Status = crd.StatusUnadvertising
+				func() {
+					res.Status.Status = crd.StatusUnadvertising
 				},
 			); err != nil {
 				return reconcile.Result{}, err
@@ -58,10 +57,9 @@ func (r *Reconciler) unadvertise(
 			)
 
 			if err := r.updateStatus(
-				ctx,
 				res,
-				func(s *crd.DNSSDServiceInstanceStatus) {
-					s.Status = crd.StatusUnadvertiseError
+				func() {
+					res.Status.Status = crd.StatusUnadvertiseError
 				},
 			); err != nil {
 				return reconcile.Result{}, err
@@ -85,10 +83,9 @@ func (r *Reconciler) unadvertise(
 	}
 
 	if err := r.updateStatus(
-		ctx,
 		res,
-		func(s *crd.DNSSDServiceInstanceStatus) {
-			s.Status = crd.StatusUnadvertised
+		func() {
+			res.Status.Status = crd.StatusUnadvertised
 		},
 	); err != nil {
 		return reconcile.Result{}, err

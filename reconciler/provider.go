@@ -53,13 +53,12 @@ func (r *Reconciler) associateAdvertiser(
 		}
 
 		if err := r.updateStatus(
-			ctx,
 			res,
-			func(s *crd.DNSSDServiceInstanceStatus) {
-				s.ProviderDescription = p.Describe()
-				s.ProviderID = p.ID()
-				s.AdvertiserID = a.ID()
-				s.Status = crd.StatusAdvertising
+			func() {
+				res.Status.ProviderDescription = p.Describe()
+				res.Status.ProviderID = p.ID()
+				res.Status.AdvertiserID = a.ID()
+				res.Status.Status = crd.StatusAdvertising
 			},
 		); err != nil {
 			return nil, false, err
@@ -106,10 +105,9 @@ func (r *Reconciler) getAdvertiser(
 
 		// Make sure the provider's description is up-to-date.
 		if err := r.updateStatus(
-			ctx,
 			res,
-			func(s *crd.DNSSDServiceInstanceStatus) {
-				s.ProviderDescription = p.Describe()
+			func() {
+				res.Status.ProviderDescription = p.Describe()
 			},
 		); err != nil {
 			return nil, false, err

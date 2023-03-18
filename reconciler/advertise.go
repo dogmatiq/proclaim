@@ -38,11 +38,18 @@ func (r *Reconciler) advertise(
 	// If we've advertised this instance at its current generation *and* those
 	// records are reflected in actual DNS queries, there's nothing left to do.
 	if res.Status.AdvertiseGeneration == res.Generation {
-		if err := r.probe(ctx, res); err != nil {
+		ready := r.checkReadyCondition(ctx, res)
+
+		if err := r.updateStatus(
+			res,
+			func() {
+				res.Condition(ready)
+			},
+		); err != nil {
 			return reconcile.Result{}, err
 		}
 
-		if res.Status.Discoverability == crd.DiscoverabilityComplete {
+		if ready.Status == metav1.ConditionTrue {
 			return reconcile.Result{}, nil
 		}
 
@@ -80,10 +87,9 @@ func (r *Reconciler) advertise(
 		)
 
 		if err := r.updateStatus(
-			ctx,
 			res,
-			func(s *crd.DNSSDServiceInstanceStatus) {
-				s.Status = crd.StatusAdvertiseError
+			func() {
+				res.Status.Status = crd.StatusAdvertiseError
 			},
 		); err != nil {
 			return reconcile.Result{}, err
@@ -111,15 +117,18 @@ func (r *Reconciler) advertise(
 			"Updated",
 			"updating existing service instance",
 		)
+
 	}
 
+	ready := r.checkReadyCondition(ctx, res)
+
 	if err := r.updateStatus(
-		ctx,
 		res,
-		func(s *crd.DNSSDServiceInstanceStatus) {
-			s.AdvertiseGeneration = res.Generation
-			s.Status = crd.StatusAdvertised
-			s.AdvertisedAt = metav1.Now()
+		func() {
+			res.Condition(ready)
+			res.Status.AdvertiseGeneration = res.Generation
+			res.Status.Status = crd.StatusAdvertised
+			res.Status.AdvertisedAt = metav1.Now()
 		},
 	); err != nil {
 		return reconcile.Result{}, err

@@ -119,6 +119,43 @@ spec:
             status:
               type: object
               properties:
+                conditions:
+                  description: List of conditions to indicate the status of the DNS-SD service instance.
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - status
+                      - type
+                    properties:
+                      type:
+                        description: Type of the condition.
+                        type: string
+                      status:
+                        description: Status of the condition.
+                        type: string
+                        enum:
+                          - "Unknown"
+                          - "True"
+                          - "False"
+                      reason:
+                        description: A machine-readable explanation for the condition's last transition.
+                        type: string
+                      message:
+                        description: A human-readable description that complements the reason.
+                        type: string
+                      observedGeneration:
+                        description: The generation of the DNS-SD resource that was known to the controller when this condition was set.
+                        type: integer
+                        format: int64
+                      lastTransitionTime:
+                        description: The time at which this condition was last changed.
+                        type: string
+                        format: date-time
+                  x-kubernetes-list-map-keys:
+                    - type
+                  x-kubernetes-list-type: map
+
                 providerID:
                   type: string
                 advertiserID:
@@ -131,13 +168,7 @@ spec:
                 status:
                   type: string
                   default: Pending
-                discoverability:
-                  type: string
-                  default: Unknown
                 advertisedAt:
-                  type: string
-                  format: datetime
-                probedAt:
                   type: string
                   format: datetime
 
@@ -172,23 +203,19 @@ spec:
           type: string
           jsonPath: .status.providerDescription
 
-        - name: Status
-          description: The state of the DNS-SD instance resource
+        - name: Ready
+          description: Indicates whether the DNS records are in sync with the desired state.
           type: string
-          jsonPath: .status.status
+          jsonPath: .status.conditions[?(@.type=="Ready")].status
 
-        - name: Discoverability
-          description: The visiblity of the DNS-SD records when querying public internet nameservers
+        - name: Reason
+          description: The reason for the current readiness status.
           type: string
-          jsonPath: .status.discoverability
+          jsonPath: .status.conditions[?(@.type=="Ready")].reason
 
         - name: Advertised
           type: date
           jsonPath: .status.advertisedAt
-
-        - name: Probed
-          type: date
-          jsonPath: .status.probedAt
 
         - name: Age
           type: date

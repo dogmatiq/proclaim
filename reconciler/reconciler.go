@@ -48,18 +48,21 @@ func (r *Reconciler) Reconcile(
 }
 
 func (r *Reconciler) updateStatus(
-	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
-	fn func(*crd.DNSSDServiceInstanceStatus),
+	update func(),
 ) error {
-	updated := dyad.Clone(res.Status)
-	fn(&updated)
+	snapshot := dyad.Clone(res.Status)
+	update()
 
-	if reflect.DeepEqual(updated, res.Status) {
+	if reflect.DeepEqual(snapshot, res.Status) {
 		return nil
 	}
 
-	res.Status = updated
+	// Build our own context with a timeout, so that we don't block forever, but
+	// nor do we fail if we're updating the status while shutting down due to a
+	// higher-level context cancelation.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
 	if err := r.Client.Status().Update(ctx, res); err != nil {
 		return fmt.Errorf("unable to update status sub-resource: %w", err)
