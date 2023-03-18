@@ -3,11 +3,9 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"time"
 
 	"github.com/dogmatiq/dissolve/dnssd"
-	"github.com/dogmatiq/dyad"
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
 	"k8s.io/client-go/tools/record"
@@ -47,24 +45,17 @@ func (r *Reconciler) Reconcile(
 	return r.unadvertise(ctx, res)
 }
 
-func (r *Reconciler) updateStatus(
+func (r *Reconciler) update(
 	res *crd.DNSSDServiceInstance,
-	update func(),
+	updates ...crd.StatusUpdate,
 ) error {
-	snapshot := dyad.Clone(res.Status)
-	update()
-
-	if reflect.DeepEqual(snapshot, res.Status) {
-		return nil
-	}
-
 	// Build our own context with a timeout, so that we don't block forever, but
 	// nor do we fail if we're updating the status while shutting down due to a
 	// higher-level context cancelation.
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	if err := r.Client.Status().Update(ctx, res); err != nil {
+	if err := crd.UpdateStatus(ctx, r.Client, res, updates...); err != nil {
 		return fmt.Errorf("unable to update status sub-resource: %w", err)
 	}
 

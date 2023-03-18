@@ -17,11 +17,9 @@ func (r *Reconciler) needsAdvertise(
 	advertised := res.Condition(crd.ConditionTypeAdvertised)
 	discoverable, observedTTL := r.computeDiscoverableCondition(ctx, res)
 
-	if err := r.updateStatus(
+	if err := r.update(
 		res,
-		func() {
-			res.MergeCondition(discoverable)
-		},
+		crd.MergeCondition(discoverable),
 	); err != nil {
 		return false, 0, err
 	}

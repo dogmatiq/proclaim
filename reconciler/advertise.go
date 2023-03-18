@@ -3,6 +3,7 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
@@ -86,16 +87,14 @@ func (r *Reconciler) advertise(
 
 	discoverable, _ := r.computeDiscoverableCondition(ctx, res)
 
-	if err := r.updateStatus(
+	if err := r.update(
 		res,
-		func() {
-			res.MergeCondition(advertised)
-			res.MergeCondition(discoverable)
-
-			if result != provider.AdvertiseError {
-				res.Status.LastAdvertised = metav1.Now()
-			}
-		},
+		crd.MergeCondition(advertised),
+		crd.MergeCondition(discoverable),
+		crd.If(
+			result != provider.AdvertiseError,
+			crd.UpdateLastAdvertised(time.Now()),
+		),
 	); err != nil {
 		return reconcile.Result{}, err
 	}

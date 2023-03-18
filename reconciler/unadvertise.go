@@ -56,11 +56,9 @@ func (r *Reconciler) unadvertise(
 			)
 		}
 
-		if err := r.updateStatus(
+		if err := r.update(
 			res,
-			func() {
-				res.MergeCondition(advertised)
-			},
+			crd.MergeCondition(advertised),
 		); err != nil {
 			return reconcile.Result{}, err
 		}

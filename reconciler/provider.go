@@ -52,13 +52,10 @@ func (r *Reconciler) associateAdvertiser(
 			continue
 		}
 
-		if err := r.updateStatus(
+		if err := r.update(
 			res,
-			func() {
-				res.Status.ProviderDescription = p.Describe()
-				res.Status.ProviderID = p.ID()
-				res.Status.AdvertiserID = a.ID()
-			},
+			crd.UpdateProviderDescription(p.Describe()),
+			crd.AssociateProvider(p.ID(), a.ID()),
 		); err != nil {
 			return nil, false, err
 		}
@@ -103,11 +100,9 @@ func (r *Reconciler) getAdvertiser(
 		}
 
 		// Make sure the provider's description is up-to-date.
-		if err := r.updateStatus(
+		if err := r.update(
 			res,
-			func() {
-				res.Status.ProviderDescription = p.Describe()
-			},
+			crd.UpdateProviderDescription(p.Describe()),
 		); err != nil {
 			return nil, false, err
 		}
