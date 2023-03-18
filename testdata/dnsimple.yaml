@@ -1,27 +1,28 @@
-# apiVersion: proclaim.dogmatiq.io/v1
-# kind: DNSSDServiceInstance
-# metadata:
-#   name: dnsimple-one
-# spec:
-#   instanceName: "instance-1"
-#   serviceType: "_proclaim._tcp"
-#   domain: "proclaim-dnsimple.dogmatiq.io"
-#   targetHost: "host1.dnsimple.example.org"
-#   targetPort: 123
-#   attributes:
-#     - foo: "bar"
-#       baz: "qux"
-#       flag: ""
-#     - more: attrs
-# ---
+apiVersion: proclaim.dogmatiq.io/v1
+kind: DNSSDServiceInstance
+metadata:
+  name: dnsimple-one
+spec:
+  instance:
+    name: instance-1
+    serviceType: _proclaim._tcp
+    domain: rinq.io
+    targetHost: one.rinq.io
+    targetPort: 123
+    attributes:
+      - foo: "bar"
+        baz: "qux"
+        flag: ""
+      - more: attrs
+---
 apiVersion: proclaim.dogmatiq.io/v1
 kind: DNSSDServiceInstance
 metadata:
   name: dnsimple-two
 spec:
   instance:
-    name: "instance-2"
-    serviceType: "_proclaim._tcp"
-    domain: "rinq.io"
-    targetHost: "host2.dnsimple.example.org"
+    name: instance-2
+    serviceType: _proclaim._tcp
+    domain: rinq.io
+    targetHost: two.ring.io
     targetPort: 456

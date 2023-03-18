@@ -41,9 +41,9 @@ func init() {
 			r *dnssd.UnicastResolver,
 		) (*reconciler.Reconciler, error) {
 			return &reconciler.Reconciler{
-				Client:        m.GetClient(),
-				EventRecorder: m.GetEventRecorderFor(crd.GroupName),
-				Resolver:      r,
+				Manager:  m,
+				Client:   m.GetClient(),
+				Resolver: r,
 			}, nil
 		},
 	)

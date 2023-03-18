@@ -5,7 +5,6 @@ import (
 
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
-	"golang.org/x/exp/slices"
 )
 
 // getOrAssociateAdvertiser returns the advertiser used to
@@ -32,16 +31,15 @@ func (r *Reconciler) associateAdvertiser(
 	for _, p := range r.Providers {
 		a, ok, err := p.AdvertiserByDomain(ctx, res.Spec.Instance.Domain)
 		if err != nil {
-			exhaustive = false
-
-			r.EventRecorder.Eventf(
+			crd.ProviderError(
+				r.Manager,
 				res,
-				"Warning",
-				"Error",
-				"%s: %s",
 				p.ID(),
-				err.Error(),
+				p.Describe(),
+				err,
 			)
+
+			exhaustive = false
 
 			if ctx.Err() != nil {
 				return nil, false, ctx.Err()
@@ -60,31 +58,13 @@ func (r *Reconciler) associateAdvertiser(
 			return nil, false, err
 		}
 
-		r.EventRecorder.Eventf(
-			res,
-			"Normal",
-			"ProviderAssociated",
-			"the %q provider will be used to advertise this service instance",
-			p.Describe(),
-		)
+		crd.InstanceAdopted(r.Manager, res)
 
 		return a, true, nil
 	}
 
 	if exhaustive {
-		var providers []string
-		for _, p := range r.Providers {
-			providers = append(providers, p.ID())
-		}
-		slices.Sort(providers)
-
-		r.EventRecorder.Eventf(
-			res,
-			"Warning",
-			"Ignored",
-			"none of the configured providers can advertise on %q",
-			res.Spec.Instance.Domain,
-		)
+		crd.InstanceIgnored(r.Manager, res)
 	}
 
 	return nil, false, nil
@@ -109,15 +89,13 @@ func (r *Reconciler) getAdvertiser(
 
 		a, err := p.AdvertiserByID(ctx, res.Status.AdvertiserID)
 		if err != nil {
-			r.EventRecorder.Eventf(
+			crd.ProviderError(
+				r.Manager,
 				res,
-				"Warning",
-				"Error",
-				"%s: %s",
-				res.Status.ProviderDescription,
-				err.Error(),
+				p.ID(),
+				p.Describe(),
+				err,
 			)
-
 			return nil, false, ctx.Err()
 		}
 

@@ -21,7 +21,7 @@ type Provider struct {
 // ID returns a short unique identifier for the provider.
 func (p *Provider) ID() string {
 	if id := p.partitionID(); id != defaultPartition {
-		return fmt.Sprintf("route53/%s", id)
+		return fmt.Sprintf("route53-%s", id)
 	}
 	return "route53"
 }

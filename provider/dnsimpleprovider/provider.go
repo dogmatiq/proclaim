@@ -21,7 +21,10 @@ type Provider struct {
 
 // ID returns a short unique identifier for the provider.
 func (p *Provider) ID() string {
-	return fmt.Sprintf("dnsimple/%s", p.environment())
+	if env := p.environment(); env != "production" {
+		return fmt.Sprintf("dnsimple.%s", env)
+	}
+	return "dnsimple"
 }
 
 func (p *Provider) environment() string {
@@ -41,12 +44,10 @@ func (p *Provider) environment() string {
 
 // Describe returns a human-readable description of the provider.
 func (p *Provider) Describe() string {
-	environment := p.environment()
-	if environment == "production" {
-		return "DNSimple"
+	if env := p.environment(); env != "production" {
+		return fmt.Sprintf("DNSimple (%s)", env)
 	}
-
-	return fmt.Sprintf("DNSimple (%s)", environment)
+	return "DNSimple"
 }
 
 // AdvertiserByID returns the Advertiser with the given ID.

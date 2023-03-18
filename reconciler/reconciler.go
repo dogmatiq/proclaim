@@ -8,18 +8,18 @@ import (
 	"github.com/dogmatiq/dissolve/dnssd"
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
-	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // Reconciler manipulates DNS records to match the state of a
 // crd.DNSSDServiceInstance.
 type Reconciler struct {
-	Client        client.Client
-	EventRecorder record.EventRecorder
-	Resolver      *dnssd.UnicastResolver
-	Providers     []provider.Provider
+	Manager   manager.Manager
+	Client    client.Client
+	Resolver  *dnssd.UnicastResolver
+	Providers []provider.Provider
 }
 
 // Reconcile performs a full reconciliation for the object referred to by the

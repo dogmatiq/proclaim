@@ -6,7 +6,6 @@ import (
 
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -20,9 +19,13 @@ func (r *Reconciler) unadvertise(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (reconcile.Result, error) {
+	if !controllerutil.ContainsFinalizer(res, crd.FinalizerName) {
+		return reconcile.Result{}, nil
+	}
+
 	advertised := res.Condition(crd.ConditionTypeAdvertised)
 
-	if advertised.Status != metav1.ConditionFalse {
+	if res.Status.ProviderID != "" {
 		a, ok, err := r.getAdvertiser(ctx, res)
 		if !ok || err != nil {
 			// The associated provider is not known to this reconciler.
@@ -32,28 +35,22 @@ func (r *Reconciler) unadvertise(
 		result, err := a.Unadvertise(ctx, instanceFromSpec(res.Spec))
 
 		switch result {
-		case provider.UnadvertiseError:
-			advertised = crd.AdvertisedConditionUnadvertiseError(err)
-			r.EventRecorder.Eventf(
-				res,
-				"Warning",
-				"Error",
-				"%s: %s",
-				res.Status.ProviderDescription,
-				err.Error(),
-			)
-		case provider.InstanceNotAdvertised:
-			// The service instance was not advertised, so we don't need to
-			// push another event.
-
 		case provider.UnadvertisedExistingInstance:
-			advertised = crd.AdvertisedConditionRecordsRemoved()
-			r.EventRecorder.Eventf(
+			crd.DNSRecordsDeleted(r.Manager, res)
+			advertised = crd.DNSRecordsDeletedCondition()
+
+		case provider.InstanceNotAdvertised:
+			// no change
+
+		case provider.UnadvertiseError:
+			crd.ProviderError(
+				r.Manager,
 				res,
-				"Normal",
-				"Unadvertised",
-				"service instance unadvertised successfully",
+				res.Status.ProviderID,
+				res.Status.ProviderDescription,
+				err,
 			)
+			advertised = crd.UnadvertiseErrorCondition(err)
 		}
 
 		if err := r.update(

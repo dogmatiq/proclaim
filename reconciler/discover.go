@@ -15,7 +15,7 @@ func (r *Reconciler) needsAdvertise(
 	res *crd.DNSSDServiceInstance,
 ) (bool, time.Duration, error) {
 	advertised := res.Condition(crd.ConditionTypeAdvertised)
-	discoverable, observedTTL := r.computeDiscoverableCondition(ctx, res)
+	discoverable, observedTTL := r.discover(ctx, res)
 
 	if err := r.update(
 		res,
@@ -61,7 +61,7 @@ func (r *Reconciler) needsAdvertise(
 	return true, res.Spec.Instance.TTL.Duration - elapsed, nil
 }
 
-func (r *Reconciler) computeDiscoverableCondition(
+func (r *Reconciler) discover(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (metav1.Condition, time.Duration) {
@@ -71,7 +71,7 @@ func (r *Reconciler) computeDiscoverableCondition(
 		res.Spec.Instance.Domain,
 	)
 	if err != nil {
-		return crd.DiscoverableConditionError(err), -1
+		return crd.DiscoveryErrorCondition(err), -1
 	}
 
 	if !slices.ContainsFunc(
@@ -80,7 +80,8 @@ func (r *Reconciler) computeDiscoverableCondition(
 			return strings.EqualFold(v, res.Spec.Instance.Name)
 		},
 	) {
-		return crd.DiscoverableConditionNegativeBrowseResult(), -1
+		crd.NegativeBrowseResult(r.Manager, res)
+		return crd.NegativeBrowseResultCondition(), -1
 	}
 
 	observed, ok, err := r.Resolver.LookupInstance(
@@ -90,10 +91,12 @@ func (r *Reconciler) computeDiscoverableCondition(
 		res.Spec.Instance.Domain,
 	)
 	if err != nil {
-		return crd.DiscoverableConditionError(err), -1
+		crd.DiscoveryError(r.Manager, res, err)
+		return crd.DiscoveryErrorCondition(err), -1
 	}
 	if !ok {
-		return crd.DiscoverableConditionNegativeLookupResult(), -1
+		crd.NegativeLookupResult(r.Manager, res)
+		return crd.NegativeLookupResultCondition(), -1
 	}
 
 	desired := instanceFromSpec(res.Spec)
@@ -104,9 +107,11 @@ func (r *Reconciler) computeDiscoverableCondition(
 	if observed.TTL <= desired.TTL {
 		desired.TTL = observed.TTL
 		if observed.Equal(desired) {
-			return crd.DiscoverableConditionDiscoverable(), observed.TTL
+			crd.Discovered(r.Manager, res)
+			return crd.DiscoveredCondition(), observed.TTL
 		}
 	}
 
-	return crd.DiscoverableConditionLookupResultOutOfSync(), observed.TTL
+	crd.LookupResultOutOfSync(r.Manager, res)
+	return crd.LookupResultOutOfSyncCondition(), observed.TTL
 }

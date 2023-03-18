@@ -53,39 +53,32 @@ func (r *Reconciler) advertise(
 
 	// Record an event about the result of the advertisement.
 	switch result {
+	case provider.AdvertisedNewInstance:
+		crd.DNSRecordsCreated(r.Manager, res)
+		advertised = crd.DNSRecordsCreatedCondition()
+
+	case provider.InstanceAlreadyAdvertised:
+		crd.DNSRecordsVerified(r.Manager, res)
+		if advertised.Status != metav1.ConditionTrue {
+			advertised = crd.DNSRecordsObservedCondition()
+		}
+
+	case provider.UpdatedExistingInstance:
+		crd.DNSRecordsUpdated(r.Manager, res)
+		advertised = crd.DNSRecordsUpdatedCondition()
+
 	case provider.AdvertiseError:
-		advertised = crd.AdvertisedConditionAdvertiseError(err)
-		r.EventRecorder.Eventf(
+		crd.ProviderError(
+			r.Manager,
 			res,
-			"Warning",
-			"Error",
-			"%s: %s",
+			res.Status.ProviderID,
 			res.Status.ProviderDescription,
 			err,
 		)
-	case provider.InstanceAlreadyAdvertised:
-		if advertised.Status != metav1.ConditionTrue {
-			advertised = crd.AdvertisedConditionRecordsCreated()
-		}
-	case provider.AdvertisedNewInstance:
-		advertised = crd.AdvertisedConditionRecordsCreated()
-		r.EventRecorder.Eventf(
-			res,
-			"Normal",
-			"Advertised",
-			"advertised new service instance",
-		)
-	case provider.UpdatedExistingInstance:
-		advertised = crd.AdvertisedConditionRecordsUpdated()
-		r.EventRecorder.Eventf(
-			res,
-			"Normal",
-			"Updated",
-			"updating existing service instance",
-		)
+		advertised = crd.AdvertiseErrorCondition(err)
 	}
 
-	discoverable, _ := r.computeDiscoverableCondition(ctx, res)
+	discoverable, _ := r.discover(ctx, res)
 
 	if err := r.update(
 		res,
