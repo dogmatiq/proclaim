@@ -5,11 +5,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-const (
-	// ConditionTypeAdvertised is a condition that indicates whether or not the
-	// service instance has been advertised via a provider.
-	ConditionTypeAdvertised = "Advertised"
-)
+// ConditionTypeAdvertised is a condition that indicates whether or not the
+// service instance has been advertised via a provider.
+const ConditionTypeAdvertised = "Advertised"
 
 // DNSRecordsCreated records an event indicating that new DNS records were
 // created.
@@ -105,35 +103,6 @@ func DNSRecordsDeletedCondition() metav1.Condition {
 		Reason:  "RecordsDeleted",
 		Message: "deleted existing DNS records",
 	}
-}
-
-// InstanceAdopted records an event indicating that the service instance was
-// adopted by the controller.
-func InstanceAdopted(m manager.Manager, res *DNSSDServiceInstance) {
-	m.
-		GetEventRecorderFor("proclaim-"+res.Status.ProviderID).
-		Eventf(
-			res,
-			"Normal",
-			"InstanceAdopted",
-			"%s can advertise on %q",
-			res.Status.ProviderDescription,
-			res.Spec.Instance.Domain,
-		)
-}
-
-// InstanceIgnored records an event indicating that the service instance was
-// ignored by the controller.
-func InstanceIgnored(m manager.Manager, res *DNSSDServiceInstance) {
-	m.
-		GetEventRecorderFor("proclaim").
-		Eventf(
-			res,
-			"Warning",
-			"InstanceIgnored",
-			"none of the configured providers can advertise on %q",
-			res.Spec.Instance.Domain,
-		)
 }
 
 // ProviderError records an event indicating that an error occurred while

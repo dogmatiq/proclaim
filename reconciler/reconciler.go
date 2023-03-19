@@ -8,6 +8,7 @@ import (
 	"github.com/dogmatiq/dissolve/dnssd"
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -37,12 +38,46 @@ func (r *Reconciler) Reconcile(
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
+	if requeue, err := r.initialize(ctx, res); requeue || err != nil {
+		return reconcile.Result{Requeue: true}, err
+	}
+
 	// Advertise the service, unless its deletion timestamp is set, in which
 	// case we unadvertise it.
 	if res.ObjectMeta.DeletionTimestamp.IsZero() {
 		return r.advertise(ctx, res)
 	}
 	return r.unadvertise(ctx, res)
+}
+
+func (r *Reconciler) initialize(
+	ctx context.Context,
+	res *crd.DNSSDServiceInstance,
+) (bool, error) {
+	types := []string{
+		crd.ConditionTypeAdopted,
+		crd.ConditionTypeAdvertised,
+		crd.ConditionTypeDiscoverable,
+	}
+
+	var updates []crd.StatusUpdate
+
+	for _, t := range types {
+		c := res.Condition(crd.ConditionTypeAdvertised)
+		if c.LastTransitionTime.IsZero() {
+			updates = append(
+				updates,
+				crd.MergeCondition(
+					metav1.Condition{
+						Type:   t,
+						Status: metav1.ConditionUnknown,
+					},
+				),
+			)
+		}
+	}
+
+	return len(updates) > 0, r.update(res, updates...)
 }
 
 func (r *Reconciler) update(

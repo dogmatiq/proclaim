@@ -5,11 +5,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-const (
-	// ConditionTypeDiscoverable is a condition that indicates whether or not
-	// the service instance is discoverable via the DNS system.
-	ConditionTypeDiscoverable = "Discoverable"
-)
+// ConditionTypeDiscoverable is a condition that indicates whether or not the
+// service instance is discoverable via the DNS system.
+const ConditionTypeDiscoverable = "Discoverable"
 
 // Discovered records an event indicating that the service instance was
 // discovered via DNS-SD.

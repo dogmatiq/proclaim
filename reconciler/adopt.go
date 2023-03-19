@@ -52,6 +52,7 @@ func (r *Reconciler) associateAdvertiser(
 
 		if err := r.update(
 			res,
+			crd.MergeCondition(crd.InstanceAdoptedCondition()),
 			crd.UpdateProviderDescription(p.Describe()),
 			crd.AssociateProvider(p.ID(), a.ID()),
 		); err != nil {
@@ -65,6 +66,13 @@ func (r *Reconciler) associateAdvertiser(
 
 	if exhaustive {
 		crd.InstanceIgnored(r.Manager, res)
+
+		if err := r.update(
+			res,
+			crd.MergeCondition(crd.InstanceIgnoredCondition()),
+		); err != nil {
+			return nil, false, err
+		}
 	}
 
 	return nil, false, nil
