@@ -7,12 +7,17 @@ type Instance struct {
 	Name        string              `json:"name"`
 	ServiceType string              `json:"serviceType"`
 	Domain      string              `json:"domain"`
-	TargetHost  string              `json:"targetHost"`
-	TargetPort  uint16              `json:"targetPort"`
-	Priority    uint16              `json:"priority,omitempty"`
-	Weight      uint16              `json:"weight,omitempty"`
 	TTL         metav1.Duration     `json:"ttl,omitempty"`
+	Targets     [1]Target           `json:"targets"`
 	Attributes  []map[string]string `json:"attributes,omitempty"`
+}
+
+// Target describes a single target address for a DNS service instance.
+type Target struct {
+	Host     string `json:"host"`
+	Port     uint16 `json:"port"`
+	Priority uint16 `json:"priority,omitempty"`
+	Weight   uint16 `json:"weight,omitempty"`
 }
 
 // DNSSDServiceInstanceSpec is the specification for a service instance.

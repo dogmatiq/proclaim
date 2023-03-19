@@ -7,8 +7,9 @@ spec:
     name: instance-1
     serviceType: _proclaim._tcp
     domain: rinq.io
-    targetHost: one.rinq.io
-    targetPort: 123
+    targets:
+      - host: one.rinq.io
+        port: 123
     attributes:
       - foo: "bar"
         baz: "qux"
@@ -24,5 +25,6 @@ spec:
     name: instance-2
     serviceType: _proclaim._tcp
     domain: rinq.io
-    targetHost: two.ring.io
-    targetPort: 456
+    targets:
+      - host: two.rinq.io
+        port: 456

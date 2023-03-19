@@ -14,7 +14,7 @@ import (
 // DNSSDServiceInstanceStatus contains the status of a service instance.
 type DNSSDServiceInstanceStatus struct {
 	Conditions     []metav1.Condition `json:"conditions,omitempty"`
-	LastAdvertised metav1.Time        `json:"lastAdvertised,omitempty"`
+	LastReconciled metav1.Time        `json:"lastReconciled,omitempty"`
 
 	ProviderDescription string `json:"providerDescription,omitempty"`
 	ProviderID          string `json:"providerID,omitempty"`
@@ -98,11 +98,11 @@ func MergeCondition(c metav1.Condition) StatusUpdate {
 	}
 }
 
-// UpdateLastAdvertised is an StatusUpdate that sets the LastAdvertised field of
+// UpdateLastReconciled is an StatusUpdate that sets the LastReconciled field of
 // the resource's status.
-func UpdateLastAdvertised(t time.Time) StatusUpdate {
+func UpdateLastReconciled(t time.Time) StatusUpdate {
 	return func(res *DNSSDServiceInstance) {
-		res.Status.LastAdvertised = metav1.NewTime(t)
+		res.Status.LastReconciled = metav1.NewTime(t)
 	}
 }
 

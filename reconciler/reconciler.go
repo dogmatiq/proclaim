@@ -69,10 +69,10 @@ func instanceFromSpec(spec crd.DNSSDServiceInstanceSpec) dnssd.ServiceInstance {
 		Name:        spec.Instance.Name,
 		ServiceType: spec.Instance.ServiceType,
 		Domain:      spec.Instance.Domain,
-		TargetHost:  spec.Instance.TargetHost,
-		TargetPort:  spec.Instance.TargetPort,
-		Priority:    spec.Instance.Priority,
-		Weight:      spec.Instance.Weight,
+		TargetHost:  spec.Instance.Targets[0].Host,
+		TargetPort:  spec.Instance.Targets[0].Port,
+		Priority:    spec.Instance.Targets[0].Priority,
+		Weight:      spec.Instance.Targets[0].Weight,
 		TTL:         spec.Instance.TTL.Duration,
 	}
 

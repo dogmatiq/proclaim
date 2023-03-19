@@ -80,7 +80,7 @@ func (r *Reconciler) advertise(
 		crd.MergeCondition(discoverable),
 		crd.If(
 			advertised.Status == metav1.ConditionTrue,
-			crd.UpdateLastAdvertised(time.Now()),
+			crd.UpdateLastReconciled(time.Now()),
 		),
 	); err != nil {
 		return reconcile.Result{}, err
