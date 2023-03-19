@@ -8,6 +8,7 @@ import (
 	. "github.com/dogmatiq/proclaim/provider/dnsimpleprovider"
 	"github.com/dogmatiq/proclaim/provider/dnsimpleprovider/internal/dnsimplex"
 	"github.com/dogmatiq/proclaim/provider/internal/providertest"
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 )
 
@@ -35,6 +36,7 @@ var _ = Describe("type Provider", func() {
 			return providertest.TestContext{
 				Provider: &Provider{
 					Client: client,
+					Logger: logr.Discard(),
 				},
 				Domain: domain,
 				NameServers: func(ctx context.Context) ([]string, error) {
