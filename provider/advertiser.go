@@ -67,7 +67,5 @@ func (cs ChangeSet) IsEmpty() bool {
 // IsCreate returns true if the change set represents an entirely new
 // instance.
 func (cs ChangeSet) IsCreate() bool {
-	return cs.PTR&Created != 0 ||
-		cs.SRV&Created != 0 ||
-		cs.TXT&Created != 0
+	return cs.PTR == Created || cs.SRV == Created
 }
