@@ -116,15 +116,9 @@ func DeclareTestSuite(
 				}
 
 				for i, inst := range expect {
-					res, err := advertiser.Advertise(ctx, inst)
+					cs, err := advertiser.Advertise(ctx, inst)
 					gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-					gomega.Expect(res).To(gomega.Equal(
-						provider.ChangeSet{
-							PTR: provider.Created,
-							SRV: provider.Created,
-							TXT: provider.Created,
-						},
-					))
+					gomega.Expect(cs.IsCreate()).To(gomega.BeTrue())
 
 					expectInstanceToEventuallyEqual(ctx, resolver, inst)
 					expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain, expect[:i+1]...)
@@ -139,15 +133,9 @@ func DeclareTestSuite(
 				expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain, expect...)
 
 				for i, inst := range expect {
-					res, err := advertiser.Unadvertise(ctx, inst)
+					cs, err := advertiser.Unadvertise(ctx, inst)
 					gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-					gomega.Expect(res).To(gomega.Equal(
-						provider.ChangeSet{
-							PTR: provider.Deleted,
-							SRV: provider.Deleted,
-							TXT: provider.Deleted,
-						},
-					))
+					gomega.Expect(cs.IsEmpty()).To(gomega.BeFalse())
 
 					expectInstanceToEventuallyEqual(ctx, resolver, inst)
 					expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain, expect[i+1:]...)
@@ -192,15 +180,10 @@ func DeclareTestSuite(
 					},
 				}
 
-				res, err := advertiser.Advertise(ctx, after)
+				cs, err := advertiser.Advertise(ctx, after)
 				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-				gomega.Expect(res).To(gomega.Equal(
-					provider.ChangeSet{
-						PTR: provider.NoChange,
-						SRV: provider.Updated,
-						TXT: provider.Updated,
-					},
-				))
+				gomega.Expect(cs.IsCreate()).To(gomega.BeFalse())
+				gomega.Expect(cs.IsEmpty()).To(gomega.BeFalse())
 
 				expectInstanceToEventuallyEqual(ctx, resolver, after)
 			})
@@ -225,15 +208,9 @@ func DeclareTestSuite(
 				_, err := advertiser.Advertise(ctx, expect)
 				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 
-				res, err := advertiser.Advertise(ctx, expect)
+				cs, err := advertiser.Advertise(ctx, expect)
 				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-				gomega.Expect(res).To(gomega.Equal(
-					provider.ChangeSet{
-						PTR: provider.NoChange,
-						SRV: provider.NoChange,
-						TXT: provider.NoChange,
-					},
-				))
+				gomega.Expect(cs.IsEmpty()).To(gomega.BeTrue())
 
 				expectInstanceToEventuallyEqual(ctx, resolver, expect)
 			})
@@ -255,15 +232,9 @@ func DeclareTestSuite(
 					},
 				}
 
-				res, err := advertiser.Unadvertise(ctx, inst)
+				cs, err := advertiser.Unadvertise(ctx, inst)
 				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-				gomega.Expect(res).To(gomega.Equal(
-					provider.ChangeSet{
-						PTR: provider.NoChange,
-						SRV: provider.NoChange,
-						TXT: provider.NoChange,
-					},
-				))
+				gomega.Expect(cs.IsEmpty()).To(gomega.BeTrue())
 			})
 		})
 	})
