@@ -53,6 +53,7 @@ func DeclareTestSuite(
 
 			servers, err := tctx.NameServers(ctx)
 			gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
+			gomega.Expect(servers).ShouldNot(gomega.BeEmpty())
 
 			resolver = &dnssd.UnicastResolver{
 				Config: &dns.ClientConfig{

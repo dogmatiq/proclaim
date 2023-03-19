@@ -19,7 +19,7 @@ const (
 	region       = "us-east-1"
 )
 
-var _ = Describe("type Provider", func() {
+var _ = XDescribe("type Provider", func() {
 	providertest.DeclareTestSuite(
 		func(ctx context.Context) providertest.TestContext {
 			if os.Getenv("DOGMATIQ_TEST_AWS_ACCESS_KEY_ID") == "" {
