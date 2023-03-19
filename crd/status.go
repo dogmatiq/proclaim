@@ -3,7 +3,6 @@ package crd
 import (
 	"context"
 	"reflect"
-	"time"
 
 	"github.com/dogmatiq/dyad"
 	"golang.org/x/exp/slices"
@@ -13,8 +12,7 @@ import (
 
 // DNSSDServiceInstanceStatus contains the status of a service instance.
 type DNSSDServiceInstanceStatus struct {
-	Conditions     []metav1.Condition `json:"conditions,omitempty"`
-	LastReconciled metav1.Time        `json:"lastReconciled,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 
 	ProviderDescription string `json:"providerDescription,omitempty"`
 	ProviderID          string `json:"providerID,omitempty"`
@@ -95,14 +93,6 @@ func MergeCondition(c metav1.Condition) StatusUpdate {
 		}
 
 		res.Status.Conditions[index] = c
-	}
-}
-
-// UpdateLastReconciled is an StatusUpdate that sets the LastReconciled field of
-// the resource's status.
-func UpdateLastReconciled(t time.Time) StatusUpdate {
-	return func(res *DNSSDServiceInstance) {
-		res.Status.LastReconciled = metav1.NewTime(t)
 	}
 }
 

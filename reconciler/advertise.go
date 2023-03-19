@@ -29,26 +29,35 @@ func (r *Reconciler) advertise(
 		}
 	}
 
-	// Work out if we need to (re)advertise the instance and when.
-	needed, after, err := r.needsAdvertise(ctx, res)
-	if !needed || err != nil {
-		return reconcile.Result{}, err
-	}
-	if after > 0 {
-		return reconcile.Result{RequeueAfter: after}, nil
+	if shouldAdvertise(res) {
+		if err := r.doAdvertise(ctx, res); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
+	if shouldDiscover(res) {
+		ttl, err := r.doDiscover(ctx, res)
+		return shouldRequeue(res, ttl), err
+	}
+
+	return shouldRequeue(res, 0), nil
+}
+
+func (r *Reconciler) doAdvertise(
+	ctx context.Context,
+	res *crd.DNSSDServiceInstance,
+) error {
 	// Get the advertiser used for this service instance's domain, looking it up
 	// by domain if necessary.
 	a, ok, err := r.getOrAssociateAdvertiser(ctx, res)
 	if !ok || err != nil {
-		return reconcile.Result{Requeue: true}, err
+		return err
 	}
-
-	advertised := res.Condition(crd.ConditionTypeAdvertised)
 
 	// Update the DNS records to reflect the service instance's existence.
 	cs, err := a.Advertise(ctx, instanceFromSpec(res.Spec))
+
+	advertised := res.Condition(crd.ConditionTypeAdvertised)
 
 	if err != nil {
 		crd.ProviderError(
@@ -72,27 +81,78 @@ func (r *Reconciler) advertise(
 		advertised = crd.DNSRecordsUpdatedCondition()
 	}
 
-	_, _, discoverable := r.discover(ctx, res)
-
-	if err := r.update(
+	return r.update(
 		res,
 		crd.MergeCondition(advertised),
-		crd.MergeCondition(discoverable),
-		crd.If(
-			advertised.Status == metav1.ConditionTrue,
-			crd.UpdateLastReconciled(time.Now()),
-		),
-	); err != nil {
-		return reconcile.Result{}, err
+	)
+}
+
+func shouldAdvertise(res *crd.DNSSDServiceInstance) bool {
+	a := res.Condition(crd.ConditionTypeAdvertised)
+	d := res.Condition(crd.ConditionTypeDiscoverable)
+
+	if a.Status != metav1.ConditionTrue {
+		return true
 	}
 
-	if advertised.Status != metav1.ConditionTrue {
-		return reconcile.Result{Requeue: true}, nil
+	if a.ObservedGeneration < res.Generation {
+		return true
 	}
 
-	if discoverable.Status != metav1.ConditionTrue {
-		return reconcile.Result{Requeue: true}, nil
+	if d.Status == metav1.ConditionTrue {
+		return false
 	}
 
-	return reconcile.Result{}, nil
+	return false
+}
+
+func shouldDiscover(res *crd.DNSSDServiceInstance) bool {
+	a := res.Condition(crd.ConditionTypeAdvertised)
+
+	if a.Status != metav1.ConditionTrue {
+		return false
+	}
+
+	if a.ObservedGeneration < res.Generation {
+		return false
+	}
+
+	return true
+}
+
+func shouldRequeue(res *crd.DNSSDServiceInstance, discoveredTTL time.Duration) reconcile.Result {
+	a := res.Condition(crd.ConditionTypeAdvertised)
+	d := res.Condition(crd.ConditionTypeDiscoverable)
+
+	if a.Status != metav1.ConditionTrue {
+		return reconcile.Result{Requeue: true}
+	}
+
+	if a.ObservedGeneration < res.Generation {
+		return reconcile.Result{Requeue: true}
+	}
+
+	if d.Status == metav1.ConditionTrue {
+		return reconcile.Result{}
+	}
+
+	if discoveredTTL == 0 {
+		// We have no TTL information of "out of sync" DNS records, so we use
+		// the TTL from the specification.
+		//
+		// HACK: This doesn't really have anything to do with the TTL, we're
+		// just using it as a (hopefully) reasonable indicator of how long we
+		// should wait before re-trying. It would be better if the provider
+		// could give us retry intervals based on the zone's SOA record (e.g.
+		// negative cache times) and/or API rate limiting.
+		return reconcile.Result{
+			RequeueAfter: res.Spec.Instance.TTL.Duration,
+		}
+	}
+
+	// Otherwise, we wait long enough for the mismatching discovered DNS records
+	// to expire (plus a small buffer).
+	return reconcile.Result{
+		RequeueAfter: discoveredTTL + (1 * time.Second),
+	}
 }

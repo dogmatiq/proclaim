@@ -152,10 +152,6 @@ spec:
                 advertiserID:
                   description: The internal ID of the DNS advertiser that is advertising the DNS-SD service instance.
                   type: string
-                lastReconciled:
-                  description: The time at which the DNS records were last reconciled with the DNS provider.
-                  type: string
-                  format: date-time
                 conditions:
                   x-kubernetes-list-map-keys:
                     - type
@@ -226,10 +222,6 @@ spec:
           description: The reason for the current ready status.
           type: string
           jsonPath: .status.conditions[?(@.type=="Discoverable")].reason
-        - name: Reconciled
-          description: The time at which the DNS records were last reconciled with the DNS provider.
-          type: date
-          jsonPath: .status.lastReconciled
         - name: Age
           type: date
           jsonPath: .metadata.creationTimestamp

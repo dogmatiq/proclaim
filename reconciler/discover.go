@@ -5,74 +5,33 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dogmatiq/dissolve/dnssd"
 	"github.com/dogmatiq/proclaim/crd"
 	"golang.org/x/exp/slices"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (r *Reconciler) needsAdvertise(
+func (r *Reconciler) doDiscover(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
-) (bool, time.Duration, error) {
-	advertised := res.Condition(crd.ConditionTypeAdvertised)
-	inst, ok, discoverable := r.discover(ctx, res)
-
-	if err := r.update(
+) (time.Duration, error) {
+	ttl, discoverable := r.computeDiscoverable(ctx, res)
+	return ttl, r.update(
 		res,
 		crd.MergeCondition(discoverable),
-	); err != nil {
-		return false, 0, err
-	}
-
-	// If we haven't advertised the service at this generation of the spec we
-	// want to do so immediately.
-	//
-	// This is necessary even if the current records appear to match the spec.
-	// We may be observing cached records that will become wrong in the future.
-	// We also can't observe the actual TTL of records if we're querying
-	// non-authoritative nameservers, which we almost certainly are, by design.
-	if advertised.Status != metav1.ConditionTrue || advertised.ObservedGeneration < res.Generation {
-		return true, 0, nil
-	}
-
-	// If we've advertised the records at this generation of the spec, and the
-	// DNS-SD results match the spec, we're done.
-	if discoverable.Status == metav1.ConditionTrue {
-		return false, 0, nil
-	}
-
-	// We found a service instance, but if it doesn't match the spec we
-	// reconcile again after the existing records have (hopefully) expired.
-	if ok && inst.TTL >= 0 {
-		const expiryBuffer = 5 * time.Second
-		return true, inst.TTL + expiryBuffer, nil
-	}
-
-	// We didn't find an existing service, so we're not waiting for any existing
-	// DNS records to expire.
-	//
-	// Instead, we wait for the "desired" TTL to pass. We do so under the
-	// assumption that the domain's SOA record and any other relevant TTLs are
-	// configured appropriately to be used with the TTL from the spec.
-	//
-	// TODO: This is a bit of a hack, and we should probably have the provider
-	// supply information about its SOA records and rate-limiting.
-	elapsed := time.Since(advertised.LastTransitionTime.Time)
-	return true, res.Spec.Instance.TTL.Duration - elapsed, nil
+	)
 }
 
-func (r *Reconciler) discover(
+func (r *Reconciler) computeDiscoverable(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
-) (dnssd.ServiceInstance, bool, metav1.Condition) {
+) (time.Duration, metav1.Condition) {
 	instances, err := r.Resolver.EnumerateInstances(
 		ctx,
 		res.Spec.Instance.ServiceType,
 		res.Spec.Instance.Domain,
 	)
 	if err != nil {
-		return dnssd.ServiceInstance{}, false, crd.DiscoveryErrorCondition(err)
+		return 0, crd.DiscoveryErrorCondition(err)
 	}
 
 	if !slices.ContainsFunc(
@@ -82,7 +41,7 @@ func (r *Reconciler) discover(
 		},
 	) {
 		crd.NegativeBrowseResult(r.Manager, res)
-		return dnssd.ServiceInstance{}, false, crd.NegativeBrowseResultCondition()
+		return 0, crd.NegativeBrowseResultCondition()
 	}
 
 	observed, ok, err := r.Resolver.LookupInstance(
@@ -93,11 +52,11 @@ func (r *Reconciler) discover(
 	)
 	if err != nil {
 		crd.DiscoveryError(r.Manager, res, err)
-		return dnssd.ServiceInstance{}, false, crd.DiscoveryErrorCondition(err)
+		return 0, crd.DiscoveryErrorCondition(err)
 	}
 	if !ok {
 		crd.NegativeLookupResult(r.Manager, res)
-		return dnssd.ServiceInstance{}, false, crd.NegativeLookupResultCondition()
+		return 0, crd.NegativeLookupResultCondition()
 	}
 
 	desired := instanceFromSpec(res.Spec)
@@ -109,10 +68,10 @@ func (r *Reconciler) discover(
 		desired.TTL = observed.TTL
 		if observed.Equal(desired) {
 			crd.Discovered(r.Manager, res)
-			return observed, true, crd.DiscoveredCondition()
+			return observed.TTL, crd.DiscoveredCondition()
 		}
 	}
 
 	crd.LookupResultOutOfSync(r.Manager, res)
-	return observed, true, crd.LookupResultOutOfSyncCondition()
+	return observed.TTL, crd.LookupResultOutOfSyncCondition()
 }
