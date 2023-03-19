@@ -15,7 +15,7 @@ const (
 // created.
 func DNSRecordsCreated(m manager.Manager, res *DNSSDServiceInstance) {
 	m.
-		GetEventRecorderFor("proclaim."+res.Status.ProviderID).
+		GetEventRecorderFor("proclaim-"+res.Status.ProviderID).
 		Event(
 			res,
 			"Normal",
@@ -39,7 +39,7 @@ func DNSRecordsCreatedCondition() metav1.Condition {
 // updated.
 func DNSRecordsUpdated(m manager.Manager, res *DNSSDServiceInstance) {
 	m.
-		GetEventRecorderFor("proclaim."+res.Status.ProviderID).
+		GetEventRecorderFor("proclaim-"+res.Status.ProviderID).
 		Event(
 			res,
 			"Normal",
@@ -63,7 +63,7 @@ func DNSRecordsUpdatedCondition() metav1.Condition {
 // verified to match the service instance spec.
 func DNSRecordsVerified(m manager.Manager, res *DNSSDServiceInstance) {
 	m.
-		GetEventRecorderFor("proclaim."+res.Status.ProviderID).
+		GetEventRecorderFor("proclaim-"+res.Status.ProviderID).
 		Event(
 			res,
 			"Normal",
@@ -87,7 +87,7 @@ func DNSRecordsObservedCondition() metav1.Condition {
 // deleted.
 func DNSRecordsDeleted(m manager.Manager, res *DNSSDServiceInstance) {
 	m.
-		GetEventRecorderFor("proclaim."+res.Status.ProviderID).
+		GetEventRecorderFor("proclaim-"+res.Status.ProviderID).
 		Event(
 			res,
 			"Normal",
@@ -111,7 +111,7 @@ func DNSRecordsDeletedCondition() metav1.Condition {
 // adopted by the controller.
 func InstanceAdopted(m manager.Manager, res *DNSSDServiceInstance) {
 	m.
-		GetEventRecorderFor("proclaim."+res.Status.ProviderID).
+		GetEventRecorderFor("proclaim-"+res.Status.ProviderID).
 		Eventf(
 			res,
 			"Normal",
@@ -145,7 +145,7 @@ func ProviderError(
 	err error,
 ) {
 	m.
-		GetEventRecorderFor("proclaim."+id).
+		GetEventRecorderFor("proclaim-"+id).
 		Eventf(
 			res,
 			"Warning",

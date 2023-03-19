@@ -25,7 +25,7 @@ func (a *advertiser) ID() string {
 func (a *advertiser) Advertise(
 	ctx context.Context,
 	inst dnssd.ServiceInstance,
-) (provider.AdvertiseResult, error) {
+) (provider.ChangeSet, error) {
 	cs := &types.ChangeBatch{
 		Comment: aws.String(fmt.Sprintf(
 			"dogmatiq/proclaim: advertising %s instance: %s ",
@@ -35,47 +35,24 @@ func (a *advertiser) Advertise(
 	}
 
 	if err := a.syncPTR(ctx, inst, cs); err != nil {
-		return provider.AdvertiseError, err
+		return provider.ChangeSet{}, err
 	}
 
 	if err := a.syncSRV(ctx, inst, cs); err != nil {
-		return provider.AdvertiseError, err
+		return provider.ChangeSet{}, err
 	}
 
 	if err := a.syncTXT(ctx, inst, cs); err != nil {
-		return provider.AdvertiseError, err
+		return provider.ChangeSet{}, err
 	}
 
-	if len(cs.Changes) == 0 {
-		return provider.InstanceAlreadyAdvertised, nil
-	}
-
-	if _, err := a.Client.ChangeResourceRecordSets(
-		ctx,
-		&route53.ChangeResourceRecordSetsInput{
-			HostedZoneId: aws.String(a.ZoneID),
-			ChangeBatch:  cs,
-		},
-	); err != nil {
-		return provider.AdvertiseError, err
-	}
-
-	// If we had to create any of the resource record sets then the service was
-	// never "fully" advertised, as all of the records (PTR, SRV and TXT) are
-	// mandatory according to the DNS-SD spec.
-	for _, c := range cs.Changes {
-		if c.Action == types.ChangeActionCreate {
-			return provider.AdvertisedNewInstance, nil
-		}
-	}
-
-	return provider.UpdatedExistingInstance, nil
+	return a.apply(ctx, cs)
 }
 
 func (a *advertiser) Unadvertise(
 	ctx context.Context,
 	inst dnssd.ServiceInstance,
-) (provider.UnadvertiseResult, error) {
+) (provider.ChangeSet, error) {
 	cs := &types.ChangeBatch{
 		Comment: aws.String(fmt.Sprintf(
 			"dogmatiq/proclaim: unadvertising %s instance: %s ",
@@ -85,19 +62,26 @@ func (a *advertiser) Unadvertise(
 	}
 
 	if err := a.deletePTR(ctx, inst, cs); err != nil {
-		return provider.UnadvertiseError, err
+		return provider.ChangeSet{}, err
 	}
 
 	if err := a.deleteSRV(ctx, inst, cs); err != nil {
-		return provider.UnadvertiseError, err
+		return provider.ChangeSet{}, err
 	}
 
 	if err := a.deleteTXT(ctx, inst, cs); err != nil {
-		return provider.UnadvertiseError, err
+		return provider.ChangeSet{}, err
 	}
 
+	return a.apply(ctx, cs)
+}
+
+func (a *advertiser) apply(
+	ctx context.Context,
+	cs *types.ChangeBatch,
+) (provider.ChangeSet, error) {
 	if len(cs.Changes) == 0 {
-		return provider.InstanceNotAdvertised, nil
+		return provider.ChangeSet{}, nil
 	}
 
 	if _, err := a.Client.ChangeResourceRecordSets(
@@ -107,10 +91,34 @@ func (a *advertiser) Unadvertise(
 			ChangeBatch:  cs,
 		},
 	); err != nil {
-		return provider.UnadvertiseError, err
+		return provider.ChangeSet{}, err
 	}
 
-	return provider.UnadvertisedExistingInstance, nil
+	var result provider.ChangeSet
+
+	for _, c := range cs.Changes {
+		var change provider.Change
+
+		switch c.Action {
+		case types.ChangeActionCreate:
+			change = provider.Created
+		case types.ChangeActionDelete:
+			change = provider.Deleted
+		case types.ChangeActionUpsert:
+			change = provider.Updated
+		}
+
+		switch c.ResourceRecordSet.Type {
+		case types.RRTypePtr:
+			result.PTR = change
+		case types.RRTypeSrv:
+			result.SRV = change
+		case types.RRTypeTxt:
+			result.TXT = change
+		}
+	}
+
+	return result, nil
 }
 
 func (a *advertiser) findResourceRecordSet(

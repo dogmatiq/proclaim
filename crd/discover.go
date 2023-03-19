@@ -15,12 +15,12 @@ const (
 // discovered via DNS-SD.
 func Discovered(m manager.Manager, res *DNSSDServiceInstance) {
 	m.
-		GetEventRecorderFor("proclaim.dns-sd").
+		GetEventRecorderFor("proclaim-dnssd").
 		Event(
 			res,
 			"Normal",
 			"Discovered",
-			"instance is discoverable",
+			"instance discovered",
 		)
 }
 
@@ -39,12 +39,12 @@ func DiscoveredCondition() metav1.Condition {
 // was not discoverable via DNS-SD.
 func NegativeBrowseResult(m manager.Manager, res *DNSSDServiceInstance) {
 	m.
-		GetEventRecorderFor("proclaim.dns-sd").
+		GetEventRecorderFor("proclaim-dnssd").
 		Event(
 			res,
 			"Warning",
 			"NegativeBrowseResult",
-			"instance is not discoverable",
+			"instance not discovered",
 		)
 }
 
@@ -63,12 +63,12 @@ func NegativeBrowseResultCondition() metav1.Condition {
 // was not discoverable via DNS-SD.
 func NegativeLookupResult(m manager.Manager, res *DNSSDServiceInstance) {
 	m.
-		GetEventRecorderFor("proclaim.dns-sd").
+		GetEventRecorderFor("proclaim-dnssd").
 		Event(
 			res,
 			"Warning",
 			"NegativeLookupResult",
-			"instance is not discoverable",
+			"instance not discovered",
 		)
 }
 
@@ -88,7 +88,7 @@ func NegativeLookupResultCondition() metav1.Condition {
 // records.
 func LookupResultOutOfSync(m manager.Manager, res *DNSSDServiceInstance) {
 	m.
-		GetEventRecorderFor("proclaim.dns-sd").
+		GetEventRecorderFor("proclaim-dnssd").
 		Event(
 			res,
 			"Warning",
@@ -117,7 +117,7 @@ func DiscoveryError(
 	err error,
 ) {
 	m.
-		GetEventRecorderFor("proclaim.dns-sd").
+		GetEventRecorderFor("proclaim-dnssd").
 		Eventf(
 			res,
 			"Warning",

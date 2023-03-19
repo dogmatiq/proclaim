@@ -17,49 +17,59 @@ type Advertiser interface {
 
 	// Advertise adds/updates DNS records to advertise the given service
 	// instance.
-	Advertise(ctx context.Context, inst dnssd.ServiceInstance) (AdvertiseResult, error)
+	Advertise(ctx context.Context, inst dnssd.ServiceInstance) (ChangeSet, error)
 
 	// Advertise removes/updates DNS records to stop advertising the given
 	// service instance.
-	Unadvertise(ctx context.Context, inst dnssd.ServiceInstance) (UnadvertiseResult, error)
+	Unadvertise(ctx context.Context, inst dnssd.ServiceInstance) (ChangeSet, error)
 }
 
-// AdvertiseResult is an enumeration of the possible results of an Advertise()
-// call.
-type AdvertiseResult int
+// ChangeSet describes the changes made to DNS records.
+type ChangeSet struct {
+	PTR Change
+	SRV Change
+	TXT Change
+}
+
+// Change is a bit-field that describes the changes made to a specific DNS
+// record.
+type Change int
 
 const (
-	// AdvertiseError indicates that an error occurred while attempting to
-	// advertise the service instance.
-	AdvertiseError AdvertiseResult = iota
+	// NoChange indicates that no changes were made.
+	NoChange Change = 0
 
-	// InstanceAlreadyAdvertised indicates that the service instance was already
-	// advertised correctly, and no changes were made.
-	InstanceAlreadyAdvertised
+	// Created indicates that a record of this type was created.
+	Created Change = 1 << iota
 
-	// AdvertisedNewInstance indicates that the service instance was not previously
-	// advertised and has been advertised successfully.
-	AdvertisedNewInstance
+	// Updated indicates that a record of this type was updated.
+	Updated
 
-	// UpdatedExistingInstance indicates that the service instance was previously advertised
-	// but changes were necessary to at least one DNS record.
-	UpdatedExistingInstance
+	// Deleted indicates that a record of this type was deleted.
+	Deleted
 )
 
-// UnadvertiseResult is an enumeration of the possible results of an
-// Unadvertise() call.
-type UnadvertiseResult int
+// IsEmpty returns true if no changes were made.
+func (cs ChangeSet) IsEmpty() bool {
+	if cs.PTR != NoChange {
+		return false
+	}
 
-const (
-	// UnadvertiseError indicates that an error occurred while attempting to
-	// advertise the service instance.
-	UnadvertiseError UnadvertiseResult = iota
+	if cs.SRV != NoChange {
+		return false
+	}
 
-	// InstanceNotAdvertised indicates that the service instance was not previously
-	// advertised and no changes were made.
-	InstanceNotAdvertised
+	if cs.TXT != NoChange {
+		return false
+	}
 
-	// UnadvertisedExistingInstance indicates that the service instance was previously
-	// advertised and has been unadvertised successfully.
-	UnadvertisedExistingInstance
-)
+	return true
+}
+
+// IsCreate returns true if the change set represents an entirely new
+// instance.
+func (cs ChangeSet) IsCreate() bool {
+	return cs.PTR&Created != 0 ||
+		cs.SRV&Created != 0 ||
+		cs.TXT&Created != 0
+}

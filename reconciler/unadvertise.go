@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/dogmatiq/proclaim/crd"
-	"github.com/dogmatiq/proclaim/provider"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -19,12 +19,6 @@ func (r *Reconciler) unadvertise(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (reconcile.Result, error) {
-	if !controllerutil.ContainsFinalizer(res, crd.FinalizerName) {
-		return reconcile.Result{}, nil
-	}
-
-	advertised := res.Condition(crd.ConditionTypeAdvertised)
-
 	if res.Status.ProviderID != "" {
 		a, ok, err := r.getAdvertiser(ctx, res)
 		if !ok || err != nil {
@@ -32,17 +26,10 @@ func (r *Reconciler) unadvertise(
 			return reconcile.Result{}, err
 		}
 
-		result, err := a.Unadvertise(ctx, instanceFromSpec(res.Spec))
+		advertised := res.Condition(crd.ConditionTypeAdvertised)
 
-		switch result {
-		case provider.UnadvertisedExistingInstance:
-			crd.DNSRecordsDeleted(r.Manager, res)
-			advertised = crd.DNSRecordsDeletedCondition()
-
-		case provider.InstanceNotAdvertised:
-			// no change
-
-		case provider.UnadvertiseError:
+		cs, err := a.Unadvertise(ctx, instanceFromSpec(res.Spec))
+		if err != nil {
 			crd.ProviderError(
 				r.Manager,
 				res,
@@ -51,6 +38,9 @@ func (r *Reconciler) unadvertise(
 				err,
 			)
 			advertised = crd.UnadvertiseErrorCondition(err)
+		} else if !cs.IsEmpty() {
+			crd.DNSRecordsDeleted(r.Manager, res)
+			advertised = crd.DNSRecordsDeletedCondition()
 		}
 
 		if err := r.update(
@@ -58,6 +48,10 @@ func (r *Reconciler) unadvertise(
 			crd.MergeCondition(advertised),
 		); err != nil {
 			return reconcile.Result{}, err
+		}
+
+		if advertised.Status != metav1.ConditionFalse {
+			return reconcile.Result{Requeue: true}, nil
 		}
 	}
 

@@ -43,10 +43,10 @@ func (a *advertiser) syncPTR(
 	ctx context.Context,
 	inst dnssd.ServiceInstance,
 	cs *changeSet,
-) (bool, error) {
+) error {
 	current, ok, err := a.findPTR(ctx, inst)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	desired := dnsimple.ZoneRecordAttributes{
@@ -59,11 +59,11 @@ func (a *advertiser) syncPTR(
 
 	if ok {
 		cs.Update(current, desired)
-		return true, nil
+	} else {
+		cs.Create(desired)
 	}
 
-	cs.Create(desired)
-	return false, nil
+	return nil
 }
 
 func (a *advertiser) deletePTR(

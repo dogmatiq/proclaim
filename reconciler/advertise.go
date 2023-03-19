@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/dogmatiq/proclaim/crd"
-	"github.com/dogmatiq/proclaim/provider"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -46,28 +45,12 @@ func (r *Reconciler) advertise(
 		return reconcile.Result{Requeue: true}, err
 	}
 
-	// Update the DNS records to reflect the service instance's existence.
-	result, err := a.Advertise(ctx, instanceFromSpec(res.Spec))
-
 	advertised := res.Condition(crd.ConditionTypeAdvertised)
 
-	// Record an event about the result of the advertisement.
-	switch result {
-	case provider.AdvertisedNewInstance:
-		crd.DNSRecordsCreated(r.Manager, res)
-		advertised = crd.DNSRecordsCreatedCondition()
+	// Update the DNS records to reflect the service instance's existence.
+	cs, err := a.Advertise(ctx, instanceFromSpec(res.Spec))
 
-	case provider.InstanceAlreadyAdvertised:
-		crd.DNSRecordsVerified(r.Manager, res)
-		if advertised.Status != metav1.ConditionTrue {
-			advertised = crd.DNSRecordsObservedCondition()
-		}
-
-	case provider.UpdatedExistingInstance:
-		crd.DNSRecordsUpdated(r.Manager, res)
-		advertised = crd.DNSRecordsUpdatedCondition()
-
-	case provider.AdvertiseError:
+	if err != nil {
 		crd.ProviderError(
 			r.Manager,
 			res,
@@ -76,6 +59,17 @@ func (r *Reconciler) advertise(
 			err,
 		)
 		advertised = crd.AdvertiseErrorCondition(err)
+	} else if cs.IsEmpty() {
+		crd.DNSRecordsVerified(r.Manager, res)
+		if advertised.Status != metav1.ConditionTrue {
+			advertised = crd.DNSRecordsObservedCondition()
+		}
+	} else if cs.IsCreate() {
+		crd.DNSRecordsCreated(r.Manager, res)
+		advertised = crd.DNSRecordsCreatedCondition()
+	} else {
+		crd.DNSRecordsUpdated(r.Manager, res)
+		advertised = crd.DNSRecordsUpdatedCondition()
 	}
 
 	discoverable, _ := r.discover(ctx, res)
@@ -85,7 +79,7 @@ func (r *Reconciler) advertise(
 		crd.MergeCondition(advertised),
 		crd.MergeCondition(discoverable),
 		crd.If(
-			result != provider.AdvertiseError,
+			advertised.Status == metav1.ConditionTrue,
 			crd.UpdateLastAdvertised(time.Now()),
 		),
 	); err != nil {
