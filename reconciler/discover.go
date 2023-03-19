@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dogmatiq/dissolve/dnssd"
 	"github.com/dogmatiq/proclaim/crd"
 	"golang.org/x/exp/slices"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,7 +16,7 @@ func (r *Reconciler) needsAdvertise(
 	res *crd.DNSSDServiceInstance,
 ) (bool, time.Duration, error) {
 	advertised := res.Condition(crd.ConditionTypeAdvertised)
-	discoverable, observedTTL := r.discover(ctx, res)
+	inst, ok, discoverable := r.discover(ctx, res)
 
 	if err := r.update(
 		res,
@@ -43,9 +44,9 @@ func (r *Reconciler) needsAdvertise(
 
 	// We found a service instance, but if it doesn't match the spec we
 	// reconcile again after the existing records have (hopefully) expired.
-	if observedTTL >= 0 {
+	if ok && inst.TTL >= 0 {
 		const expiryBuffer = 5 * time.Second
-		return true, observedTTL + expiryBuffer, nil
+		return true, inst.TTL + expiryBuffer, nil
 	}
 
 	// We didn't find an existing service, so we're not waiting for any existing
@@ -64,14 +65,14 @@ func (r *Reconciler) needsAdvertise(
 func (r *Reconciler) discover(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
-) (metav1.Condition, time.Duration) {
+) (dnssd.ServiceInstance, bool, metav1.Condition) {
 	instances, err := r.Resolver.EnumerateInstances(
 		ctx,
 		res.Spec.Instance.ServiceType,
 		res.Spec.Instance.Domain,
 	)
 	if err != nil {
-		return crd.DiscoveryErrorCondition(err), -1
+		return dnssd.ServiceInstance{}, false, crd.DiscoveryErrorCondition(err)
 	}
 
 	if !slices.ContainsFunc(
@@ -81,7 +82,7 @@ func (r *Reconciler) discover(
 		},
 	) {
 		crd.NegativeBrowseResult(r.Manager, res)
-		return crd.NegativeBrowseResultCondition(), -1
+		return dnssd.ServiceInstance{}, false, crd.NegativeBrowseResultCondition()
 	}
 
 	observed, ok, err := r.Resolver.LookupInstance(
@@ -92,11 +93,11 @@ func (r *Reconciler) discover(
 	)
 	if err != nil {
 		crd.DiscoveryError(r.Manager, res, err)
-		return crd.DiscoveryErrorCondition(err), -1
+		return dnssd.ServiceInstance{}, false, crd.DiscoveryErrorCondition(err)
 	}
 	if !ok {
 		crd.NegativeLookupResult(r.Manager, res)
-		return crd.NegativeLookupResultCondition(), -1
+		return dnssd.ServiceInstance{}, false, crd.NegativeLookupResultCondition()
 	}
 
 	desired := instanceFromSpec(res.Spec)
@@ -108,10 +109,10 @@ func (r *Reconciler) discover(
 		desired.TTL = observed.TTL
 		if observed.Equal(desired) {
 			crd.Discovered(r.Manager, res)
-			return crd.DiscoveredCondition(), observed.TTL
+			return observed, true, crd.DiscoveredCondition()
 		}
 	}
 
 	crd.LookupResultOutOfSync(r.Manager, res)
-	return crd.LookupResultOutOfSyncCondition(), observed.TTL
+	return observed, true, crd.LookupResultOutOfSyncCondition()
 }

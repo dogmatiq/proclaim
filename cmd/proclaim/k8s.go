@@ -17,7 +17,7 @@ func init() {
 		container,
 		func(
 			ctx imbue.Context,
-			l logr.Logger,
+			l imbue.ByName[systemLogger, logr.Logger],
 		) (manager.Manager, error) {
 			cfg, err := controller.GetConfig()
 			if err != nil {
@@ -27,7 +27,7 @@ func init() {
 			return controller.NewManager(
 				cfg,
 				controller.Options{
-					Logger: l,
+					Logger: l.Value(),
 				},
 			)
 		},

@@ -72,7 +72,7 @@ func (r *Reconciler) advertise(
 		advertised = crd.DNSRecordsUpdatedCondition()
 	}
 
-	discoverable, _ := r.discover(ctx, res)
+	_, _, discoverable := r.discover(ctx, res)
 
 	if err := r.update(
 		res,

@@ -8,8 +8,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
+type (
+	systemLogger   imbue.Name[logr.Logger]
+	providerLogger imbue.Name[logr.Logger]
+)
+
 func init() {
-	imbue.With0(
+	imbue.With0Named[systemLogger](
 		container,
 		func(
 			ctx imbue.Context,
@@ -19,6 +24,16 @@ func init() {
 					os.Getenv("DEBUG") != "",
 				),
 			), nil
+		},
+	)
+
+	imbue.With1Named[providerLogger](
+		container,
+		func(
+			ctx imbue.Context,
+			l imbue.ByName[systemLogger, logr.Logger],
+		) (logr.Logger, error) {
+			return l.Value().V(1), nil
 		},
 	)
 }

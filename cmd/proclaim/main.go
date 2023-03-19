@@ -30,7 +30,7 @@ func main() {
 			ctx context.Context,
 			m manager.Manager,
 			r *reconciler.Reconciler,
-			l logr.Logger,
+			l imbue.ByName[systemLogger, logr.Logger],
 		) error {
 			err := builder.
 				ControllerManagedBy(m).
@@ -42,7 +42,7 @@ func main() {
 			}
 
 			for _, p := range r.Providers {
-				l.Info(
+				l.Value().Info(
 					"provider enabled",
 					"id", p.ID(),
 				)

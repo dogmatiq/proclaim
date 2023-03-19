@@ -11,12 +11,14 @@ import (
 	"github.com/dnsimple/dnsimple-go/dnsimple"
 	"github.com/dogmatiq/proclaim/provider"
 	"github.com/dogmatiq/proclaim/provider/dnsimpleprovider/internal/dnsimplex"
+	"github.com/go-logr/logr"
 )
 
 // Provider is an implementation of provider.Provider that advertises DNS-SD
 // services on domains hosted by dnsimple.com.
 type Provider struct {
-	API *dnsimple.Client
+	Client *dnsimple.Client
+	Logger logr.Logger
 }
 
 // ID returns a short unique identifier for the provider.
@@ -28,7 +30,7 @@ func (p *Provider) ID() string {
 }
 
 func (p *Provider) environment() string {
-	u, err := url.Parse(p.API.BaseURL)
+	u, err := url.Parse(p.Client.BaseURL)
 	if err != nil {
 		panic(err)
 	}
@@ -74,7 +76,7 @@ func (p *Provider) AdvertiserByDomain(
 	return dnsimplex.Find(
 		ctx,
 		func(opts dnsimple.ListOptions) (*dnsimple.Pagination, []dnsimple.Account, error) {
-			res, err := p.API.Accounts.ListAccounts(ctx, &opts)
+			res, err := p.Client.Accounts.ListAccounts(ctx, &opts)
 			if err != nil {
 				return nil, nil, fmt.Errorf("unable to list accounts: %w", err)
 			}
@@ -94,7 +96,7 @@ func (p *Provider) advertiserByDomain(
 	accountID int64,
 	domain string,
 ) (provider.Advertiser, error) {
-	res, err := p.API.Zones.GetZone(
+	res, err := p.Client.Zones.GetZone(
 		ctx,
 		strconv.FormatInt(accountID, 10),
 		domain,
@@ -109,8 +111,9 @@ func (p *Provider) advertiserByDomain(
 	}
 
 	return &advertiser{
-		API:  p.API.Zones,
-		Zone: res.Data,
+		p.Client.Zones,
+		res.Data,
+		p.Logger,
 	}, nil
 }
 

@@ -11,7 +11,6 @@ require (
 	github.com/dogmatiq/dyad v0.2.2
 	github.com/dogmatiq/ferrite v1.0.0
 	github.com/dogmatiq/imbue v0.6.2
-	github.com/dogmatiq/linger v1.1.0
 	github.com/go-logr/logr v1.2.3
 	github.com/miekg/dns v1.1.52
 	github.com/onsi/ginkgo/v2 v2.9.1
@@ -64,6 +63,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect

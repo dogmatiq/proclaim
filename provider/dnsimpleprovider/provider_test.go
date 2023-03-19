@@ -34,7 +34,7 @@ var _ = Describe("type Provider", func() {
 
 			return providertest.TestContext{
 				Provider: &Provider{
-					API: client,
+					Client: client,
 				},
 				Domain: domain,
 				NameServers: func(ctx context.Context) ([]string, error) {

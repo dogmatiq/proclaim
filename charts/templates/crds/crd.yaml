@@ -119,6 +119,16 @@ spec:
             status:
               type: object
               properties:
+                providerID:
+                  type: string
+                advertiserID:
+                  type: string
+                providerDescription:
+                  type: string
+                  default: Unknown
+                lastAdvertised:
+                  type: string
+                  format: date-time
                 conditions:
                   x-kubernetes-list-map-keys:
                     - type
@@ -155,20 +165,6 @@ spec:
                         description: The time at which this condition was last changed.
                         type: string
                         format: date-time
-
-                lastAdvertised:
-                  type: string
-                  format: date-time
-
-                providerID:
-                  type: string
-                advertiserID:
-                  type: string
-                advertiseGeneration:
-                  type: integer
-                providerDescription:
-                  type: string
-                  default: Unknown
 
       additionalPrinterColumns:
         - name: Instance Name

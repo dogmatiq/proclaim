@@ -8,6 +8,7 @@ import (
 	"github.com/dogmatiq/imbue"
 	"github.com/dogmatiq/proclaim/provider/route53provider"
 	"github.com/dogmatiq/proclaim/reconciler"
+	"github.com/go-logr/logr"
 )
 
 var route53Enabled = ferrite.
@@ -16,12 +17,13 @@ var route53Enabled = ferrite.
 	Required()
 
 func init() {
-	imbue.Decorate1(
+	imbue.Decorate2(
 		container,
 		func(
 			ctx imbue.Context,
 			r *reconciler.Reconciler,
 			c imbue.Optional[*route53.Client],
+			l imbue.ByName[providerLogger, logr.Logger],
 		) (*reconciler.Reconciler, error) {
 			if !route53Enabled.Value() {
 				return r, nil
@@ -36,6 +38,7 @@ func init() {
 				r.Providers,
 				&route53provider.Provider{
 					Client: cli,
+					Logger: l.Value(),
 				},
 			)
 

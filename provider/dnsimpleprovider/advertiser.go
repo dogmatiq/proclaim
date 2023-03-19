@@ -8,11 +8,13 @@ import (
 	"github.com/dnsimple/dnsimple-go/dnsimple"
 	"github.com/dogmatiq/dissolve/dnssd"
 	"github.com/dogmatiq/proclaim/provider"
+	"github.com/go-logr/logr"
 )
 
 type advertiser struct {
-	API  *dnsimple.ZonesService
-	Zone *dnsimple.Zone
+	Client *dnsimple.ZonesService
+	Zone   *dnsimple.Zone
+	Logger logr.Logger
 }
 
 func (a *advertiser) ID() string {
@@ -69,7 +71,7 @@ func (a *advertiser) apply(
 	accountID := strconv.FormatInt(a.Zone.AccountID, 10)
 
 	for _, rec := range cs.deletes {
-		if _, err := a.API.DeleteRecord(ctx, accountID, a.Zone.Name, rec.ID); err != nil {
+		if _, err := a.Client.DeleteRecord(ctx, accountID, a.Zone.Name, rec.ID); err != nil {
 			return provider.ChangeSet{}, fmt.Errorf("unable to delete %s record: %w", rec.Type, err)
 		}
 
@@ -81,10 +83,19 @@ func (a *advertiser) apply(
 		case "TXT":
 			result.TXT |= provider.Deleted
 		}
+
+		a.Logger.Info(
+			"DELETE record",
+			"type", rec.Type,
+			"name", rec.Name,
+			"content", rec.Content,
+			"priority", rec.Priority,
+			"ttl", rec.TTL,
+		)
 	}
 
 	for _, up := range cs.updates {
-		if _, err := a.API.UpdateRecord(ctx, accountID, a.Zone.Name, up.Before.ID, up.After); err != nil {
+		if _, err := a.Client.UpdateRecord(ctx, accountID, a.Zone.Name, up.Before.ID, up.After); err != nil {
 			return provider.ChangeSet{}, fmt.Errorf("unable to update %s record: %w", up.Before.Type, err)
 		}
 
@@ -96,10 +107,22 @@ func (a *advertiser) apply(
 		case "TXT":
 			result.TXT |= provider.Updated
 		}
+
+		a.Logger.Info(
+			"UPDATE record",
+			"type", up.Before.Type,
+			"name", up.Before.Name,
+			"content_before", up.Before.Content,
+			"priority_before", up.Before.Priority,
+			"ttl_before", up.Before.TTL,
+			"content_after", up.After.Content,
+			"priority_after", up.After.Priority,
+			"ttl_after", up.After.TTL,
+		)
 	}
 
 	for _, attr := range cs.creates {
-		if _, err := a.API.CreateRecord(ctx, accountID, a.Zone.Name, attr); err != nil {
+		if _, err := a.Client.CreateRecord(ctx, accountID, a.Zone.Name, attr); err != nil {
 			return provider.ChangeSet{}, fmt.Errorf("unable to create %s record: %w", attr.Type, err)
 		}
 
@@ -111,6 +134,15 @@ func (a *advertiser) apply(
 		case "TXT":
 			result.TXT |= provider.Created
 		}
+
+		a.Logger.Info(
+			"CREATE record",
+			"type", attr.Type,
+			"name", attr.Name,
+			"content", attr.Content,
+			"priority", attr.Priority,
+			"ttl", attr.TTL,
+		)
 	}
 
 	return result, nil

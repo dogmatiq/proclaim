@@ -17,7 +17,7 @@ func (a *advertiser) findSRV(
 	return dnsimplex.One(
 		ctx,
 		func(opts dnsimple.ListOptions) (*dnsimple.Pagination, []dnsimple.ZoneRecord, error) {
-			res, err := a.API.ListRecords(
+			res, err := a.Client.ListRecords(
 				ctx,
 				strconv.FormatInt(a.Zone.AccountID, 10),
 				a.Zone.Name,

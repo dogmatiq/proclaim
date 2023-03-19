@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/dogmatiq/proclaim/provider"
+	"github.com/go-logr/logr"
 )
 
 const defaultPartition = "aws"
@@ -16,6 +17,7 @@ const defaultPartition = "aws"
 type Provider struct {
 	Client      *route53.Client
 	PartitionID string
+	Logger      logr.Logger
 }
 
 // ID returns a short unique identifier for the provider.
@@ -48,8 +50,9 @@ func (p *Provider) AdvertiserByID(
 	}
 
 	return &advertiser{
-		Client: p.Client,
-		ZoneID: id,
+		p.Client,
+		id,
+		p.Logger,
 	}, nil
 }
 
@@ -85,8 +88,9 @@ func (p *Provider) AdvertiserByDomain(
 	}
 
 	return &advertiser{
-		Client: p.Client,
-		ZoneID: *zone.Id,
+		p.Client,
+		*zone.Id,
+		p.Logger,
 	}, true, nil
 }
 

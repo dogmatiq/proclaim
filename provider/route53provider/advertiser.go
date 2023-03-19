@@ -4,21 +4,20 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/dogmatiq/dissolve/dnssd"
-	"github.com/dogmatiq/linger"
-	"github.com/dogmatiq/linger/backoff"
 	"github.com/dogmatiq/proclaim/provider"
+	"github.com/go-logr/logr"
 	"github.com/miekg/dns"
 )
 
 type advertiser struct {
 	Client *route53.Client
 	ZoneID string
+	Logger logr.Logger
 }
 
 func (a *advertiser) ID() string {
@@ -87,7 +86,7 @@ func (a *advertiser) apply(
 		return provider.ChangeSet{}, nil
 	}
 
-	out, err := a.Client.ChangeResourceRecordSets(
+	_, err := a.Client.ChangeResourceRecordSets(
 		ctx,
 		&route53.ChangeResourceRecordSetsInput{
 			HostedZoneId: aws.String(a.ZoneID),
@@ -96,32 +95,6 @@ func (a *advertiser) apply(
 	)
 	if err != nil {
 		return provider.ChangeSet{}, err
-	}
-
-	status := out.ChangeInfo.Status
-	counter := backoff.Counter{
-		Strategy: backoff.WithTransforms(
-			backoff.Exponential(500*time.Millisecond),
-			linger.Limiter(0, 30*time.Second),
-		),
-	}
-
-	for status == types.ChangeStatusPending {
-		if err := counter.Sleep(ctx, nil); err != nil {
-			return provider.ChangeSet{}, err
-		}
-
-		out, err := a.Client.GetChange(
-			ctx,
-			&route53.GetChangeInput{
-				Id: out.ChangeInfo.Id,
-			},
-		)
-		if err != nil {
-			return provider.ChangeSet{}, err
-		}
-
-		status = out.ChangeInfo.Status
 	}
 
 	var result provider.ChangeSet
@@ -145,6 +118,16 @@ func (a *advertiser) apply(
 			result.SRV = change
 		case types.RRTypeTxt:
 			result.TXT = change
+		}
+
+		for _, rec := range c.ResourceRecordSet.ResourceRecords {
+			a.Logger.Info(
+				string(c.Action)+" record",
+				"type", c.ResourceRecordSet.Type,
+				"name", c.ResourceRecordSet.Name,
+				"value", *rec.Value,
+				"ttl", *c.ResourceRecordSet.TTL,
+			)
 		}
 	}
 
