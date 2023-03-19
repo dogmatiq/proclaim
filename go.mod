@@ -4,13 +4,14 @@ go 1.20
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.17.6
-	github.com/aws/aws-sdk-go-v2/config v1.18.17
+	github.com/aws/aws-sdk-go-v2/config v1.18.18
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.27.4
 	github.com/dnsimple/dnsimple-go v1.2.0
 	github.com/dogmatiq/dissolve v0.2.0
 	github.com/dogmatiq/dyad v0.2.2
-	github.com/dogmatiq/ferrite v0.6.0
+	github.com/dogmatiq/ferrite v1.0.0
 	github.com/dogmatiq/imbue v0.6.2
+	github.com/dogmatiq/linger v1.1.0
 	github.com/go-logr/logr v1.2.3
 	github.com/miekg/dns v1.1.52
 	github.com/onsi/ginkgo/v2 v2.9.1
