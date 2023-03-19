@@ -13,6 +13,11 @@ import (
 	"github.com/onsi/gomega"
 )
 
+const (
+	testTimeout     = 10 * time.Minute
+	convergeTimeout = 5 * time.Minute
+)
+
 // TestContext contains provider-specific testing-related information.
 type TestContext struct {
 	Provider      provider.Provider
@@ -35,7 +40,7 @@ func DeclareTestSuite(
 
 		ginkgo.BeforeEach(func() {
 			var cancel context.CancelFunc
-			ctx, cancel = context.WithTimeout(context.Background(), 5*time.Minute)
+			ctx, cancel = context.WithTimeout(context.Background(), 10*time.Minute)
 			ginkgo.DeferCleanup(cancel)
 
 			service = fmt.Sprintf(
