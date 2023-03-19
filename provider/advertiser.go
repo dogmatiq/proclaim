@@ -9,11 +9,9 @@ import (
 // Advertiser is an interface for advertising DNS-SD service instances on a
 // specific domain.
 type Advertiser interface {
-	// ID returns a unique identifier for the advertiser.
-	//
-	// The identifier must uniquely describe this advertiser within the context
-	// of the provider that created it.
-	ID() string
+	// ID returns a data-structure that unique identifies this advertiser within
+	// the provider that created it.
+	ID() map[string]any
 
 	// Advertise adds/updates DNS records to advertise the given service
 	// instance.

@@ -13,7 +13,7 @@ const ConditionTypeAdopted = "Adopted"
 // adopted by the controller.
 func InstanceAdopted(m manager.Manager, res *DNSSDServiceInstance) {
 	m.
-		GetEventRecorderFor("proclaim-"+res.Status.ProviderID).
+		GetEventRecorderFor("proclaim-"+res.Status.Provider).
 		Eventf(
 			res,
 			"Normal",

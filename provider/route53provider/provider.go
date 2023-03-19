@@ -2,6 +2,7 @@ package route53provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -39,11 +40,17 @@ func (p *Provider) Describe() string {
 // AdvertiserByID returns the Advertiser with the given ID.
 func (p *Provider) AdvertiserByID(
 	ctx context.Context,
-	id string,
+	id map[string]any,
 ) (provider.Advertiser, error) {
-	if _, err := p.Client.GetHostedZone(ctx,
+	zoneID, err := unmarshalAdvertiserID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := p.Client.GetHostedZone(
+		ctx,
 		&route53.GetHostedZoneInput{
-			Id: aws.String(id),
+			Id: aws.String(zoneID),
 		},
 	); err != nil {
 		return nil, fmt.Errorf("unable to get hosted zone: %w", err)
@@ -51,7 +58,7 @@ func (p *Provider) AdvertiserByID(
 
 	return &advertiser{
 		p.Client,
-		id,
+		zoneID,
 		p.Logger,
 	}, nil
 }
@@ -99,4 +106,26 @@ func (p *Provider) partitionID() string {
 		return defaultPartition
 	}
 	return p.PartitionID
+}
+
+// marshalAdvertiserID returns the ID of the advertiser for the given zone.
+func marshalAdvertiserID(zoneID string) map[string]any {
+	return map[string]any{
+		"hostedZoneID": zoneID,
+	}
+}
+
+// unmarshalAdvertiserID parses an advertiser ID into its constituent parts.
+func unmarshalAdvertiserID(id map[string]any) (zoneID string, err error) {
+	zoneIDAny, ok := id["hostedZoneID"]
+	if !ok {
+		return "", errors.New("invalid advertiser ID: missing hostedZoneID key")
+	}
+
+	zoneID, ok = zoneIDAny.(string)
+	if !ok || zoneID == "" {
+		return "", errors.New("invalid advertiser ID: hostedZoneID must be a non-empty string")
+	}
+
+	return zoneID, nil
 }

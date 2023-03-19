@@ -14,9 +14,9 @@ import (
 type DNSSDServiceInstanceStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 
-	ProviderDescription string `json:"providerDescription,omitempty"`
-	ProviderID          string `json:"providerID,omitempty"`
-	AdvertiserID        string `json:"advertiserID,omitempty"`
+	ProviderDescription string         `json:"providerDescription,omitempty"`
+	Provider            string         `json:"provider,omitempty"`
+	Advertiser          map[string]any `json:"advertiser,omitempty"`
 }
 
 // Condition returns the condition with the given type.
@@ -104,12 +104,12 @@ func UpdateProviderDescription(desc string) StatusUpdate {
 	}
 }
 
-// AssociateProvider is an StatusUpdate that sets the ProviderID and
-// AdvertiserID fields of the resource's status.
-func AssociateProvider(providerID, advertiserID string) StatusUpdate {
+// AssociateProvider is an StatusUpdate that sets the Provider and
+// Advertiser fields of the resource's status.
+func AssociateProvider(provider string, advertiser map[string]any) StatusUpdate {
 	return func(res *DNSSDServiceInstance) {
-		res.Status.ProviderID = providerID
-		res.Status.AdvertiserID = advertiserID
+		res.Status.Provider = provider
+		res.Status.Advertiser = advertiser
 	}
 }
 

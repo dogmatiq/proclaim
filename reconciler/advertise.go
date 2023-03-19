@@ -63,7 +63,7 @@ func (r *Reconciler) doAdvertise(
 		crd.ProviderError(
 			r.Manager,
 			res,
-			res.Status.ProviderID,
+			res.Status.Provider,
 			res.Status.ProviderDescription,
 			err,
 		)

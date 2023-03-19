@@ -142,16 +142,17 @@ spec:
             status:
               type: object
               properties:
-                providerID:
+                provider:
                   description: The internal ID of the DNS provider that is advertising the DNS-SD service instance.
                   type: string
                 providerDescription:
                   description: A human-readable description of the DNS provider that is advertising the DNS-SD service instance.
                   type: string
                   default: Unknown
-                advertiserID:
-                  description: The internal ID of the DNS advertiser that is advertising the DNS-SD service instance.
-                  type: string
+                advertiser:
+                  description: A provider-specific structure identifying the advertiser.
+                  type: object
+                  additionalProperties: true
                 conditions:
                   x-kubernetes-list-map-keys:
                     - type

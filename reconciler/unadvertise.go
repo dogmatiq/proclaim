@@ -19,7 +19,7 @@ func (r *Reconciler) unadvertise(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (reconcile.Result, error) {
-	if res.Status.ProviderID != "" {
+	if res.Status.Provider != "" {
 		a, ok, err := r.getAdvertiser(ctx, res)
 		if !ok || err != nil {
 			// The associated provider is not known to this reconciler.
@@ -33,7 +33,7 @@ func (r *Reconciler) unadvertise(
 			crd.ProviderError(
 				r.Manager,
 				res,
-				res.Status.ProviderID,
+				res.Status.Provider,
 				res.Status.ProviderDescription,
 				err,
 			)

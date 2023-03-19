@@ -55,7 +55,7 @@ func (p *Provider) Describe() string {
 // AdvertiserByID returns the Advertiser with the given ID.
 func (p *Provider) AdvertiserByID(
 	ctx context.Context,
-	id string,
+	id map[string]any,
 ) (provider.Advertiser, error) {
 	accountID, domain, err := unmarshalAdvertiserID(id)
 	if err != nil {
@@ -118,25 +118,33 @@ func (p *Provider) advertiserByDomain(
 }
 
 // marshalAdvertiserID returns the ID of the advertiser for the given zone.
-func marshalAdvertiserID(z *dnsimple.Zone) string {
-	return fmt.Sprintf("%d %s", z.AccountID, z.Name)
+func marshalAdvertiserID(z *dnsimple.Zone) map[string]any {
+	return map[string]any{
+		"accountID": z.AccountID,
+		"zoneName":  z.Name,
+	}
 }
 
 // unmarshalAdvertiserID parses an advertiser ID into its constituent parts.
-func unmarshalAdvertiserID(id string) (accountID int64, domain string, err error) {
-	i := strings.IndexByte(id, ' ')
-	if i == -1 {
-		return 0, "", fmt.Errorf("invalid advertiser ID: missing separator")
+func unmarshalAdvertiserID(id map[string]any) (accountID int64, domain string, err error) {
+	accountIDAny, ok := id["accountID"]
+	if !ok {
+		return 0, "", errors.New("invalid advertiser ID: missing accountID key")
 	}
 
-	accountID, _ = strconv.ParseInt(id[:i], 10, 64)
-	if accountID <= 0 {
-		return 0, "", errors.New("invalid advertiser ID: account ID component must be a positive number")
+	accountID, ok = accountIDAny.(int64)
+	if !ok || accountID <= 0 {
+		return 0, "", errors.New("invalid advertiser ID: accountID must be a positive integer")
 	}
 
-	domain = id[i+1:]
-	if domain == "" {
-		return 0, "", errors.New("invalid advertiser ID: domain component must not be empty")
+	zoneNameAny, ok := id["zoneName"]
+	if !ok {
+		return 0, "", errors.New("invalid advertiser ID: missing zoneName key")
+	}
+
+	domain, ok = zoneNameAny.(string)
+	if !ok || domain == "" {
+		return 0, "", errors.New("invalid advertiser ID: zoneName must be a non-empty string")
 	}
 
 	return accountID, domain, nil

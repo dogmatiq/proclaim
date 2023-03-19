@@ -13,7 +13,7 @@ func (r *Reconciler) getOrAssociateAdvertiser(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (provider.Advertiser, bool, error) {
-	if res.Status.ProviderID != "" {
+	if res.Status.Provider != "" {
 		return r.getAdvertiser(ctx, res)
 	}
 	return r.associateAdvertiser(ctx, res)
@@ -83,7 +83,7 @@ func (r *Reconciler) getAdvertiser(
 	res *crd.DNSSDServiceInstance,
 ) (provider.Advertiser, bool, error) {
 	for _, p := range r.Providers {
-		if p.ID() != res.Status.ProviderID {
+		if p.ID() != res.Status.Provider {
 			continue
 		}
 
@@ -95,7 +95,7 @@ func (r *Reconciler) getAdvertiser(
 			return nil, false, err
 		}
 
-		a, err := p.AdvertiserByID(ctx, res.Status.AdvertiserID)
+		a, err := p.AdvertiserByID(ctx, res.Status.Advertiser)
 		if err != nil {
 			crd.ProviderError(
 				r.Manager,

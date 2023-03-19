@@ -17,7 +17,7 @@ type advertiser struct {
 	Logger logr.Logger
 }
 
-func (a *advertiser) ID() string {
+func (a *advertiser) ID() map[string]any {
 	return marshalAdvertiserID(a.Zone)
 }
 

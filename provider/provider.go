@@ -17,8 +17,8 @@ type Provider interface {
 	// Describe returns a human-readable description of the provider.
 	Describe() string
 
-	// AdvertiserByID returns the Advertiser with the given ID.
-	AdvertiserByID(ctx context.Context, id string) (Advertiser, error)
+	// AdvertiserByID returns the Advertiser with the given identity structure.
+	AdvertiserByID(ctx context.Context, id map[string]any) (Advertiser, error)
 
 	// AdvertiserByDomain returns the Advertiser used to advertise services on
 	// the given domain.
