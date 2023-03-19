@@ -1,0 +1,12 @@
+apiVersion: proclaim.dogmatiq.io/v1
+kind: DNSSDServiceInstance
+metadata:
+  name: simple-example
+spec:
+  instance:
+    name: primary-webserver
+    serviceType: _http._tcp
+    domain: example.org
+    targets:
+      - host: www.example.org
+        port: 80
