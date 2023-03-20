@@ -12,11 +12,14 @@ proclaim:
 
 image:
   repository: ghcr.io/dogmatiq/proclaim
-  # Overrides the image tag whose default is v{{ .Chart.AppVersion }}
   tag: "dev"
   pullPolicy: Never
 
 imagePullSecrets: []
+
+env:
+  - name: DEBUG
+    value: "true"
 
 nameOverride: ""
 fullnameOverride: ""
