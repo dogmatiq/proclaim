@@ -14,15 +14,15 @@ import (
 )
 
 const (
-	testTimeout     = 10 * time.Minute
-	convergeTimeout = 5 * time.Minute
+	testTimeout     = 1 * time.Minute
+	convergeTimeout = 100 * time.Millisecond
 )
 
 // TestContext contains provider-specific testing-related information.
 type TestContext struct {
 	Provider      provider.Provider
 	Domain        string
-	NameServers   func(ctx context.Context) ([]string, error)
+	GetRecords    func(ctx context.Context) ([]dns.RR, error)
 	DeleteRecords func(ctx context.Context) error
 }
 
@@ -34,6 +34,7 @@ func DeclareTestSuite(
 		var (
 			ctx      context.Context
 			tctx     TestContext
+			server   *server
 			resolver *dnssd.UnicastResolver
 			service  string
 		)
@@ -51,23 +52,63 @@ func DeclareTestSuite(
 
 			tctx = setUp(ctx)
 
-			servers, err := tctx.NameServers(ctx)
+			var err error
+			server, resolver, err = startServer()
 			gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-			gomega.Expect(servers).ShouldNot(gomega.BeEmpty())
-
-			resolver = &dnssd.UnicastResolver{
-				Config: &dns.ClientConfig{
-					Port:     "53",
-					Ndots:    1,
-					Timeout:  5,
-					Attempts: 10,
-					Servers:  servers,
-				},
-			}
+			ginkgo.DeferCleanup(server.Stop)
 
 			err = tctx.DeleteRecords(ctx)
 			gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 		})
+
+		expectEnumerateToMatch := func(expect ...dnssd.ServiceInstance) {
+			records, err := tctx.GetRecords(ctx)
+			gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
+			server.SetRecords(records)
+
+			var names []string
+			for _, inst := range expect {
+				names = append(names, inst.Name)
+			}
+
+			instances, err := resolver.EnumerateInstances(ctx, service, tctx.Domain)
+			gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
+			gomega.ExpectWithOffset(1, instances).To(gomega.ConsistOf(names))
+		}
+
+		expectLookupToMatch := func(expect dnssd.ServiceInstance) {
+			records, err := tctx.GetRecords(ctx)
+			gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
+			server.SetRecords(records)
+
+			actual, ok, err := resolver.LookupInstance(
+				ctx,
+				expect.Name,
+				expect.ServiceType,
+				expect.Domain,
+			)
+			gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
+			gomega.ExpectWithOffset(1, ok).To(gomega.BeTrue(), "instance not found")
+
+			if !actual.Equal(expect) {
+				gomega.ExpectWithOffset(1, actual).To(gomega.Equal(expect))
+			}
+		}
+
+		expectLookupToFail := func(inst dnssd.ServiceInstance) {
+			records, err := tctx.GetRecords(ctx)
+			gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
+			server.SetRecords(records)
+
+			_, ok, err := resolver.LookupInstance(
+				ctx,
+				inst.Name,
+				inst.ServiceType,
+				inst.Domain,
+			)
+			gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred())
+			gomega.ExpectWithOffset(1, ok).To(gomega.BeFalse(), "instance not found unexpectedly")
+		}
 
 		ginkgo.When("the provider can not advertise on the domain", func() {
 			ginkgo.Describe("func AdvertiserByDomain()", func() {
@@ -121,28 +162,28 @@ func DeclareTestSuite(
 					gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 					gomega.Expect(cs.IsCreate()).To(gomega.BeTrue())
 
-					expectInstanceToEventuallyEqual(ctx, resolver, inst)
-					expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain, expect[:i+1]...)
+					expectEnumerateToMatch(expect[:i+1]...)
+					expectLookupToMatch(inst)
 				}
 
 				// Check that all instances still exist after they have all the
 				// advertise calls.
 				for _, inst := range expect {
-					expectInstanceToEventuallyEqual(ctx, resolver, inst)
+					expectLookupToMatch(inst)
 				}
 
-				expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain, expect...)
+				expectEnumerateToMatch(expect...)
 
 				for i, inst := range expect {
 					cs, err := advertiser.Unadvertise(ctx, inst)
 					gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 					gomega.Expect(cs.IsEmpty()).To(gomega.BeFalse())
 
-					expectInstanceToEventuallyEqual(ctx, resolver, inst)
-					expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain, expect[i+1:]...)
+					expectEnumerateToMatch(expect[i+1:]...)
+					expectLookupToFail(inst)
 				}
 
-				expectInstanceListToEventuallyEqual(ctx, resolver, service, tctx.Domain)
+				expectEnumerateToMatch()
 			})
 
 			ginkgo.It("can update an existing instance", func() {
@@ -186,7 +227,7 @@ func DeclareTestSuite(
 				gomega.Expect(cs.IsCreate()).To(gomega.BeFalse())
 				gomega.Expect(cs.IsEmpty()).To(gomega.BeFalse())
 
-				expectInstanceToEventuallyEqual(ctx, resolver, after)
+				expectLookupToMatch(after)
 			})
 
 			ginkgo.It("ignores an existing identical instance", func() {
@@ -213,7 +254,7 @@ func DeclareTestSuite(
 				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 				gomega.Expect(cs.IsEmpty()).To(gomega.BeTrue())
 
-				expectInstanceToEventuallyEqual(ctx, resolver, expect)
+				expectLookupToMatch(expect)
 			})
 
 			ginkgo.It("does not fail when unadvertising a non-existent instance", func() {

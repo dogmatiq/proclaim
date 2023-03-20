@@ -3,6 +3,8 @@ package route53provider_test
 import (
 	"context"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
@@ -10,6 +12,7 @@ import (
 	"github.com/dogmatiq/proclaim/provider/internal/providertest"
 	. "github.com/dogmatiq/proclaim/provider/route53provider"
 	"github.com/go-logr/logr"
+	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo/v2"
 )
 
@@ -46,8 +49,8 @@ var _ = Describe("type Provider", func() {
 					Logger: logr.Discard(),
 				},
 				Domain: domain,
-				NameServers: func(ctx context.Context) ([]string, error) {
-					var servers []string
+				GetRecords: func(ctx context.Context) ([]dns.RR, error) {
+					var records []dns.RR
 
 					in := &route53.ListResourceRecordSetsInput{
 						HostedZoneId: aws.String(hostedZoneID),
@@ -59,22 +62,20 @@ var _ = Describe("type Provider", func() {
 							return nil, err
 						}
 
-						for _, rr := range out.ResourceRecordSets {
-							if rr.Type == types.RRTypeNs {
-								for _, r := range rr.ResourceRecords {
-									servers = append(servers, *r.Value)
-								}
-							}
+						for _, set := range out.ResourceRecordSets {
+							records = append(records, convertRecords(set)...)
 						}
 
 						if !out.IsTruncated {
-							return servers, nil
+							break
 						}
 
 						in.StartRecordIdentifier = out.NextRecordIdentifier
 						in.StartRecordName = out.NextRecordName
 						in.StartRecordType = out.NextRecordType
 					}
+
+					return records, nil
 				},
 				DeleteRecords: func(ctx context.Context) error {
 					cs := &types.ChangeBatch{}
@@ -133,3 +134,67 @@ var _ = Describe("type Provider", func() {
 		},
 	)
 })
+
+func convertRecords(set types.ResourceRecordSet) []dns.RR {
+	var records []dns.RR
+
+	for _, rec := range set.ResourceRecords {
+		switch set.Type {
+		case types.RRTypePtr:
+			records = append(records, &dns.PTR{
+				Hdr: dns.RR_Header{
+					Name:   *set.Name,
+					Rrtype: dns.TypePTR,
+					Class:  dns.ClassINET,
+					Ttl:    uint32(*set.TTL),
+				},
+				Ptr: *rec.Value,
+			})
+		case types.RRTypeSrv:
+			parts := strings.Split(*rec.Value, " ")
+
+			priority, err := strconv.Atoi(parts[0])
+			if err != nil {
+				panic(err)
+			}
+
+			weight, err := strconv.Atoi(parts[1])
+			if err != nil {
+				panic(err)
+			}
+
+			port, err := strconv.Atoi(parts[2])
+			if err != nil {
+				panic(err)
+			}
+
+			records = append(records, &dns.SRV{
+				Hdr: dns.RR_Header{
+					Name:   *set.Name,
+					Rrtype: dns.TypeSRV,
+					Class:  dns.ClassINET,
+					Ttl:    uint32(*set.TTL),
+				},
+				Target:   parts[3],
+				Port:     uint16(port),
+				Priority: uint16(priority),
+				Weight:   uint16(weight),
+			})
+		case types.RRTypeTxt:
+			records = append(records, &dns.TXT{
+				Hdr: dns.RR_Header{
+					Name:   *set.Name,
+					Rrtype: dns.TypeTXT,
+					Class:  dns.ClassINET,
+					Ttl:    uint32(*set.TTL),
+				},
+				Txt: strings.Split(
+					strings.Trim(*rec.Value, `"`),
+					`" "`,
+				),
+			})
+		}
+	}
+
+	return records
+}

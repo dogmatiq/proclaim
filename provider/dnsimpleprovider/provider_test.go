@@ -3,12 +3,15 @@ package dnsimpleprovider_test
 import (
 	"context"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
 	. "github.com/dogmatiq/proclaim/provider/dnsimpleprovider"
 	"github.com/dogmatiq/proclaim/provider/dnsimpleprovider/internal/dnsimplex"
 	"github.com/dogmatiq/proclaim/provider/internal/providertest"
 	"github.com/go-logr/logr"
+	"github.com/miekg/dns"
 	. "github.com/onsi/ginkgo/v2"
 )
 
@@ -39,9 +42,9 @@ var _ = Describe("type Provider", func() {
 					Logger: logr.Discard(),
 				},
 				Domain: domain,
-				NameServers: func(ctx context.Context) ([]string, error) {
-					var servers []string
-					err := dnsimplex.Each(
+				GetRecords: func(ctx context.Context) ([]dns.RR, error) {
+					var records []dns.RR
+					return records, dnsimplex.Each(
 						ctx,
 						func(opts dnsimple.ListOptions) (*dnsimple.Pagination, []dnsimple.ZoneRecord, error) {
 							res, err := client.Zones.ListRecords(
@@ -50,7 +53,6 @@ var _ = Describe("type Provider", func() {
 								domain,
 								&dnsimple.ZoneRecordListOptions{
 									ListOptions: opts,
-									Type:        dnsimple.String("NS"),
 								},
 							)
 							if err != nil {
@@ -59,12 +61,12 @@ var _ = Describe("type Provider", func() {
 							return res.Pagination, res.Data, err
 						},
 						func(rec dnsimple.ZoneRecord) (bool, error) {
-							servers = append(servers, rec.Content)
+							if rr, ok := convertRecord(rec); ok {
+								records = append(records, rr)
+							}
 							return true, nil
 						},
 					)
-
-					return servers, err
 				},
 				DeleteRecords: func(ctx context.Context) error {
 					return dnsimplex.Each(
@@ -103,3 +105,60 @@ var _ = Describe("type Provider", func() {
 		},
 	)
 })
+
+func convertRecord(rec dnsimple.ZoneRecord) (dns.RR, bool) {
+	switch rec.Type {
+	default:
+		return nil, false
+	case "PTR":
+		return &dns.PTR{
+			Hdr: dns.RR_Header{
+				Name:   rec.Name + "." + domain + ".",
+				Rrtype: dns.TypePTR,
+				Class:  dns.ClassINET,
+				Ttl:    uint32(rec.TTL),
+			},
+			Ptr: rec.Content + ".",
+		}, true
+
+	case "SRV":
+		parts := strings.Split(rec.Content, " ")
+
+		weight, err := strconv.Atoi(parts[0])
+		if err != nil {
+			panic(err)
+		}
+
+		port, err := strconv.Atoi(parts[1])
+		if err != nil {
+			panic(err)
+		}
+
+		return &dns.SRV{
+			Hdr: dns.RR_Header{
+				Name:   rec.Name + "." + domain + ".",
+				Rrtype: dns.TypeSRV,
+				Class:  dns.ClassINET,
+				Ttl:    uint32(rec.TTL),
+			},
+			Target:   parts[2] + ".",
+			Port:     uint16(port),
+			Priority: uint16(rec.Priority),
+			Weight:   uint16(weight),
+		}, true
+
+	case "TXT":
+		return &dns.TXT{
+			Hdr: dns.RR_Header{
+				Name:   rec.Name + "." + domain + ".",
+				Rrtype: dns.TypeTXT,
+				Class:  dns.ClassINET,
+				Ttl:    uint32(rec.TTL),
+			},
+			Txt: strings.Split(
+				strings.Trim(rec.Content, `"`),
+				`" "`,
+			),
+		}, true
+	}
+}
