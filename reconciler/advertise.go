@@ -20,9 +20,6 @@ func (r *Reconciler) advertise(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (reconcile.Result, error) {
-	// If the resource does not have a finalizer, add one. This ensures that
-	// we are notified on deletion and have an opportunity to unadvertise the
-	// service.
 	if controllerutil.AddFinalizer(res, crd.FinalizerName) {
 		if err := r.Client.Update(ctx, res); err != nil {
 			return reconcile.Result{}, fmt.Errorf("unable to add finalizer: %w", err)
@@ -47,15 +44,12 @@ func (r *Reconciler) doAdvertise(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) error {
-	// Get the advertiser used for this service instance's domain, looking it up
-	// by domain if necessary.
 	a, ok, err := r.getOrAssociateAdvertiser(ctx, res)
 	if !ok || err != nil {
 		return err
 	}
 
-	// Update the DNS records to reflect the service instance's existence.
-	cs, err := a.Advertise(ctx, instanceFromSpec(res.Spec))
+	cs, err := a.Advertise(ctx, res.Spec.ToDissolve())
 
 	advertised := res.Condition(crd.ConditionTypeAdvertised)
 
@@ -103,7 +97,7 @@ func shouldAdvertise(res *crd.DNSSDServiceInstance) bool {
 		return false
 	}
 
-	return false
+	return true
 }
 
 func shouldDiscover(res *crd.DNSSDServiceInstance) bool {

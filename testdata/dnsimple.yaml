@@ -13,8 +13,10 @@ spec:
     attributes:
       - foo: "bar"
         baz: "qux"
-        flag: ""
-      - more: attrs
+        flag: true
+        num: 23
+        dec: 1.2
+        nul: null
 ---
 apiVersion: proclaim.dogmatiq.io/v1
 kind: DNSSDServiceInstance

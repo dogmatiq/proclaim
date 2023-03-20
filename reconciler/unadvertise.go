@@ -28,7 +28,7 @@ func (r *Reconciler) unadvertise(
 
 		advertised := res.Condition(crd.ConditionTypeAdvertised)
 
-		cs, err := a.Unadvertise(ctx, instanceFromSpec(res.Spec))
+		cs, err := a.Unadvertise(ctx, res.Spec.ToDissolve())
 		if err != nil {
 			crd.ProviderError(
 				r.Manager,

@@ -96,38 +96,3 @@ func (r *Reconciler) update(
 
 	return nil
 }
-
-// instanceFromSpec returns a dnssd.Instance from a CRD service instance
-// specification.
-func instanceFromSpec(spec crd.DNSSDServiceInstanceSpec) dnssd.ServiceInstance {
-	result := dnssd.ServiceInstance{
-		Name:        spec.Instance.Name,
-		ServiceType: spec.Instance.ServiceType,
-		Domain:      spec.Instance.Domain,
-		TargetHost:  spec.Instance.Targets[0].Host,
-		TargetPort:  spec.Instance.Targets[0].Port,
-		Priority:    spec.Instance.Targets[0].Priority,
-		Weight:      spec.Instance.Targets[0].Weight,
-		TTL:         spec.Instance.TTL.Duration,
-	}
-
-	if result.TTL == 0 {
-		result.TTL = 60 * time.Second
-	}
-
-	for _, src := range spec.Instance.Attributes {
-		var dst dnssd.Attributes
-
-		for k, v := range src {
-			if v == "" {
-				dst = dst.WithFlag(k)
-			} else {
-				dst = dst.WithPair(k, []byte(v))
-			}
-		}
-
-		result.Attributes = append(result.Attributes, dst)
-	}
-
-	return result
-}
