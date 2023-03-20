@@ -41,26 +41,24 @@ named `proclaim`. This secret is **NOT** created by the Helm chart.
 
 ### Amazon Route 53
 
-Set the `proclaim.providers.route53.enabled` value to `true` in the Helm chart
-[values file].
-
-[IRSA] is recommended when running under EKS. The Helm chart creates a service
-account which can be annotated with IAM-specific annotations by setting the
-`proclaim.serviceAccount.annotations` value in the [values file].
-
-Otherwise, the standard AWS environment variables (`AWS_ACCESS_KEY_ID`, etc) can
-be added to the `proclaim` secret.
+1. Set the `proclaim.providers.route53.enabled` value to `true` in the Helm chart
+   [values file].
+2. Configure AWS credentials:
+   - [IRSA] is recommended when running under EKS. The Helm chart creates a service
+     account which can be annotated with IAM-specific annotations by setting the
+     `proclaim.serviceAccount.annotations` value in the [values file].
+   - Otherwise, the standard AWS environment variables (`AWS_ACCESS_KEY_ID`, etc) can
+     be added to the `proclaim` secret.
 
 The [example IAM policy] illustrates the precise set of permissions required for
 Proclaim to function.
 
 ### DNSSimple
 
-Set the `proclaim.providers.dnsimple.enabled` value to `true` in the Helm chart
-[values file].
-
-Add a `DNSIMPLE_TOKEN` key to the `proclaim` secret. The token can be either a
-"user" token or an "account" token.
+1. Set the `proclaim.providers.dnsimple.enabled` value to `true` in the Helm chart
+   [values file].
+2. Add a `DNSIMPLE_TOKEN` key to the `proclaim` secret. The token can be either a
+   "user" token or an "account" token.
 
 <!-- references -->
 
