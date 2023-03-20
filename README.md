@@ -34,7 +34,7 @@ Please note that pulling the Helm chart from the `main` branch will always
 install the latest version. `main` can be replaced with a version number (e.g.
 `v0.3.0`) to install that version.
 
-## Provider Configuration
+## Configuration
 
 Multiple DNS providers can be enabled at once by setting the `enabled` value to
 `true` in the relevant `providers` section of the Helm chart [values file].
