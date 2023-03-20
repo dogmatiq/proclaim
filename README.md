@@ -20,3 +20,35 @@ DNS provider implementations:
 <!-- references -->
 
 [dns-sd]: https://www.rfc-editor.org/rfc/rfc6763
+
+## Deployment
+
+
+
+#### Via a Local Helm Chart
+
+```
+
+helm pull https://github.com/dogmatiq/proclaim/tree/main/charts dogmatiq/proclaim
+# Configure values.yaml with your preferences
+helm install proclaim --values values.yaml domatiq/proclaim
+```
+
+#### Via Terraform
+
+```
+TODO
+
+```
+
+## Provider Authentication
+
+#### Route53 Provider
+
+- The best way is to use [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) and a AWS Managed Role
+- A tested AWS role is: **arn:aws:iam::aws:policy/AmazonRoute53FullAccess**
+- TODO: document a sample IAM Policy
+
+#### DNSSimple Provider
+
+- TODO: document

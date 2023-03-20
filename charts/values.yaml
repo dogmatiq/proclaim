@@ -2,13 +2,17 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# Proclaim Specific Properties
 proclaim:
+  # Secret to store API keys for DNS Providers
   secretName: "proclaim"
+  # What Providers to enable. Multiple providers can be enable for one instance of Proclaim.
   providers:
     route53:
       enabled: false
     dnsimple:
       enabled: false
+      # URL for DNSSimple API
       api: ""
 
 image:
@@ -103,29 +107,3 @@ tolerations: []
 affinity: {}
 
 topologySpreadConstraints: []
-
-logLevel: info
-logFormat: text
-
-interval: 1m
-triggerLoopOnEvent: false
-
-sources:
-  - service
-  - ingress
-
-policy: upsert-only
-
-registry: txt
-txtOwnerId: ""
-txtPrefix: ""
-txtSuffix: ""
-
-domainFilters: []
-
-provider: aws
-
-extraArgs: []
-
-deploymentStrategy:
-  type: Recreate
