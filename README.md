@@ -31,13 +31,10 @@ helm install proclaim --values values.yaml dogmatiq/proclaim
 ```
 
 Please note that pulling the Helm chart from the `main` branch will always
-install the latest version. `main` can be replaced with a version number (e.g.
-`v0.3.0`) to install that version.
+install the latest version. Use a version number (e.g. `v0.3.0`) to install a
+specific version.
 
 ## Configuration
-
-Multiple DNS providers can be enabled at once by setting the `enabled` value to
-`true` in the relevant `providers` section of the Helm chart [values file].
 
 Each provider needs its own credentials which are stored in a Kubernetes secret
 named `proclaim`. This secret is **NOT** created by the Helm chart.
@@ -47,14 +44,14 @@ named `proclaim`. This secret is **NOT** created by the Helm chart.
 Set the `proclaim.providers.route53.enabled` value to `true` in the Helm chart
 [values file].
 
-[IRSA] is recommended when running under EKS. Proclaim creates a service account
-which can be annotated with IAM-specific annotations by setting the
-`proclaim.serviceAccount.annotations` value in the Helm chart [values file].
+[IRSA] is recommended when running under EKS. The Helm chart creates a service
+account which can be annotated with IAM-specific annotations by setting the
+`proclaim.serviceAccount.annotations` value in the [values file].
 
 Otherwise, the standard AWS environment variables (`AWS_ACCESS_KEY_ID`, etc) can
 be added to the `proclaim` secret.
 
-The [example IAM policy] illustrates the minimum set of permissions required for
+The [example IAM policy] illustrates the precise set of permissions required for
 Proclaim to function.
 
 ### DNSSimple
