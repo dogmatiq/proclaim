@@ -10,11 +10,29 @@ The format is based on [Keep a Changelog], and this project adheres to
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
-## [Unreleased]
+## [0.4.0]
+
+### Added
+
+- Added `env` key to Helm chart values
 
 ### Fixed
 
 - Handle `null` values in `attributes` field
+
+### Changed
+
+- Controller now loads all values from the `proclaim` secret as environment variables
+- **[BC]** Changed some Helm chart values for consistency:
+  - Added `deployment.labels`
+  - Renamed `deploymentAnnotations` to `deployment.annotations`
+  - Renamed `podAnnotations` to `pod.annotations`
+  - Renamed `podLabels` to `pod.labels`
+  - Renamed `commonLabels` to `common.labels`
+
+### Removed
+
+- Removed various unused Helm chart values
 
 ## [0.3.0] - 2023-03-20
 
@@ -56,6 +74,7 @@ The format is based on [Keep a Changelog], and this project adheres to
 [0.1.0]: https://github.com/dogmatiq/proclaim/releases/tag/v0.1.0
 [0.2.0]: https://github.com/dogmatiq/proclaim/releases/tag/v0.2.0
 [0.3.0]: https://github.com/dogmatiq/proclaim/releases/tag/v0.3.0
+[0.4.0]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.0
 
 <!-- version template
 ## [0.0.1] - YYYY-MM-DD
