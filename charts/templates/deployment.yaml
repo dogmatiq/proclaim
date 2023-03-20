@@ -5,7 +5,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "proclaim.labels" . | nindent 4 }}
-  {{- with .Values.deploymentAnnotations }}
+    {{- with .Values.deployment.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.deployment.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -20,10 +23,10 @@ spec:
     metadata:
       labels:
         {{- include "proclaim.selectorLabels" . | nindent 8 }}
-      {{- with .Values.podLabels }}
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- if .Values.podAnnotations }}
+        {{- with .Values.pod.labels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- if .Values.pod.annotations }}
       annotations:
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
@@ -56,6 +59,9 @@ spec:
           {{- end }}
           image: {{ include "proclaim.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.proclaim.secretName }}
           env:
             {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
@@ -64,16 +70,9 @@ spec:
               value: {{ toYaml (.Values.proclaim.providers.route53.enabled | toString) }}
             - name: DNSIMPLE_ENABLED
               value: {{ toYaml (.Values.proclaim.providers.dnsimple.enabled | toString) }}
-            {{- if .Values.proclaim.providers.dnsimple.enabled }}
-            - name: DNSIMPLE_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.proclaim.secretName }}
-                  key: DNSIMPLE_TOKEN
-            {{- if .Values.proclaim.providers.dnsimple.api }}
+            {{- with .Values.proclaim.providers.dnsimple.api }}
             - name: DNSIMPLE_API_URL
-              value: {{ .Values.proclaim.providers.dnsimple.api }}
-            {{- end }}
+              value: {{ . }}
             {{- end }}
           {{- with .Values.resources }}
           resources:

@@ -40,7 +40,7 @@ helm.sh/chart: {{ include "proclaim.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- with .Values.commonLabels }}
+{{- with .Values.common.labels }}
 {{ toYaml . }}
 {{- end }}
 {{- end }}

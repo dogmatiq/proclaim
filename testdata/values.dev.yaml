@@ -1,14 +1,94 @@
-# Default values for proclaim.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
 proclaim:
+  # secretName is the main of the Kubernetes secret from which Proclaim loads
+  # its credentials for the various DNS providers.
   secretName: "proclaim"
+
   providers:
+    # Enable publishing DNS records via Amazon Route 53.
+    #
+    # Under EKS it is RECOMMENDED that you use a service account with an IAM
+    # role that can manage Route 53 records.
+    #
+    # Otherwise, you MAY add the common AWS environment variables
+    # (AWS_ACCESS_KEY_ID, etc) to the proclaim secret.
+    #
+    # An example IAM policy is available in the example folder of this
+    # repository.
+    #
+    # https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html.
     route53:
       enabled: false
+
+    # Enable publishing DNS records via DNSimple.com
+    #
+    # You must add a DNSimple API token to the proclaim secret with the key
+    # DNSIMPLE_API_TOKEN. The token may be either a user token or an account
+    # token.
+    #
+    # If api is empty the DNSimple production environment is used.
+    #
+    # DNSimple also offers a sandbox environment.
+    # https://developer.dnsimple.com/sandbox/.
     dnsimple:
       enabled: true
+      api: ""
+
+################################################################################
+
+# serviceAccount configures the service account used by the Proclaim controller.
+#
+# If publishing via Route 53 and running under EKS it is RECOMMENDED that you
+# use a service account with an IAM role that can manage the Route 53 records.
+#
+# https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html.
+#
+# If the name is empty one is generated automatically.
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+  labels: {}
+
+# rbac configures the ClusterRole and ClusterRoleBinding that allow Proclaim to
+# respond to changes to DNSSDServiceInstance resources.
+rbac:
+  create: true
+  additionalPermissions: []
+
+# common contains additional labels to add to all Kubernetes resources created
+# by this Helm chart.
+common:
+  labels: {}
+
+# deployment contains additional annotations and labels to add to the Deployment
+# resource.
+deployment:
+  annotations: {}
+  labels: {}
+
+# pod contains additional annotations and labels to add to the pod(s) that run
+# the Proclaim controller.
+pod:
+  annotations: {}
+  labels: {}
+
+# fullnameOverride and nameOverride are used to override the default name of
+# the Helm release.
+nameOverride: ""
+fullnameOverride: ""
+
+################################################################################
+
+# The remainder of the configuration maps directly to standard Kubernetes
+# features. These values do not need to be changed under normal operation.
+
+affinity: {}
+
+dnsPolicy:
+
+env:
+  - name: "DEBUG"
+    value: "true"
 
 image:
   repository: ghcr.io/dogmatiq/proclaim
@@ -17,41 +97,14 @@ image:
 
 imagePullSecrets: []
 
-env:
-  - name: DEBUG
-    value: "true"
-
-nameOverride: ""
-fullnameOverride: ""
-
-commonLabels: {}
-
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Annotations to add to the service account
-  annotations: {}
-  # Labels to add to the service account
-  labels: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
-
-rbac:
-  # Specifies whether RBAC resources should be created
-  create: true
-  additionalPermissions: []
-
-# Annotations to add to the Deployment
-deploymentAnnotations: {}
-
-podLabels: {}
-
-# Annotations to add to the Pod
-podAnnotations: {}
+nodeSelector: {}
 
 podSecurityContext:
   fsGroup: 65534
+
+priorityClassName: ""
+
+resources: {}
 
 securityContext:
   runAsNonRoot: true
@@ -60,54 +113,8 @@ securityContext:
   capabilities:
     drop: ["ALL"]
 
-# Defaults to `ClusterFirst`.
-# Valid values are: `ClusterFirstWithHostNet`, `ClusterFirst`, `Default` or `None`.
-dnsPolicy:
-
-priorityClassName: ""
-
 terminationGracePeriodSeconds:
-
-service:
-  port: 7979
-  annotations: {}
-
-extraVolumes: []
-
-extraVolumeMounts: []
-
-resources: {}
-
-nodeSelector: {}
 
 tolerations: []
 
-affinity: {}
-
 topologySpreadConstraints: []
-
-logLevel: info
-logFormat: text
-
-interval: 1m
-triggerLoopOnEvent: false
-
-sources:
-  - service
-  - ingress
-
-policy: upsert-only
-
-registry: txt
-txtOwnerId: ""
-txtPrefix: ""
-txtSuffix: ""
-
-domainFilters: []
-
-provider: aws
-
-extraArgs: []
-
-deploymentStrategy:
-  type: Recreate
