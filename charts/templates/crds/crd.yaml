@@ -3,8 +3,7 @@ kind: CustomResourceDefinition
 metadata:
   name: dnssd-service-instances.proclaim.dogmatiq.io
   labels:
-    app.kubernetes.io/name: proclaim.dogmatiq.io
-    app.kubernetes.io/part-of: proclaim
+    {{- include "proclaim.labels" . | nindent 4 }}
 spec:
   scope: Namespaced
   group: proclaim.dogmatiq.io
