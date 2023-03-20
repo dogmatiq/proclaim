@@ -67,6 +67,8 @@ func (s DNSSDServiceInstanceSpec) ToDissolve() dnssd.ServiceInstance {
 			case float64:
 				s := strconv.FormatFloat(v, 'g', -1, 64)
 				dst = dst.WithPair(k, []byte(s))
+			case nil:
+				// ignore
 			default:
 				// TODO: A validating web-hook will make it so this branch
 				// cannot be reached.
