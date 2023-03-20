@@ -3,4 +3,4 @@ name: proclaim
 description: A Kubernetes controller and CRD that publishes DNS-SD records.
 type: application
 version: v0.1.1
-appVersion: v0.1.0
+appVersion: v0.3.0
