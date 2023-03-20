@@ -1,0 +1,19 @@
+apiVersion: proclaim.dogmatiq.io/v1
+kind: DNSSDServiceInstance
+metadata:
+  name: attribute-example
+spec:
+  instance:
+    name: primary-webserver
+    serviceType: _http._tcp
+    domain: example.org
+    targets:
+      - host: www.example.org
+        port: 80
+    attributes:
+      - text: "Hello, wolrd!"
+        integer: 23
+        decimal: 1.2
+        nothing: null # ignored
+        flag: true # treated as a boolean attribute, see https://www.rfc-editor.org/rfc/rfc6763#section-6.4
+        disabledFlag: false # ignored
