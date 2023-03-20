@@ -14,41 +14,61 @@ Proclaim defines a `DNSSDServiceInstance` Kubernetes custom resource that
 describes a [DNS-SD] service instance to be advertised on one of the supported
 DNS provider implementations:
 
-- AWS Route53
-- DNSimple.com
+- [Amazon Route 53](https://aws.amazon.com/route53/)
+- [DNSimple](https://dnsimple.com/)
+
+## Deployment
+
+### Helm
+
+Proclaim can be deployed using the Helm chart in this repository.
+The default values are suitable for most deployments.
+
+```bash
+# configure the "proclaim" secret (see below)
+helm pull https://github.com/dogmatiq/proclaim/tree/main/charts dogmatiq/proclaim
+helm install proclaim --values values.yaml dogmatiq/proclaim
+```
+
+Please note that pulling the Helm chart from `main` will always install the
+latest version, which may not be suitable for production deployments. `main` can
+be replaced with a specific release tag to install a specific version.
+
+## Provider Configuration
+
+Proclaim supports multiple DNS providers, any combination of which can be
+enabled at the same time by setting the `enabled` value to `true` in the
+relevant `providers` section of the Helm chart values.
+
+Each provider needs access credentials which are stored in a Kubernetes secret
+named `proclaim`. This secret is **NOT** created by the Helm chart.
+
+### Amazon Route 53
+
+Set the `proclaim.providers.route53.enabled` value to `true` in the Helm chart
+values file.
+
+If deployed under EKS, [IRSA] is recommended. Proclaim creates a service account
+which can be annotated with IAM-specific annotations by setting the
+`proclaim.serviceAccount.annotations` value in the Helm chart values file.
+
+Otherwise, the standard AWS environment variables (`AWS_ACCESS_KEY_ID`, etc) can
+be added to the `proclaim` secret.
+
+The [example policy](examples/iam/policy.json) illustrates the minimum set of
+permissions required for Proclaim to function.
+
+### DNSSimple
+
+Set the `proclaim.providers.dnsimple.enabled` value to `true` in the Helm chart
+values file.
+
+Add a `DNSIMPLE_TOKEN` key to the `proclaim` secret. The token can be either a
+"user" token or an "account" token.
 
 <!-- references -->
 
 [dns-sd]: https://www.rfc-editor.org/rfc/rfc6763
-
-## Deployment
-
-
-
-#### Via a Local Helm Chart
-
-```
-
-helm pull https://github.com/dogmatiq/proclaim/tree/main/charts dogmatiq/proclaim
-# Configure values.yaml with your preferences
-helm install proclaim --values values.yaml domatiq/proclaim
-```
-
-#### Via Terraform
-
-```
-TODO
-
-```
-
-## Provider Authentication
-
-#### Route53 Provider
-
-- The best way is to use [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) and a AWS Managed Role
-- A tested AWS role is: **arn:aws:iam::aws:policy/AmazonRoute53FullAccess**
-- TODO: document a sample IAM Policy
-
-#### DNSSimple Provider
-
-- TODO: document
+[amazon route53]: https://aws.amazon.com/route53/
+[dnsimple.com]: https://dnsimple.com/
+[irsa]: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
