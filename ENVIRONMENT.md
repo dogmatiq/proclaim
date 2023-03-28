@@ -2,29 +2,28 @@
 
 This document describes the environment variables used by `proclaim`.
 
-If any of the environment variable values do not meet the requirements herein,
-the application will print usage information to `STDERR` then exit with a
-non-zero exit code. Please note that **undefined** variables and **empty**
-values are considered equivalent.
+| Name                 | Optionality                            | Description                      |
+| -------------------- | -------------------------------------- | -------------------------------- |
+| [`DNSIMPLE_API_URL`] | defaults to `https://api.dnsimple.com` | the URL of the DNSimple API      |
+| [`DNSIMPLE_ENABLED`] | defaults to `false`                    | enable the DNSimple provider     |
+| [`DNSIMPLE_TOKEN`]   | conditional                            | enable the DNSimple provider     |
+| [`ROUTE53_ENABLED`]  | defaults to `false`                    | enable the AWS Route 53 provider |
 
-⚠️ This document includes **non-normative** example values. While these values
-are syntactically correct, they may not be meaningful to this application.
+⚠️ `proclaim` may consume other undocumented environment variables. This
+document only shows variables declared using [Ferrite].
 
-⚠️ The application may consume other undocumented environment variables; this
-document only shows those variables declared using [Ferrite].
+## Specification
+
+All environment variables described below must meet the stated requirements.
+Otherwise, `proclaim` prints usage information to `STDERR` then exits.
+**Undefined** variables and **empty** values are equivalent.
+
+⚠️ This section includes **non-normative** example values. These examples are
+syntactically valid, but may not be meaningful to `proclaim`.
 
 The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**,
 **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this
 document are to be interpreted as described in [RFC 2119].
-
-## Index
-
-- [`DNSIMPLE_API_URL`] — the URL of the DNSimple API
-- [`DNSIMPLE_ENABLED`] — enable the DNSimple provider
-- [`DNSIMPLE_TOKEN`] — enable the DNSimple provider
-- [`ROUTE53_ENABLED`] — enable the AWS Route 53 provider
-
-## Specification
 
 ### `DNSIMPLE_API_URL`
 
