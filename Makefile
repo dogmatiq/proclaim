@@ -1,4 +1,6 @@
 DOCKER_REPO = ghcr.io/dogmatiq/proclaim
+HELM_REGISTRY = oci://ghcr.io/dogmatiq/helm
+
 DOCKER_PLATFORMS += linux/amd64
 DOCKER_PLATFORMS += linux/arm64
 
