@@ -77,7 +77,7 @@ var _ = Describe("type Provider", func() {
 
 					return records, nil
 				},
-				DeleteRecords: func(ctx context.Context) error {
+				DeleteRecords: func(ctx context.Context, service string) error {
 					cs := &types.ChangeBatch{}
 
 					in := &route53.ListResourceRecordSetsInput{
@@ -93,10 +93,7 @@ var _ = Describe("type Provider", func() {
 						for _, rr := range out.ResourceRecordSets {
 							rr := rr // capture loop variable
 
-							switch rr.Type {
-							case types.RRTypeNs, types.RRTypeSoa:
-								continue
-							default:
+							if strings.Contains(*rr.Name, service) {
 								cs.Changes = append(
 									cs.Changes,
 									types.Change{

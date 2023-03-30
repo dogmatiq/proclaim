@@ -23,7 +23,7 @@ type TestContext struct {
 	Provider      provider.Provider
 	Domain        string
 	GetRecords    func(ctx context.Context) ([]dns.RR, error)
-	DeleteRecords func(ctx context.Context) error
+	DeleteRecords func(ctx context.Context, service string) error
 }
 
 // DeclareTestSuite declares a Ginkgo test suite for a provider implementation.
@@ -55,9 +55,12 @@ func DeclareTestSuite(
 			var err error
 			server, resolver, err = startServer()
 			gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-			ginkgo.DeferCleanup(server.Stop)
+		})
 
-			err = tctx.DeleteRecords(ctx)
+		ginkgo.AfterEach(func() {
+			server.Stop()
+
+			err := tctx.DeleteRecords(ctx, service)
 			gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 		})
 

@@ -68,7 +68,7 @@ var _ = Describe("type Provider", func() {
 						},
 					)
 				},
-				DeleteRecords: func(ctx context.Context) error {
+				DeleteRecords: func(ctx context.Context, service string) error {
 					return dnsimplex.Each(
 						ctx,
 						func(opts dnsimple.ListOptions) (*dnsimple.Pagination, []dnsimple.ZoneRecord, error) {
@@ -86,18 +86,16 @@ var _ = Describe("type Provider", func() {
 							return res.Pagination, res.Data, err
 						},
 						func(rec dnsimple.ZoneRecord) (bool, error) {
-							switch rec.Type {
-							case "NS", "SOA":
-								return true, nil
-							default:
-								_, err := client.Zones.DeleteRecord(
+							var err error
+							if strings.Contains(rec.Name, service) {
+								_, err = client.Zones.DeleteRecord(
 									ctx,
 									accountID,
 									domain,
 									rec.ID,
 								)
-								return true, err
 							}
+							return true, err
 						},
 					)
 				},
