@@ -49,9 +49,12 @@ func (r *Reconciler) doAdvertise(
 		return err
 	}
 
-	cs, err := a.Advertise(ctx, res.Spec.ToDissolve())
+	cs, err := a.Advertise(
+		ctx,
+		crd.ToDissolve(res.Spec.Instance),
+	)
 
-	advertised := res.Condition(crd.ConditionTypeAdvertised)
+	advertised := res.Status.Condition(crd.ConditionTypeAdvertised)
 
 	if err != nil {
 		crd.ProviderError(
@@ -82,8 +85,8 @@ func (r *Reconciler) doAdvertise(
 }
 
 func shouldAdvertise(res *crd.DNSSDServiceInstance) bool {
-	a := res.Condition(crd.ConditionTypeAdvertised)
-	d := res.Condition(crd.ConditionTypeDiscoverable)
+	a := res.Status.Condition(crd.ConditionTypeAdvertised)
+	d := res.Status.Condition(crd.ConditionTypeDiscoverable)
 
 	if a.Status != metav1.ConditionTrue {
 		return true
@@ -101,7 +104,7 @@ func shouldAdvertise(res *crd.DNSSDServiceInstance) bool {
 }
 
 func shouldDiscover(res *crd.DNSSDServiceInstance) bool {
-	a := res.Condition(crd.ConditionTypeAdvertised)
+	a := res.Status.Condition(crd.ConditionTypeAdvertised)
 
 	if a.Status != metav1.ConditionTrue {
 		return false
@@ -115,8 +118,8 @@ func shouldDiscover(res *crd.DNSSDServiceInstance) bool {
 }
 
 func shouldRequeue(res *crd.DNSSDServiceInstance, discoveredTTL time.Duration) reconcile.Result {
-	a := res.Condition(crd.ConditionTypeAdvertised)
-	d := res.Condition(crd.ConditionTypeDiscoverable)
+	a := res.Status.Condition(crd.ConditionTypeAdvertised)
+	d := res.Status.Condition(crd.ConditionTypeDiscoverable)
 
 	if a.Status != metav1.ConditionTrue {
 		return reconcile.Result{Requeue: true}
@@ -131,7 +134,7 @@ func shouldRequeue(res *crd.DNSSDServiceInstance, discoveredTTL time.Duration) r
 	}
 
 	if discoveredTTL == 0 {
-		// We have no TTL information of "out of sync" DNS records, so we use
+		// We have no TTL information for "out of sync" DNS records, so we use
 		// the TTL from the specification.
 		//
 		// HACK: This doesn't really have anything to do with the TTL, we're

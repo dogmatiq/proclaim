@@ -6,8 +6,47 @@ import (
 	"time"
 
 	"github.com/dogmatiq/dissolve/dnssd"
+	"github.com/dogmatiq/dyad"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
+
+// DNSSDServiceInstance is a resource that represents a DNS-SD service instance.
+type DNSSDServiceInstance struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec struct {
+		Instance Instance `json:"instance"`
+	} `json:"spec,omitempty"`
+	Status Status `json:"status,omitempty"`
+}
+
+// DeepCopyObject returns a deep clone of i.
+func (i *DNSSDServiceInstance) DeepCopyObject() runtime.Object {
+	return dyad.Clone(i)
+}
+
+func (i *DNSSDServiceInstance) domain() string {
+	return i.Spec.Instance.Domain
+}
+
+func (i *DNSSDServiceInstance) status() *Status {
+	return &i.Status
+}
+
+// DNSSDServiceInstanceList is a list of DNS-SD service instances.
+type DNSSDServiceInstanceList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []DNSSDServiceInstance `json:"items"`
+}
+
+// DeepCopyObject returns a deep clone of l.
+func (l *DNSSDServiceInstanceList) DeepCopyObject() runtime.Object {
+	return dyad.Clone(l)
+}
 
 // Instance is a DNS-SD service instance.
 type Instance struct {
@@ -27,30 +66,25 @@ type Target struct {
 	Weight   uint16 `json:"weight,omitempty"`
 }
 
-// DNSSDServiceInstanceSpec is the specification for a service instance.
-type DNSSDServiceInstanceSpec struct {
-	Instance Instance `json:"instance"`
-}
-
-// ToDissolve returns a Dissolve dnssd.Instance from a CRD service instance
-// specification.
-func (s DNSSDServiceInstanceSpec) ToDissolve() dnssd.ServiceInstance {
+// ToDissolve returns a Dissolve dnssd.ServiceInstance from a CRD service
+// instance.
+func ToDissolve(i Instance) dnssd.ServiceInstance {
 	inst := dnssd.ServiceInstance{
-		Name:        s.Instance.Name,
-		ServiceType: s.Instance.ServiceType,
-		Domain:      s.Instance.Domain,
-		TargetHost:  s.Instance.Targets[0].Host,
-		TargetPort:  s.Instance.Targets[0].Port,
-		Priority:    s.Instance.Targets[0].Priority,
-		Weight:      s.Instance.Targets[0].Weight,
-		TTL:         s.Instance.TTL.Duration,
+		Name:        i.Name,
+		ServiceType: i.ServiceType,
+		Domain:      i.Domain,
+		TargetHost:  i.Targets[0].Host,
+		TargetPort:  i.Targets[0].Port,
+		Priority:    i.Targets[0].Priority,
+		Weight:      i.Targets[0].Weight,
+		TTL:         i.TTL.Duration,
 	}
 
 	if inst.TTL == 0 {
 		inst.TTL = 60 * time.Second
 	}
 
-	for _, src := range s.Instance.Attributes {
+	for _, src := range i.Attributes {
 		var dst dnssd.Attributes
 
 		for k, v := range src {

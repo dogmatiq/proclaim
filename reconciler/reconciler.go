@@ -63,7 +63,7 @@ func (r *Reconciler) initialize(
 	var updates []crd.StatusUpdate
 
 	for _, t := range types {
-		c := res.Condition(crd.ConditionTypeAdvertised)
+		c := res.Status.Condition(crd.ConditionTypeAdvertised)
 		if c.LastTransitionTime.IsZero() {
 			updates = append(
 				updates,

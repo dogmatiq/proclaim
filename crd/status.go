@@ -10,18 +10,25 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// DNSSDServiceInstanceStatus contains the status of a service instance.
-type DNSSDServiceInstanceStatus struct {
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+// Resource is a DNS-SD resource that has a status.
+type Resource interface {
+	client.Object
 
-	ProviderDescription string         `json:"providerDescription,omitempty"`
-	Provider            string         `json:"provider,omitempty"`
-	Advertiser          map[string]any `json:"advertiser,omitempty"`
+	domain() string
+	status() *Status
+}
+
+// Status encapsulates the status of a DNS-SD resource.
+type Status struct {
+	Conditions          []metav1.Condition `json:"conditions,omitempty"`
+	ProviderDescription string             `json:"providerDescription,omitempty"`
+	Provider            string             `json:"provider,omitempty"`
+	Advertiser          map[string]any     `json:"advertiser,omitempty"`
 }
 
 // Condition returns the condition with the given type.
-func (res *DNSSDServiceInstance) Condition(t string) metav1.Condition {
-	for _, c := range res.Status.Conditions {
+func (s *Status) Condition(t string) metav1.Condition {
+	for _, c := range s.Conditions {
 		if c.Type == t {
 			return c
 		}
@@ -33,58 +40,58 @@ func (res *DNSSDServiceInstance) Condition(t string) metav1.Condition {
 	}
 }
 
-// UpdateStatus applies the given StatusUpdates to the given resource.
+// StatusUpdate is a function that applies a change to a resource's status.
+type StatusUpdate func(Resource, *Status)
+
+// UpdateStatus applies a set of updates to the given resource's status.
 func UpdateStatus(
 	ctx context.Context,
 	cli client.Client,
-	res *DNSSDServiceInstance,
+	res Resource,
 	updates ...StatusUpdate,
 ) error {
-	clone := dyad.Clone(res)
+	before := res.status()
+	after := dyad.Clone(before)
 
 	for _, update := range updates {
-		update(clone)
+		update(res, after)
 	}
 
-	if reflect.DeepEqual(clone.Status, res.Status) {
+	if reflect.DeepEqual(before, after) {
 		return nil
 	}
 
-	if err := cli.Status().Update(ctx, clone); err != nil {
+	*before = *after
+	if err := cli.Status().Update(ctx, res); err != nil {
 		return err
 	}
-
-	*res = *clone
 
 	return nil
 }
 
-// StatusUpdate is a function that updates a resource's status in some way.
-type StatusUpdate func(*DNSSDServiceInstance)
-
-// MergeCondition is an StatusUpdate that merges a new Condition into the
+// MergeCondition returns a StatusUpdate that merges a new Condition into the
 // resource's status.
 //
 // If a Condition with the same type already exists, it is replaced with the new
 // Condition, otherwise the new Condition is appended.
 func MergeCondition(c metav1.Condition) StatusUpdate {
-	return func(res *DNSSDServiceInstance) {
-		c.ObservedGeneration = res.Generation
+	return func(res Resource, s *Status) {
+		c.ObservedGeneration = res.GetGeneration()
 		c.LastTransitionTime = metav1.Now()
 
 		index := slices.IndexFunc(
-			res.Status.Conditions,
+			s.Conditions,
 			func(x metav1.Condition) bool {
 				return x.Type == c.Type
 			},
 		)
 
 		if index == -1 {
-			res.Status.Conditions = append(res.Status.Conditions, c)
+			s.Conditions = append(s.Conditions, c)
 			return
 		}
 
-		x := res.Status.Conditions[index]
+		x := s.Conditions[index]
 
 		// Only update the LastTransitionTime if the status has actually
 		// transitioned.
@@ -92,33 +99,34 @@ func MergeCondition(c metav1.Condition) StatusUpdate {
 			c.LastTransitionTime = x.LastTransitionTime
 		}
 
-		res.Status.Conditions[index] = c
+		s.Conditions[index] = c
 	}
 }
 
-// UpdateProviderDescription is an StatusUpdate that sets the
+// UpdateProviderDescription returns a StatusUpdate that sets the
 // ProviderDescription field of the resource's status.
 func UpdateProviderDescription(desc string) StatusUpdate {
-	return func(res *DNSSDServiceInstance) {
-		res.Status.ProviderDescription = desc
+	return func(_ Resource, s *Status) {
+		s.ProviderDescription = desc
 	}
 }
 
-// AssociateProvider is an StatusUpdate that sets the Provider and
-// Advertiser fields of the resource's status.
+// AssociateProvider returns a StatusUpdate that sets the Provider and
+// Advertiser
+// fields of the resource's status.
 func AssociateProvider(provider string, advertiser map[string]any) StatusUpdate {
-	return func(res *DNSSDServiceInstance) {
-		res.Status.Provider = provider
-		res.Status.Advertiser = advertiser
+	return func(_ Resource, s *Status) {
+		s.Provider = provider
+		s.Advertiser = advertiser
 	}
 }
 
-// If is an StatusUpdate that conditionally applies other StatusUpdates.
+// If returns a StatusUpdate that conditionally applies other updates.
 func If(test bool, updates ...StatusUpdate) StatusUpdate {
-	return func(res *DNSSDServiceInstance) {
+	return func(res Resource, s *Status) {
 		if test {
-			for _, update := range updates {
-				update(res)
+			for _, m := range updates {
+				m(res, s)
 			}
 		}
 	}

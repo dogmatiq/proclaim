@@ -11,16 +11,17 @@ const ConditionTypeAdopted = "Adopted"
 
 // InstanceAdopted records an event indicating that the service instance was
 // adopted by the controller.
-func InstanceAdopted(m manager.Manager, res *DNSSDServiceInstance) {
+func InstanceAdopted(m manager.Manager, res Resource) {
+	s := res.status()
 	m.
-		GetEventRecorderFor("proclaim-"+res.Status.Provider).
+		GetEventRecorderFor("proclaim-"+s.Provider).
 		Eventf(
 			res,
 			"Normal",
 			"InstanceAdopted",
 			"%s can advertise on %q",
-			res.Status.ProviderDescription,
-			res.Spec.Instance.Domain,
+			s.ProviderDescription,
+			res.domain(),
 		)
 }
 
@@ -37,7 +38,7 @@ func InstanceAdoptedCondition() metav1.Condition {
 
 // InstanceIgnored records an event indicating that the service instance was
 // ignored by the controller.
-func InstanceIgnored(m manager.Manager, res *DNSSDServiceInstance) {
+func InstanceIgnored(m manager.Manager, res Resource) {
 	m.
 		GetEventRecorderFor("proclaim").
 		Eventf(
@@ -45,7 +46,7 @@ func InstanceIgnored(m manager.Manager, res *DNSSDServiceInstance) {
 			"Warning",
 			"InstanceIgnored",
 			"none of the configured providers can advertise on %q",
-			res.Spec.Instance.Domain,
+			res.domain(),
 		)
 }
 

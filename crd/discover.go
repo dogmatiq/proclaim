@@ -11,7 +11,7 @@ const ConditionTypeDiscoverable = "Discoverable"
 
 // Discovered records an event indicating that the service instance was
 // discovered via DNS-SD.
-func Discovered(m manager.Manager, res *DNSSDServiceInstance) {
+func Discovered(m manager.Manager, res Resource) {
 	m.
 		GetEventRecorderFor("proclaim-dnssd").
 		Event(
@@ -35,7 +35,7 @@ func DiscoveredCondition() metav1.Condition {
 
 // NegativeBrowseResult records an event indicating that the service instance
 // was not discoverable via DNS-SD.
-func NegativeBrowseResult(m manager.Manager, res *DNSSDServiceInstance) {
+func NegativeBrowseResult(m manager.Manager, res Resource) {
 	m.
 		GetEventRecorderFor("proclaim-dnssd").
 		Event(
@@ -59,7 +59,7 @@ func NegativeBrowseResultCondition() metav1.Condition {
 
 // NegativeLookupResult records an event indicating that the service instance
 // was not discoverable via DNS-SD.
-func NegativeLookupResult(m manager.Manager, res *DNSSDServiceInstance) {
+func NegativeLookupResult(m manager.Manager, res Resource) {
 	m.
 		GetEventRecorderFor("proclaim-dnssd").
 		Event(
@@ -84,7 +84,7 @@ func NegativeLookupResultCondition() metav1.Condition {
 // LookupResultOutOfSync records an event indicating that the service instance
 // was discovered via DNS-SD, but the result did not match the advertised DNS
 // records.
-func LookupResultOutOfSync(m manager.Manager, res *DNSSDServiceInstance) {
+func LookupResultOutOfSync(m manager.Manager, res Resource) {
 	m.
 		GetEventRecorderFor("proclaim-dnssd").
 		Event(
@@ -111,7 +111,7 @@ func LookupResultOutOfSyncCondition() metav1.Condition {
 // performing DNS-SD discovery.
 func DiscoveryError(
 	m manager.Manager,
-	res *DNSSDServiceInstance,
+	res Resource,
 	err error,
 ) {
 	m.
