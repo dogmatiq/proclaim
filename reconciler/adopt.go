@@ -9,11 +9,11 @@ import (
 
 // getOrAssociateAdvertiser returns the advertiser used to
 // advertise/unadvertise the given DNS-SD service instance.
-func (r *Reconciler) getOrAssociateAdvertiser(
+func (r *InstanceReconciler) getOrAssociateAdvertiser(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (provider.Advertiser, bool, error) {
-	if res.Status.Provider != "" {
+	if res.Status().Provider != "" {
 		return r.getAdvertiser(ctx, res)
 	}
 	return r.associateAdvertiser(ctx, res)
@@ -22,7 +22,7 @@ func (r *Reconciler) getOrAssociateAdvertiser(
 // associateAdvertiser finds the appropriate advertiser for the given DNS-SD
 // service instance from all available providers and associates it with the
 // resource.
-func (r *Reconciler) associateAdvertiser(
+func (r *InstanceReconciler) associateAdvertiser(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (provider.Advertiser, bool, error) {
@@ -78,12 +78,12 @@ func (r *Reconciler) associateAdvertiser(
 	return nil, false, nil
 }
 
-func (r *Reconciler) getAdvertiser(
+func (r *InstanceReconciler) getAdvertiser(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (provider.Advertiser, bool, error) {
 	for _, p := range r.Providers {
-		if p.ID() != res.Status.Provider {
+		if p.ID() != res.Status().Provider {
 			continue
 		}
 
@@ -95,7 +95,7 @@ func (r *Reconciler) getAdvertiser(
 			return nil, false, err
 		}
 
-		a, err := p.AdvertiserByID(ctx, res.Status.Advertiser)
+		a, err := p.AdvertiserByID(ctx, res.Status().Advertiser)
 		if err != nil {
 			crd.ProviderError(
 				r.Manager,

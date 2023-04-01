@@ -7,6 +7,7 @@ import (
 	"github.com/dogmatiq/ferrite"
 	"github.com/dogmatiq/imbue"
 	"github.com/dogmatiq/proclaim/crd"
+	"github.com/dogmatiq/proclaim/provider"
 	"github.com/dogmatiq/proclaim/reconciler"
 	"github.com/go-logr/logr"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -19,17 +20,35 @@ import (
 var container = imbue.New()
 
 func main() {
+	defer container.Close()
 	ferrite.Init()
 
 	ctx := controller.SetupSignalHandler()
+	g := container.WaitGroup(ctx)
 
-	if err := imbue.Invoke3(
-		ctx,
-		container,
+	imbue.Go2(
+		g,
+		func(
+			ctx context.Context,
+			providers []provider.Provider,
+			l imbue.ByName[systemLogger, logr.Logger],
+		) error {
+			for _, p := range providers {
+				l.Value().Info(
+					"provider enabled",
+					"id", p.ID(),
+				)
+			}
+			return nil
+		},
+	)
+
+	imbue.Go3(
+		g,
 		func(
 			ctx context.Context,
 			m manager.Manager,
-			r *reconciler.Reconciler,
+			r *reconciler.InstanceReconciler,
 			l imbue.ByName[systemLogger, logr.Logger],
 		) error {
 			err := builder.
@@ -41,16 +60,32 @@ func main() {
 				return err
 			}
 
-			for _, p := range r.Providers {
-				l.Value().Info(
-					"provider enabled",
-					"id", p.ID(),
-				)
-			}
-
 			return m.Start(ctx)
 		},
-	); err != nil {
+	)
+
+	// imbue.Go3(
+	// 	g,
+	// 	func(
+	// 		ctx context.Context,
+	// 		m manager.Manager,
+	// 		r *subtype.Reconciler,
+	// 		l imbue.ByName[systemLogger, logr.Logger],
+	// 	) error {
+	// 		err := builder.
+	// 			ControllerManagedBy(m).
+	// 			For(&crd.DNSSDServiceInstanceSubType{}).
+	// 			WithEventFilter(predicate.GenerationChangedPredicate{}).
+	// 			Complete(r)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+
+	// 		return m.Start(ctx)
+	// 	},
+	// )
+
+	if err := g.Wait(); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/dogmatiq/dissolve/dnssd"
 	"github.com/dogmatiq/imbue"
 	"github.com/dogmatiq/proclaim/crd"
+	"github.com/dogmatiq/proclaim/provider"
 	"github.com/dogmatiq/proclaim/reconciler"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -33,17 +34,19 @@ func init() {
 		},
 	)
 
-	imbue.With2(
+	imbue.With3(
 		container,
 		func(
 			ctx imbue.Context,
 			m manager.Manager,
 			r *dnssd.UnicastResolver,
-		) (*reconciler.Reconciler, error) {
-			return &reconciler.Reconciler{
-				Manager:  m,
-				Client:   m.GetClient(),
-				Resolver: r,
+			providers []provider.Provider,
+		) (*reconciler.InstanceReconciler, error) {
+			return &reconciler.InstanceReconciler{
+				Manager:   m,
+				Client:    m.GetClient(),
+				Resolver:  r,
+				Providers: providers,
 			}, nil
 		},
 	)
@@ -64,6 +67,8 @@ func init() {
 			b.Register(
 				&crd.DNSSDServiceInstance{},
 				&crd.DNSSDServiceInstanceList{},
+				&crd.DNSSDServiceInstanceSubType{},
+				&crd.DNSSDServiceInstanceSubTypeList{},
 			)
 
 			if err := b.AddToScheme(m.GetScheme()); err != nil {

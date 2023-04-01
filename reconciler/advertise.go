@@ -16,7 +16,7 @@ import (
 //
 // It returns true on success. A non-nil error indicates context cancelation or
 // a problem interacting with Kubernetes itself.
-func (r *Reconciler) advertise(
+func (r *InstanceReconciler) advertise(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (reconcile.Result, error) {
@@ -40,7 +40,7 @@ func (r *Reconciler) advertise(
 	return shouldRequeue(res, 0), nil
 }
 
-func (r *Reconciler) doAdvertise(
+func (r *InstanceReconciler) doAdvertise(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) error {
@@ -51,17 +51,17 @@ func (r *Reconciler) doAdvertise(
 
 	cs, err := a.AdvertiseInstance(
 		ctx,
-		res.Spec.Instance.DissolveInstance(),
+		res.DissolveInstance(),
 	)
 
-	advertised := res.Status.Condition(crd.ConditionTypeAdvertised)
+	advertised := res.Status().Condition(crd.ConditionTypeAdvertised)
 
 	if err != nil {
 		crd.ProviderError(
 			r.Manager,
 			res,
-			res.Status.Provider,
-			res.Status.ProviderDescription,
+			res.Status().Provider,
+			res.Status().ProviderDescription,
 			err,
 		)
 		advertised = crd.AdvertiseErrorCondition(err)
@@ -84,15 +84,15 @@ func (r *Reconciler) doAdvertise(
 	)
 }
 
-func shouldAdvertise(res *crd.DNSSDServiceInstance) bool {
-	a := res.Status.Condition(crd.ConditionTypeAdvertised)
-	d := res.Status.Condition(crd.ConditionTypeDiscoverable)
+func shouldAdvertise(res crd.Resource) bool {
+	a := res.Status().Condition(crd.ConditionTypeAdvertised)
+	d := res.Status().Condition(crd.ConditionTypeDiscoverable)
 
 	if a.Status != metav1.ConditionTrue {
 		return true
 	}
 
-	if a.ObservedGeneration < res.Generation {
+	if a.ObservedGeneration < res.GetGeneration() {
 		return true
 	}
 
@@ -103,29 +103,29 @@ func shouldAdvertise(res *crd.DNSSDServiceInstance) bool {
 	return true
 }
 
-func shouldDiscover(res *crd.DNSSDServiceInstance) bool {
-	a := res.Status.Condition(crd.ConditionTypeAdvertised)
+func shouldDiscover(res crd.Resource) bool {
+	a := res.Status().Condition(crd.ConditionTypeAdvertised)
 
 	if a.Status != metav1.ConditionTrue {
 		return false
 	}
 
-	if a.ObservedGeneration < res.Generation {
+	if a.ObservedGeneration < res.GetGeneration() {
 		return false
 	}
 
 	return true
 }
 
-func shouldRequeue(res *crd.DNSSDServiceInstance, discoveredTTL time.Duration) reconcile.Result {
-	a := res.Status.Condition(crd.ConditionTypeAdvertised)
-	d := res.Status.Condition(crd.ConditionTypeDiscoverable)
+func shouldRequeue(res crd.Resource, discoveredTTL time.Duration) reconcile.Result {
+	a := res.Status().Condition(crd.ConditionTypeAdvertised)
+	d := res.Status().Condition(crd.ConditionTypeDiscoverable)
 
 	if a.Status != metav1.ConditionTrue {
 		return reconcile.Result{Requeue: true}
 	}
 
-	if a.ObservedGeneration < res.Generation {
+	if a.ObservedGeneration < res.GetGeneration() {
 		return reconcile.Result{Requeue: true}
 	}
 
@@ -135,7 +135,7 @@ func shouldRequeue(res *crd.DNSSDServiceInstance, discoveredTTL time.Duration) r
 
 	if discoveredTTL == 0 {
 		// We have no TTL information for "out of sync" DNS records, so we use
-		// the TTL from the specification.
+		// a constant.
 		//
 		// HACK: This doesn't really have anything to do with the TTL, we're
 		// just using it as a (hopefully) reasonable indicator of how long we
@@ -143,7 +143,7 @@ func shouldRequeue(res *crd.DNSSDServiceInstance, discoveredTTL time.Duration) r
 		// could give us retry intervals based on the zone's SOA record (e.g.
 		// negative cache times) and/or API rate limiting.
 		return reconcile.Result{
-			RequeueAfter: res.Spec.Instance.TTL.Duration,
+			RequeueAfter: 30 * time.Second,
 		}
 	}
 

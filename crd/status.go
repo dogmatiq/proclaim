@@ -10,14 +10,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Resource is a DNS-SD resource that has a status.
-type Resource interface {
-	client.Object
-
-	domain() string
-	status() *Status
-}
-
 // Status encapsulates the status of a DNS-SD resource.
 type Status struct {
 	Conditions          []metav1.Condition `json:"conditions,omitempty"`
@@ -50,7 +42,7 @@ func UpdateStatus(
 	res Resource,
 	updates ...StatusUpdate,
 ) error {
-	before := res.status()
+	before := res.Status()
 	after := dyad.Clone(before)
 
 	for _, update := range updates {
@@ -130,4 +122,42 @@ func If(test bool, updates ...StatusUpdate) StatusUpdate {
 			}
 		}
 	}
+}
+
+// InitializeConditions explicitly sets all conditions to "Unknown" if they are
+// not already set.
+func InitializeConditions(
+	ctx context.Context,
+	cli client.Client,
+	res Resource,
+) (bool, error) {
+	types := []string{
+		ConditionTypeAdopted,
+		ConditionTypeAdvertised,
+		ConditionTypeDiscoverable,
+	}
+
+	var updates []StatusUpdate
+
+	for _, t := range types {
+		c := res.Status().Condition(t)
+
+		if c.LastTransitionTime.IsZero() {
+			updates = append(
+				updates,
+				MergeCondition(
+					metav1.Condition{
+						Type:   t,
+						Status: metav1.ConditionUnknown,
+					},
+				),
+			)
+		}
+	}
+
+	if len(updates) == 0 {
+		return false, nil
+	}
+
+	return true, UpdateStatus(ctx, cli, res, updates...)
 }

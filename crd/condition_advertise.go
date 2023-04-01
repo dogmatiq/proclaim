@@ -12,9 +12,8 @@ const ConditionTypeAdvertised = "Advertised"
 // DNSRecordsCreated records an event indicating that new DNS records were
 // created.
 func DNSRecordsCreated(m manager.Manager, res Resource) {
-	s := res.status()
 	m.
-		GetEventRecorderFor("proclaim-"+s.Provider).
+		GetEventRecorderFor("proclaim-"+res.Status().Provider).
 		Event(
 			res,
 			"Normal",
@@ -37,9 +36,8 @@ func DNSRecordsCreatedCondition() metav1.Condition {
 // DNSRecordsUpdated records an event indicating that existing DNS records were
 // updated.
 func DNSRecordsUpdated(m manager.Manager, res Resource) {
-	s := res.status()
 	m.
-		GetEventRecorderFor("proclaim-"+s.Provider).
+		GetEventRecorderFor("proclaim-"+res.Status().Provider).
 		Event(
 			res,
 			"Normal",
@@ -62,9 +60,8 @@ func DNSRecordsUpdatedCondition() metav1.Condition {
 // DNSRecordsVerified records an event indicating that existing DNS records were
 // verified to match the service instance spec.
 func DNSRecordsVerified(m manager.Manager, res Resource) {
-	s := res.status()
 	m.
-		GetEventRecorderFor("proclaim-"+s.Provider).
+		GetEventRecorderFor("proclaim-"+res.Status().Provider).
 		Event(
 			res,
 			"Normal",
@@ -87,9 +84,8 @@ func DNSRecordsObservedCondition() metav1.Condition {
 // DNSRecordsDeleted records an event indicating that existing DNS records were
 // deleted.
 func DNSRecordsDeleted(m manager.Manager, res Resource) {
-	s := res.status()
 	m.
-		GetEventRecorderFor("proclaim-"+s.Provider).
+		GetEventRecorderFor("proclaim-"+res.Status().Provider).
 		Event(
 			res,
 			"Normal",

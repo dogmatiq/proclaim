@@ -4,8 +4,8 @@ import (
 	"github.com/dnsimple/dnsimple-go/dnsimple"
 	"github.com/dogmatiq/ferrite"
 	"github.com/dogmatiq/imbue"
+	"github.com/dogmatiq/proclaim/provider"
 	"github.com/dogmatiq/proclaim/provider/dnsimpleprovider"
-	"github.com/dogmatiq/proclaim/reconciler"
 	"github.com/go-logr/logr"
 )
 
@@ -29,11 +29,11 @@ func init() {
 		container,
 		func(
 			ctx imbue.Context,
-			r *reconciler.Reconciler,
+			providers []provider.Provider,
 			l imbue.ByName[providerLogger, logr.Logger],
-		) (*reconciler.Reconciler, error) {
+		) ([]provider.Provider, error) {
 			if !dnsimpleEnabled.Value() {
-				return r, nil
+				return providers, nil
 			}
 
 			client := dnsimple.NewClient(
@@ -44,15 +44,13 @@ func init() {
 			)
 			client.BaseURL = dnsimpleURL.Value().String()
 
-			r.Providers = append(
-				r.Providers,
+			return append(
+				providers,
 				&dnsimpleprovider.Provider{
 					Client: client,
 					Logger: l.Value(),
 				},
-			)
-
-			return r, nil
+			), nil
 		},
 	)
 }

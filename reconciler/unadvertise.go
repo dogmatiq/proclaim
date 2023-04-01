@@ -15,29 +15,29 @@ import (
 //
 // It returns true on success. A non-nil error indicates context cancelation or
 // a problem interacting with Kubernetes itself.
-func (r *Reconciler) unadvertise(
+func (r *InstanceReconciler) unadvertise(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (reconcile.Result, error) {
-	if res.Status.Provider != "" {
+	if res.Status().Provider != "" {
 		a, ok, err := r.getAdvertiser(ctx, res)
 		if !ok || err != nil {
 			// The associated provider is not known to this reconciler.
 			return reconcile.Result{}, err
 		}
 
-		advertised := res.Status.Condition(crd.ConditionTypeAdvertised)
+		advertised := res.Status().Condition(crd.ConditionTypeAdvertised)
 
 		cs, err := a.UnadvertiseInstance(
 			ctx,
-			res.Spec.Instance.DissolveName(),
+			res.DissolveName(),
 		)
 		if err != nil {
 			crd.ProviderError(
 				r.Manager,
 				res,
-				res.Status.Provider,
-				res.Status.ProviderDescription,
+				res.Status().Provider,
+				res.Status().ProviderDescription,
 				err,
 			)
 			advertised = crd.UnadvertiseErrorCondition(err)

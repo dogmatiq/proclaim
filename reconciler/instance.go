@@ -14,9 +14,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// Reconciler manipulates DNS records to match the state of a
+// InstanceReconciler manipulates DNS records to match the state of a
 // crd.DNSSDServiceInstance.
-type Reconciler struct {
+type InstanceReconciler struct {
 	Manager   manager.Manager
 	Client    client.Client
 	Resolver  *dnssd.UnicastResolver
@@ -25,7 +25,7 @@ type Reconciler struct {
 
 // Reconcile performs a full reconciliation for the object referred to by the
 // Request, which must be a crd.DNSSDServiceInstance.
-func (r *Reconciler) Reconcile(
+func (r *InstanceReconciler) Reconcile(
 	ctx context.Context,
 	req reconcile.Request,
 ) (reconcile.Result, error) {
@@ -50,7 +50,7 @@ func (r *Reconciler) Reconcile(
 	return r.unadvertise(ctx, res)
 }
 
-func (r *Reconciler) initialize(
+func (r *InstanceReconciler) initialize(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (bool, error) {
@@ -63,7 +63,7 @@ func (r *Reconciler) initialize(
 	var updates []crd.StatusUpdate
 
 	for _, t := range types {
-		c := res.Status.Condition(crd.ConditionTypeAdvertised)
+		c := res.Status().Condition(crd.ConditionTypeAdvertised)
 		if c.LastTransitionTime.IsZero() {
 			updates = append(
 				updates,
@@ -80,7 +80,7 @@ func (r *Reconciler) initialize(
 	return len(updates) > 0, r.update(res, updates...)
 }
 
-func (r *Reconciler) update(
+func (r *InstanceReconciler) update(
 	res *crd.DNSSDServiceInstance,
 	updates ...crd.StatusUpdate,
 ) error {

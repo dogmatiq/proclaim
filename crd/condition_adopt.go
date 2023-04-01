@@ -12,16 +12,15 @@ const ConditionTypeAdopted = "Adopted"
 // InstanceAdopted records an event indicating that the service instance was
 // adopted by the controller.
 func InstanceAdopted(m manager.Manager, res Resource) {
-	s := res.status()
 	m.
-		GetEventRecorderFor("proclaim-"+s.Provider).
+		GetEventRecorderFor("proclaim-"+res.Status().Provider).
 		Eventf(
 			res,
 			"Normal",
 			"InstanceAdopted",
 			"%s can advertise on %q",
-			s.ProviderDescription,
-			res.domain(),
+			res.Status().ProviderDescription,
+			res.DissolveName().Domain,
 		)
 }
 
@@ -46,7 +45,7 @@ func InstanceIgnored(m manager.Manager, res Resource) {
 			"Warning",
 			"InstanceIgnored",
 			"none of the configured providers can advertise on %q",
-			res.domain(),
+			res.DissolveName().Domain,
 		)
 }
 

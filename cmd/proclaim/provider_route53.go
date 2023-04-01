@@ -6,8 +6,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/dogmatiq/ferrite"
 	"github.com/dogmatiq/imbue"
+	"github.com/dogmatiq/proclaim/provider"
 	"github.com/dogmatiq/proclaim/provider/route53provider"
-	"github.com/dogmatiq/proclaim/reconciler"
 	"github.com/go-logr/logr"
 )
 
@@ -21,12 +21,12 @@ func init() {
 		container,
 		func(
 			ctx imbue.Context,
-			r *reconciler.Reconciler,
+			providers []provider.Provider,
 			c imbue.Optional[*route53.Client],
 			l imbue.ByName[providerLogger, logr.Logger],
-		) (*reconciler.Reconciler, error) {
+		) ([]provider.Provider, error) {
 			if !route53Enabled.Value() {
-				return r, nil
+				return providers, nil
 			}
 
 			cli, err := c.Value()
@@ -34,15 +34,13 @@ func init() {
 				return nil, err
 			}
 
-			r.Providers = append(
-				r.Providers,
+			return append(
+				providers,
 				&route53provider.Provider{
 					Client: cli,
 					Logger: l.Value(),
 				},
-			)
-
-			return r, nil
+			), nil
 		},
 	)
 

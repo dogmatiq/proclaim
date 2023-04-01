@@ -10,7 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (r *Reconciler) doDiscover(
+func (r *InstanceReconciler) doDiscover(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (time.Duration, error) {
@@ -21,7 +21,7 @@ func (r *Reconciler) doDiscover(
 	)
 }
 
-func (r *Reconciler) computeDiscoverable(
+func (r *InstanceReconciler) computeDiscoverable(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (time.Duration, metav1.Condition) {
@@ -59,7 +59,7 @@ func (r *Reconciler) computeDiscoverable(
 		return 0, crd.NegativeLookupResultCondition()
 	}
 
-	desired := res.Spec.Instance.DissolveInstance()
+	desired := res.DissolveInstance()
 
 	// The TTL of the observed instance may be less than the desired TTL based
 	// on how old the DNS server's cache is. So long as the observed TTL does

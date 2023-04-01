@@ -30,3 +30,14 @@ spec:
     targets:
       - host: two.rinq.io
         port: 456
+---
+apiVersion: proclaim.dogmatiq.io/v1
+kind: DNSSDServiceInstanceSubType
+metadata:
+  name: dnsimple-two-demo
+spec:
+  instance:
+    name: instance-2
+    serviceType: _proclaim._tcp
+    domain: rinq.io
+  subType: _demo
