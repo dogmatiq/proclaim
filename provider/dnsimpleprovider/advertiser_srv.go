@@ -12,7 +12,7 @@ import (
 
 func (a *advertiser) findSRV(
 	ctx context.Context,
-	inst dnssd.ServiceInstance,
+	name dnssd.ServiceInstanceName,
 ) (dnsimple.ZoneRecord, bool, error) {
 	return dnsimplex.One(
 		ctx,
@@ -23,10 +23,8 @@ func (a *advertiser) findSRV(
 				a.Zone.Name,
 				&dnsimple.ZoneRecordListOptions{
 					ListOptions: opts,
-					Name: dnsimple.String(
-						dnssd.EscapeInstance(inst.Name) + "." + inst.ServiceType,
-					),
-					Type: dnsimple.String("SRV"),
+					Name:        dnsimple.String(name.Relative()),
+					Type:        dnsimple.String("SRV"),
 				},
 			)
 			if err != nil {
@@ -43,7 +41,7 @@ func (a *advertiser) syncSRV(
 	inst dnssd.ServiceInstance,
 	cs *changeSet,
 ) error {
-	current, ok, err := a.findSRV(ctx, inst)
+	current, ok, err := a.findSRV(ctx, inst.ServiceInstanceName)
 	if err != nil {
 		return err
 	}
@@ -51,9 +49,7 @@ func (a *advertiser) syncSRV(
 	desired := dnsimple.ZoneRecordAttributes{
 		ZoneID: a.Zone.Name,
 		Type:   "SRV",
-		Name: dnsimple.String(
-			dnssd.EscapeInstance(inst.Name) + "." + inst.ServiceType,
-		),
+		Name:   dnsimple.String(inst.Relative()),
 		Content: fmt.Sprintf(
 			"%d %d %s",
 			inst.Weight,
@@ -75,10 +71,10 @@ func (a *advertiser) syncSRV(
 
 func (a *advertiser) deleteSRV(
 	ctx context.Context,
-	inst dnssd.ServiceInstance,
+	name dnssd.ServiceInstanceName,
 	cs *changeSet,
 ) error {
-	current, ok, err := a.findSRV(ctx, inst)
+	current, ok, err := a.findSRV(ctx, name)
 	if !ok || err != nil {
 		return err
 	}

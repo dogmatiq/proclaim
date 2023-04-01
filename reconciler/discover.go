@@ -59,7 +59,7 @@ func (r *Reconciler) computeDiscoverable(
 		return 0, crd.NegativeLookupResultCondition()
 	}
 
-	desired := crd.ToDissolve(res.Spec.Instance)
+	desired := res.Spec.Instance.DissolveInstance()
 
 	// The TTL of the observed instance may be less than the desired TTL based
 	// on how old the DNS server's cache is. So long as the observed TTL does

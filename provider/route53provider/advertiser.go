@@ -24,7 +24,7 @@ func (a *advertiser) ID() map[string]any {
 	return marshalAdvertiserID(a.ZoneID)
 }
 
-func (a *advertiser) Advertise(
+func (a *advertiser) AdvertiseInstance(
 	ctx context.Context,
 	inst dnssd.ServiceInstance,
 ) (provider.ChangeSet, error) {
@@ -51,27 +51,27 @@ func (a *advertiser) Advertise(
 	return a.apply(ctx, cs)
 }
 
-func (a *advertiser) Unadvertise(
+func (a *advertiser) UnadvertiseInstance(
 	ctx context.Context,
-	inst dnssd.ServiceInstance,
+	name dnssd.ServiceInstanceName,
 ) (provider.ChangeSet, error) {
 	cs := &types.ChangeBatch{
 		Comment: aws.String(fmt.Sprintf(
 			"dogmatiq/proclaim: unadvertising %s instance: %s ",
-			inst.ServiceType,
-			inst.Name,
+			name.ServiceType,
+			name.Name,
 		)),
 	}
 
-	if err := a.deletePTR(ctx, inst, cs); err != nil {
+	if err := a.deletePTR(ctx, name, cs); err != nil {
 		return provider.ChangeSet{}, err
 	}
 
-	if err := a.deleteSRV(ctx, inst, cs); err != nil {
+	if err := a.deleteSRV(ctx, name, cs); err != nil {
 		return provider.ChangeSet{}, err
 	}
 
-	if err := a.deleteTXT(ctx, inst, cs); err != nil {
+	if err := a.deleteTXT(ctx, name, cs); err != nil {
 		return provider.ChangeSet{}, err
 	}
 
@@ -136,14 +136,14 @@ func (a *advertiser) apply(
 
 func (a *advertiser) findResourceRecordSet(
 	ctx context.Context,
-	name *string,
+	name string,
 	recordType types.RRType,
 ) (types.ResourceRecordSet, bool, error) {
 	out, err := a.Client.ListResourceRecordSets(
 		ctx,
 		&route53.ListResourceRecordSetsInput{
 			HostedZoneId:    aws.String(a.ZoneID),
-			StartRecordName: name,
+			StartRecordName: &name,
 			StartRecordType: recordType,
 			MaxItems:        aws.Int32(1),
 		},
@@ -158,7 +158,7 @@ func (a *advertiser) findResourceRecordSet(
 
 	set := out.ResourceRecordSets[0]
 
-	if !strings.EqualFold(*set.Name, *name) {
+	if !strings.EqualFold(*set.Name, name) {
 		return types.ResourceRecordSet{}, false, nil
 	}
 
@@ -167,18 +167,6 @@ func (a *advertiser) findResourceRecordSet(
 	}
 
 	return set, true, nil
-}
-
-func instanceName(inst dnssd.ServiceInstance) *string {
-	return aws.String(
-		dnssd.ServiceInstanceName(inst.Name, inst.ServiceType, inst.Domain) + ".",
-	)
-}
-
-func serviceName(inst dnssd.ServiceInstance) *string {
-	return aws.String(
-		dnssd.InstanceEnumerationDomain(inst.ServiceType, inst.Domain) + ".",
-	)
 }
 
 func convertRecords[

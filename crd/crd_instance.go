@@ -11,15 +11,16 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// DNSSDServiceInstance is a resource that represents a DNS-SD service instance.
+// DNSSDServiceInstance is a resource that represents a DNS-SD service instance
+// to be published.
 type DNSSDServiceInstance struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec struct {
+	Status Status `json:"status,omitempty"`
+	Spec   struct {
 		Instance Instance `json:"instance"`
 	} `json:"spec,omitempty"`
-	Status Status `json:"status,omitempty"`
 }
 
 // DeepCopyObject returns a deep clone of i.
@@ -66,18 +67,30 @@ type Target struct {
 	Weight   uint16 `json:"weight,omitempty"`
 }
 
-// ToDissolve returns a Dissolve dnssd.ServiceInstance from a CRD service
+// DissolveName returns a Dissolve dnssd.ServiceInstanceName from a CRD service
 // instance.
-func ToDissolve(i Instance) dnssd.ServiceInstance {
-	inst := dnssd.ServiceInstance{
+func (i Instance) DissolveName() dnssd.ServiceInstanceName {
+	return dnssd.ServiceInstanceName{
 		Name:        i.Name,
 		ServiceType: i.ServiceType,
 		Domain:      i.Domain,
-		TargetHost:  i.Targets[0].Host,
-		TargetPort:  i.Targets[0].Port,
-		Priority:    i.Targets[0].Priority,
-		Weight:      i.Targets[0].Weight,
-		TTL:         i.TTL.Duration,
+	}
+}
+
+// DissolveInstance returns a Dissolve dnssd.ServiceInstance from a CRD service
+// instance.
+func (i Instance) DissolveInstance() dnssd.ServiceInstance {
+	inst := dnssd.ServiceInstance{
+		ServiceInstanceName: dnssd.ServiceInstanceName{
+			Name:        i.Name,
+			ServiceType: i.ServiceType,
+			Domain:      i.Domain,
+		},
+		TargetHost: i.Targets[0].Host,
+		TargetPort: i.Targets[0].Port,
+		Priority:   i.Targets[0].Priority,
+		Weight:     i.Targets[0].Weight,
+		TTL:        i.TTL.Duration,
 	}
 
 	if inst.TTL == 0 {

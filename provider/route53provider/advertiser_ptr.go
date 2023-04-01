@@ -24,11 +24,11 @@ const ptrTTL = 30 * time.Second
 
 func (a *advertiser) findPTR(
 	ctx context.Context,
-	inst dnssd.ServiceInstance,
+	name dnssd.ServiceInstanceName,
 ) (types.ResourceRecordSet, bool, error) {
 	return a.findResourceRecordSet(
 		ctx,
-		serviceName(inst),
+		dnssd.AbsoluteInstanceEnumerationDomain(name.ServiceType, name.Domain),
 		types.RRTypePtr,
 	)
 }
@@ -42,14 +42,14 @@ func (a *advertiser) syncPTR(
 		SetIdentifier: marshalGeneration(0),
 		Weight:        aws.Int64(0),
 		Type:          types.RRTypePtr,
-		Name:          serviceName(inst),
+		Name:          aws.String(dnssd.AbsoluteInstanceEnumerationDomain(inst.ServiceType, inst.Domain)),
 		TTL:           aws.Int64(int64(ptrTTL.Seconds())),
 		ResourceRecords: convertRecords(
 			dnssd.NewPTRRecord(inst),
 		),
 	}
 
-	current, ok, err := a.findPTR(ctx, inst)
+	current, ok, err := a.findPTR(ctx, inst.ServiceInstanceName)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (a *advertiser) syncPTR(
 		return nil
 	}
 
-	if indexOf(current, inst) != -1 {
+	if indexOf(current, inst.ServiceInstanceName) != -1 {
 		return nil
 	}
 
@@ -95,15 +95,15 @@ func (a *advertiser) syncPTR(
 
 func (a *advertiser) deletePTR(
 	ctx context.Context,
-	inst dnssd.ServiceInstance,
+	name dnssd.ServiceInstanceName,
 	cs *types.ChangeBatch,
 ) error {
-	current, ok, err := a.findPTR(ctx, inst)
+	current, ok, err := a.findPTR(ctx, name)
 	if !ok || err != nil {
 		return err
 	}
 
-	index := indexOf(current, inst)
+	index := indexOf(current, name)
 	if index == -1 {
 		return nil
 	}
@@ -125,7 +125,7 @@ func (a *advertiser) deletePTR(
 		SetIdentifier: marshalGeneration(gen + 1),
 		Weight:        aws.Int64(0),
 		Type:          types.RRTypePtr,
-		Name:          serviceName(inst),
+		Name:          aws.String(dnssd.AbsoluteInstanceEnumerationDomain(name.ServiceType, name.Domain)),
 		TTL:           aws.Int64(int64(ptrTTL.Seconds())),
 		ResourceRecords: slices.Delete(
 			slices.Clone(current.ResourceRecords),
@@ -149,10 +149,11 @@ func (a *advertiser) deletePTR(
 
 // indexOf returns the index of the given inst in a PTR resource record set, or
 // -1 if it is not present.
-func indexOf(set types.ResourceRecordSet, inst dnssd.ServiceInstance) int {
-	n := instanceName(inst)
+func indexOf(set types.ResourceRecordSet, name dnssd.ServiceInstanceName) int {
+	n := name.Absolute()
+
 	for i, rec := range set.ResourceRecords {
-		if strings.EqualFold(*rec.Value, *n) {
+		if strings.EqualFold(*rec.Value, n) {
 			return i
 		}
 	}

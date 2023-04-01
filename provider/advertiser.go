@@ -13,13 +13,13 @@ type Advertiser interface {
 	// the provider that created it.
 	ID() map[string]any
 
-	// Advertise adds/updates DNS records to advertise the given service
+	// AdvertiseInstance adds/updates DNS records to advertise the given service
 	// instance.
-	Advertise(ctx context.Context, inst dnssd.ServiceInstance) (ChangeSet, error)
+	AdvertiseInstance(ctx context.Context, inst dnssd.ServiceInstance) (ChangeSet, error)
 
 	// Advertise removes/updates DNS records to stop advertising the given
 	// service instance.
-	Unadvertise(ctx context.Context, inst dnssd.ServiceInstance) (ChangeSet, error)
+	UnadvertiseInstance(ctx context.Context, inst dnssd.ServiceInstanceName) (ChangeSet, error)
 }
 
 // ChangeSet describes the changes made to DNS records.

@@ -12,7 +12,7 @@ import (
 
 func (a *advertiser) findPTR(
 	ctx context.Context,
-	inst dnssd.ServiceInstance,
+	name dnssd.ServiceInstanceName,
 ) (dnsimple.ZoneRecord, bool, error) {
 	return dnsimplex.First(
 		ctx,
@@ -23,7 +23,7 @@ func (a *advertiser) findPTR(
 				a.Zone.Name,
 				&dnsimple.ZoneRecordListOptions{
 					ListOptions: opts,
-					Name:        dnsimple.String(inst.ServiceType),
+					Name:        dnsimple.String(name.ServiceType),
 					Type:        dnsimple.String("PTR"),
 				},
 			)
@@ -34,7 +34,7 @@ func (a *advertiser) findPTR(
 			return res.Pagination, res.Data, nil
 		},
 		func(candidate dnsimple.ZoneRecord) bool {
-			return candidate.Content == dnssd.ServiceInstanceName(inst.Name, inst.ServiceType, inst.Domain)
+			return candidate.Content == dnssd.AbsoluteServiceInstanceName(name.Name, name.ServiceType, name.Domain)
 		},
 	)
 }
@@ -44,7 +44,7 @@ func (a *advertiser) syncPTR(
 	inst dnssd.ServiceInstance,
 	cs *changeSet,
 ) error {
-	current, ok, err := a.findPTR(ctx, inst)
+	current, ok, err := a.findPTR(ctx, inst.ServiceInstanceName)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (a *advertiser) syncPTR(
 		ZoneID:  a.Zone.Name,
 		Type:    "PTR",
 		Name:    dnsimple.String(inst.ServiceType),
-		Content: dnssd.ServiceInstanceName(inst.Name, inst.ServiceType, inst.Domain),
+		Content: dnssd.AbsoluteServiceInstanceName(inst.Name, inst.ServiceType, inst.Domain),
 		TTL:     int(inst.TTL.Seconds()),
 	}
 
@@ -68,10 +68,10 @@ func (a *advertiser) syncPTR(
 
 func (a *advertiser) deletePTR(
 	ctx context.Context,
-	inst dnssd.ServiceInstance,
+	name dnssd.ServiceInstanceName,
 	cs *changeSet,
 ) error {
-	current, ok, err := a.findPTR(ctx, inst)
+	current, ok, err := a.findPTR(ctx, name)
 	if !ok || err != nil {
 		return err
 	}

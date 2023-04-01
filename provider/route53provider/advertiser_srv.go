@@ -11,11 +11,11 @@ import (
 
 func (a *advertiser) findSRV(
 	ctx context.Context,
-	inst dnssd.ServiceInstance,
+	name dnssd.ServiceInstanceName,
 ) (types.ResourceRecordSet, bool, error) {
 	return a.findResourceRecordSet(
 		ctx,
-		instanceName(inst),
+		name.Absolute(),
 		types.RRTypeSrv,
 	)
 }
@@ -26,7 +26,7 @@ func (a *advertiser) syncSRV(
 	cs *types.ChangeBatch,
 ) error {
 	desired := types.ResourceRecordSet{
-		Name: instanceName(inst),
+		Name: aws.String(inst.Absolute()),
 		Type: types.RRTypeSrv,
 		TTL:  aws.Int64(int64(inst.TTL.Seconds())),
 		ResourceRecords: convertRecords(
@@ -34,7 +34,7 @@ func (a *advertiser) syncSRV(
 		),
 	}
 
-	current, ok, err := a.findSRV(ctx, inst)
+	current, ok, err := a.findSRV(ctx, inst.ServiceInstanceName)
 	if err != nil {
 		return err
 	}
@@ -67,10 +67,10 @@ func (a *advertiser) syncSRV(
 
 func (a *advertiser) deleteSRV(
 	ctx context.Context,
-	inst dnssd.ServiceInstance,
+	name dnssd.ServiceInstanceName,
 	cs *types.ChangeBatch,
 ) error {
-	current, ok, err := a.findSRV(ctx, inst)
+	current, ok, err := a.findSRV(ctx, name)
 	if !ok || err != nil {
 		return err
 	}

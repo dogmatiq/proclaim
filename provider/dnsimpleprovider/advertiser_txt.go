@@ -14,7 +14,7 @@ import (
 
 func (a *advertiser) findTXT(
 	ctx context.Context,
-	inst dnssd.ServiceInstance,
+	name dnssd.ServiceInstanceName,
 ) ([]dnsimple.ZoneRecord, error) {
 	return dnsimplex.All(
 		ctx,
@@ -25,10 +25,8 @@ func (a *advertiser) findTXT(
 				a.Zone.Name,
 				&dnsimple.ZoneRecordListOptions{
 					ListOptions: opts,
-					Name: dnsimple.String(
-						dnssd.EscapeInstance(inst.Name) + "." + inst.ServiceType,
-					),
-					Type: dnsimple.String("TXT"),
+					Name:        dnsimple.String(name.Relative()),
+					Type:        dnsimple.String("TXT"),
 				},
 			)
 			if err != nil {
@@ -45,7 +43,7 @@ func (a *advertiser) syncTXT(
 	inst dnssd.ServiceInstance,
 	cs *changeSet,
 ) error {
-	current, err := a.findTXT(ctx, inst)
+	current, err := a.findTXT(ctx, inst.ServiceInstanceName)
 	if err != nil {
 		return err
 	}
@@ -56,11 +54,9 @@ func (a *advertiser) syncTXT(
 		desired = append(
 			desired,
 			dnsimple.ZoneRecordAttributes{
-				ZoneID: a.Zone.Name,
-				Type:   "TXT",
-				Name: dnsimple.String(
-					dnssd.EscapeInstance(inst.Name) + "." + inst.ServiceType,
-				),
+				ZoneID:  a.Zone.Name,
+				Type:    "TXT",
+				Name:    dnsimple.String(inst.Relative()),
 				Content: strings.TrimPrefix(r.String(), r.Hdr.String()),
 				TTL:     int(inst.TTL.Seconds()),
 			},
@@ -91,10 +87,10 @@ next:
 
 func (a *advertiser) deleteTXT(
 	ctx context.Context,
-	inst dnssd.ServiceInstance,
+	name dnssd.ServiceInstanceName,
 	cs *changeSet,
 ) error {
-	current, err := a.findTXT(ctx, inst)
+	current, err := a.findTXT(ctx, name)
 	if err != nil {
 		return err
 	}

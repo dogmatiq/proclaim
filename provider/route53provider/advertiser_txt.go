@@ -11,11 +11,11 @@ import (
 
 func (a *advertiser) findTXT(
 	ctx context.Context,
-	inst dnssd.ServiceInstance,
+	name dnssd.ServiceInstanceName,
 ) (types.ResourceRecordSet, bool, error) {
 	return a.findResourceRecordSet(
 		ctx,
-		instanceName(inst),
+		name.Absolute(),
 		types.RRTypeTxt,
 	)
 }
@@ -26,7 +26,7 @@ func (a *advertiser) syncTXT(
 	cs *types.ChangeBatch,
 ) error {
 	desired := types.ResourceRecordSet{
-		Name: instanceName(inst),
+		Name: aws.String(inst.Absolute()),
 		Type: types.RRTypeTxt,
 		TTL:  aws.Int64(int64(inst.TTL.Seconds())),
 		ResourceRecords: convertRecords(
@@ -34,7 +34,7 @@ func (a *advertiser) syncTXT(
 		),
 	}
 
-	current, ok, err := a.findTXT(ctx, inst)
+	current, ok, err := a.findTXT(ctx, inst.ServiceInstanceName)
 	if err != nil {
 		return err
 	}
@@ -67,10 +67,10 @@ func (a *advertiser) syncTXT(
 
 func (a *advertiser) deleteTXT(
 	ctx context.Context,
-	inst dnssd.ServiceInstance,
+	name dnssd.ServiceInstanceName,
 	cs *types.ChangeBatch,
 ) error {
-	current, ok, err := a.findTXT(ctx, inst)
+	current, ok, err := a.findTXT(ctx, name)
 	if err != nil {
 		return err
 	}

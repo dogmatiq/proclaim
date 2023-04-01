@@ -21,7 +21,7 @@ func (a *advertiser) ID() map[string]any {
 	return marshalAdvertiserID(a.Zone)
 }
 
-func (a *advertiser) Advertise(
+func (a *advertiser) AdvertiseInstance(
 	ctx context.Context,
 	inst dnssd.ServiceInstance,
 ) (provider.ChangeSet, error) {
@@ -42,21 +42,21 @@ func (a *advertiser) Advertise(
 	return a.apply(ctx, cs)
 }
 
-func (a *advertiser) Unadvertise(
+func (a *advertiser) UnadvertiseInstance(
 	ctx context.Context,
-	inst dnssd.ServiceInstance,
+	name dnssd.ServiceInstanceName,
 ) (provider.ChangeSet, error) {
 	cs := &changeSet{}
 
-	if err := a.deletePTR(ctx, inst, cs); err != nil {
+	if err := a.deletePTR(ctx, name, cs); err != nil {
 		return provider.ChangeSet{}, err
 	}
 
-	if err := a.deleteSRV(ctx, inst, cs); err != nil {
+	if err := a.deleteSRV(ctx, name, cs); err != nil {
 		return provider.ChangeSet{}, err
 	}
 
-	if err := a.deleteTXT(ctx, inst, cs); err != nil {
+	if err := a.deleteTXT(ctx, name, cs); err != nil {
 		return provider.ChangeSet{}, err
 	}
 

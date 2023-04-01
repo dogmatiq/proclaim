@@ -49,9 +49,9 @@ func (r *Reconciler) doAdvertise(
 		return err
 	}
 
-	cs, err := a.Advertise(
+	cs, err := a.AdvertiseInstance(
 		ctx,
-		crd.ToDissolve(res.Spec.Instance),
+		res.Spec.Instance.DissolveInstance(),
 	)
 
 	advertised := res.Status.Condition(crd.ConditionTypeAdvertised)
