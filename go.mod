@@ -9,7 +9,7 @@ require (
 	github.com/dnsimple/dnsimple-go v1.2.0
 	github.com/dogmatiq/dissolve v0.2.0
 	github.com/dogmatiq/dyad v0.2.2
-	github.com/dogmatiq/ferrite v1.0.2
+	github.com/dogmatiq/ferrite v1.0.3
 	github.com/dogmatiq/imbue v0.7.0
 	github.com/go-logr/logr v1.2.4
 	github.com/miekg/dns v1.1.53
