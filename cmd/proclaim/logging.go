@@ -9,8 +9,8 @@ import (
 )
 
 type (
-	systemLogger   imbue.Name[logr.Logger]
-	providerLogger imbue.Name[logr.Logger]
+	systemLogger  imbue.Name[logr.Logger]
+	verboseLogger imbue.Name[logr.Logger]
 )
 
 func init() {
@@ -27,7 +27,7 @@ func init() {
 		},
 	)
 
-	imbue.With1Named[providerLogger](
+	imbue.With1Named[verboseLogger](
 		container,
 		func(
 			ctx imbue.Context,

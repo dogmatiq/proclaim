@@ -33,17 +33,19 @@ func init() {
 		},
 	)
 
-	imbue.With2(
+	imbue.With3(
 		container,
 		func(
 			ctx imbue.Context,
 			m manager.Manager,
 			r *dnssd.UnicastResolver,
+			l imbue.ByName[verboseLogger, logr.Logger],
 		) (*reconciler.Reconciler, error) {
 			return &reconciler.Reconciler{
 				Manager:  m,
 				Client:   m.GetClient(),
 				Resolver: r,
+				Logger:   l.Value(),
 			}, nil
 		},
 	)

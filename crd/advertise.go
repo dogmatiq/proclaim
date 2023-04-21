@@ -105,6 +105,18 @@ func DNSRecordsDeletedCondition() metav1.Condition {
 	}
 }
 
+// DNSRecordsDoNotExistCondition returns a condition indicating that the
+// instance's DNS records do not exist, either because they never did or they
+// have already been removed.
+func DNSRecordsDoNotExistCondition() metav1.Condition {
+	return metav1.Condition{
+		Type:    ConditionTypeAdvertised,
+		Status:  metav1.ConditionFalse,
+		Reason:  "RecordsDoNotExist",
+		Message: "DNS records do not exist",
+	}
+}
+
 // ProviderError records an event indicating that an error occurred while
 // interacting with a DNS provider.
 func ProviderError(

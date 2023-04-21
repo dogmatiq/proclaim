@@ -23,7 +23,7 @@ func init() {
 			ctx imbue.Context,
 			r *reconciler.Reconciler,
 			c imbue.Optional[*route53.Client],
-			l imbue.ByName[providerLogger, logr.Logger],
+			l imbue.ByName[verboseLogger, logr.Logger],
 		) (*reconciler.Reconciler, error) {
 			if !route53Enabled.Value() {
 				return r, nil

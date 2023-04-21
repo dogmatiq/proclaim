@@ -67,7 +67,10 @@ func (r *Reconciler) computeDiscoverable(
 	if observed.TTL <= desired.TTL {
 		desired.TTL = observed.TTL
 		if observed.Equal(desired) {
-			crd.Discovered(r.Manager, res)
+			d := res.Condition(crd.ConditionTypeDiscoverable)
+			if d.Status != metav1.ConditionTrue {
+				crd.Discovered(r.Manager, res)
+			}
 			return observed.TTL, crd.DiscoveredCondition()
 		}
 	}

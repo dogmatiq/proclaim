@@ -10,6 +10,24 @@ The format is based on [Keep a Changelog], and this project adheres to
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## [Unreleased]
+
+### Changed
+
+- Drastically reduced the re-reconciliation interval from 10 hours (the
+  Kubernetes default), to the TTL of the DNS-SD instance (typically ~1 minute).
+  This provides much more practical drift-detection behavior. Assuming there is
+  no DNS record drift, the only overhead is a DNS query every TTL period.
+- The `Discovered` event is now only emitted when a service instance is first
+  discovered, or returns to being discoverable after a period of
+  undiscoverability or drift. Prior to this change the event was emitted every
+  time drift detection was performed.
+
+### Added
+
+- Added granular debug logging for advertise, unadvertise, discover and
+  finalization operations.
+
 ## [0.4.0]
 
 ### Added

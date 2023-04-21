@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/dogmatiq/proclaim/crd"
+	"github.com/dogmatiq/proclaim/provider"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -19,13 +20,12 @@ func (r *Reconciler) unadvertise(
 	ctx context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (reconcile.Result, error) {
-	if res.Status.Provider != "" {
-		a, ok, err := r.getAdvertiser(ctx, res)
-		if !ok || err != nil {
-			// The associated provider is not known to this reconciler.
-			return reconcile.Result{}, err
-		}
+	a, ok, err := r.shouldUnadvertise(ctx, res)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
 
+	if ok {
 		advertised := res.Condition(crd.ConditionTypeAdvertised)
 
 		cs, err := a.Unadvertise(ctx, res.Spec.ToDissolve())
@@ -38,7 +38,9 @@ func (r *Reconciler) unadvertise(
 				err,
 			)
 			advertised = crd.UnadvertiseErrorCondition(err)
-		} else if !cs.IsEmpty() {
+		} else if cs.IsEmpty() {
+			advertised = crd.DNSRecordsDoNotExistCondition()
+		} else {
 			crd.DNSRecordsDeleted(r.Manager, res)
 			advertised = crd.DNSRecordsDeletedCondition()
 		}
@@ -51,6 +53,12 @@ func (r *Reconciler) unadvertise(
 		}
 
 		if advertised.Status != metav1.ConditionFalse {
+			r.Logger.Info(
+				"re-queueing",
+				"namespace", res.Namespace,
+				"name", res.Name,
+				"reason", "potentially still advertised",
+			)
 			return reconcile.Result{Requeue: true}, nil
 		}
 	}
@@ -60,5 +68,54 @@ func (r *Reconciler) unadvertise(
 		return reconcile.Result{}, fmt.Errorf("unable to remove finalizer: %w", err)
 	}
 
+	r.Logger.Info(
+		"removed finalizer",
+		"namespace", res.Namespace,
+		"name", res.Name,
+		"finalizer", crd.FinalizerName,
+	)
+
 	return reconcile.Result{}, nil
+}
+
+func (r *Reconciler) shouldUnadvertise(
+	ctx context.Context,
+	res *crd.DNSSDServiceInstance,
+) (adv provider.Advertiser, should bool, err error) {
+	a := res.Condition(crd.ConditionTypeAdvertised)
+
+	reason := ""
+
+	if a.Status == metav1.ConditionFalse {
+		should = false
+		reason = "not advertised"
+	} else {
+		adv, should, err = r.getAdvertiser(ctx, res)
+		if err != nil {
+			return nil, false, err
+		}
+		if !should {
+			reason = "unrecognized provider"
+		} else if a.Status == metav1.ConditionTrue {
+			should = true
+			reason = "still advertised"
+		} else if a.Status == metav1.ConditionUnknown {
+			should = true
+			reason = "potentially still advertised"
+		}
+	}
+
+	message := "not unadvertising"
+	if should {
+		message = "unadvertising"
+	}
+
+	r.Logger.Info(
+		message,
+		"namespace", res.Namespace,
+		"name", res.Name,
+		"reason", reason,
+	)
+
+	return adv, should, nil
 }

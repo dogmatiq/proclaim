@@ -8,6 +8,7 @@ import (
 	"github.com/dogmatiq/dissolve/dnssd"
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
+	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -21,6 +22,7 @@ type Reconciler struct {
 	Client    client.Client
 	Resolver  *dnssd.UnicastResolver
 	Providers []provider.Provider
+	Logger    logr.Logger
 }
 
 // Reconcile performs a full reconciliation for the object referred to by the
@@ -38,8 +40,17 @@ func (r *Reconciler) Reconcile(
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if requeue, err := r.initialize(ctx, res); requeue || err != nil {
-		return reconcile.Result{Requeue: true}, err
+	if requeue, err := r.initialize(ctx, res); err != nil {
+		return reconcile.Result{}, err
+	} else if requeue {
+		r.Logger.Info(
+			"initialized status",
+			"resource", req.NamespacedName,
+		)
+
+		// TODO: Why do we requeue here, instead of just continuing on.
+		// Is it a roundabout way of reloading the resource after modifying it?
+		return reconcile.Result{Requeue: true}, nil
 	}
 
 	// Advertise the service, unless its deletion timestamp is set, in which

@@ -30,7 +30,7 @@ func init() {
 		func(
 			ctx imbue.Context,
 			r *reconciler.Reconciler,
-			l imbue.ByName[providerLogger, logr.Logger],
+			l imbue.ByName[verboseLogger, logr.Logger],
 		) (*reconciler.Reconciler, error) {
 			if !dnsimpleEnabled.Value() {
 				return r, nil
