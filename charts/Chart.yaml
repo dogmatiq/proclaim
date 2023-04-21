@@ -3,5 +3,5 @@ name: proclaim
 description: A Kubernetes controller and CRD that publishes DNS-SD records.
 type: application
 version: v0.2.0
-appVersion: v0.4.0
+appVersion: v0.4.1
 icon: https://dogmatiq.io/res/img/icon-144x144.png
