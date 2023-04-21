@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog], and this project adheres to
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## [0.4.2] - 2023-04-22
+
+### Changed
+
+- The Helm chart in versioned in lockstep with Proclaim itself
+
 ## [0.4.1] - 2023-04-22
 
 ### Changed
@@ -94,6 +100,7 @@ The format is based on [Keep a Changelog], and this project adheres to
 [0.3.0]: https://github.com/dogmatiq/proclaim/releases/tag/v0.3.0
 [0.4.0]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.0
 [0.4.1]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.1
+[0.4.2]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.2
 
 <!-- version template
 ## [0.0.1] - YYYY-MM-DD

@@ -31,7 +31,7 @@ helm install proclaim --values values.yaml dogmatiq/proclaim
 ```
 
 Please note that pulling the Helm chart from the `main` branch will always
-install the latest version. Use a version number (e.g. `v0.4.1`) to install a
+install the latest version. Use a version number (e.g. `v0.4.2`) to install a
 specific version.
 
 ## Configuration
