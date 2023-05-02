@@ -12,7 +12,7 @@ require (
 	github.com/dogmatiq/ferrite v1.0.3
 	github.com/dogmatiq/imbue v0.7.0
 	github.com/go-logr/logr v1.2.4
-	github.com/miekg/dns v1.1.53
+	github.com/miekg/dns v1.1.54
 	github.com/onsi/ginkgo/v2 v2.9.2
 	github.com/onsi/gomega v1.27.6
 	golang.org/x/exp v0.0.0-20230108222341-4b8118a2686a
