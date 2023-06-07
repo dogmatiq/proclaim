@@ -91,91 +91,11 @@ export ROUTE53_ENABLED=true
 export ROUTE53_ENABLED=false # (default)
 ```
 
-## Usage Examples
-
-<details>
-<summary>Kubernetes</summary>
-
-This example shows how to define the environment variables needed by `proclaim`
-on a [Kubernetes container] within a Kubenetes deployment manifest.
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: example-deployment
-spec:
-  template:
-    spec:
-      containers:
-        - name: example-container
-          env:
-            - name: DNSIMPLE_API_URL # the URL of the DNSimple API (defaults to https://api.dnsimple.com)
-              value: https://api.dnsimple.com
-            - name: DNSIMPLE_ENABLED # enable the DNSimple provider (defaults to false)
-              value: "false"
-            - name: DNSIMPLE_TOKEN # enable the DNSimple provider
-              value: foo
-            - name: ROUTE53_ENABLED # enable the AWS Route 53 provider (defaults to false)
-              value: "false"
-```
-
-Alternatively, the environment variables can be defined within a [config map][kubernetes config map]
-then referenced from a deployment manifest using `configMapRef`.
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: example-config-map
-data:
-  DNSIMPLE_API_URL: https://api.dnsimple.com # the URL of the DNSimple API (defaults to https://api.dnsimple.com)
-  DNSIMPLE_ENABLED: "false" # enable the DNSimple provider (defaults to false)
-  DNSIMPLE_TOKEN: foo # enable the DNSimple provider
-  ROUTE53_ENABLED: "false" # enable the AWS Route 53 provider (defaults to false)
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: example-deployment
-spec:
-  template:
-    spec:
-      containers:
-        - name: example-container
-          envFrom:
-            - configMapRef:
-                name: example-config-map
-```
-
-</details>
-
-<details>
-<summary>Docker</summary>
-
-This example shows how to define the environment variables needed by `proclaim`
-when running as a [Docker service] defined in a Docker compose file.
-
-```yaml
-service:
-  example-service:
-    environment:
-      DNSIMPLE_API_URL: https://api.dnsimple.com # the URL of the DNSimple API (defaults to https://api.dnsimple.com)
-      DNSIMPLE_ENABLED: "false" # enable the DNSimple provider (defaults to false)
-      DNSIMPLE_TOKEN: foo # enable the DNSimple provider
-      ROUTE53_ENABLED: "false" # enable the AWS Route 53 provider (defaults to false)
-```
-
-</details>
-
 <!-- references -->
 
 [`dnsimple_api_url`]: #DNSIMPLE_API_URL
 [`dnsimple_enabled`]: #DNSIMPLE_ENABLED
 [`dnsimple_token`]: #DNSIMPLE_TOKEN
-[docker service]: https://docs.docker.com/compose/environment-variables/#set-environment-variables-in-containers
 [ferrite]: https://github.com/dogmatiq/ferrite
-[kubernetes config map]: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables
-[kubernetes container]: https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/#define-an-environment-variable-for-a-container
 [rfc 2119]: https://www.rfc-editor.org/rfc/rfc2119.html
 [`route53_enabled`]: #ROUTE53_ENABLED
