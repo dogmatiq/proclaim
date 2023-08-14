@@ -10,7 +10,7 @@ require (
 	github.com/dogmatiq/dissolve v0.2.0
 	github.com/dogmatiq/dyad v0.2.2
 	github.com/dogmatiq/ferrite v1.2.0
-	github.com/dogmatiq/imbue v0.7.0
+	github.com/dogmatiq/imbue v0.7.1
 	github.com/go-logr/logr v1.2.4
 	github.com/miekg/dns v1.1.55
 	github.com/onsi/ginkgo/v2 v2.11.0
@@ -75,10 +75,10 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/mod v0.10.0 // indirect
+	golang.org/x/mod v0.11.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/oauth2 v0.10.0 // indirect
-	golang.org/x/sync v0.2.0 // indirect
+	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/term v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
