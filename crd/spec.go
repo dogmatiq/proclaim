@@ -36,14 +36,16 @@ type DNSSDServiceInstanceSpec struct {
 // specification.
 func (s DNSSDServiceInstanceSpec) ToDissolve() dnssd.ServiceInstance {
 	inst := dnssd.ServiceInstance{
-		Name:        s.Instance.Name,
-		ServiceType: s.Instance.ServiceType,
-		Domain:      s.Instance.Domain,
-		TargetHost:  s.Instance.Targets[0].Host,
-		TargetPort:  s.Instance.Targets[0].Port,
-		Priority:    s.Instance.Targets[0].Priority,
-		Weight:      s.Instance.Targets[0].Weight,
-		TTL:         s.Instance.TTL.Duration,
+		ServiceInstanceName: dnssd.ServiceInstanceName{
+			Name:        s.Instance.Name,
+			ServiceType: s.Instance.ServiceType,
+			Domain:      s.Instance.Domain,
+		},
+		TargetHost: s.Instance.Targets[0].Host,
+		TargetPort: s.Instance.Targets[0].Port,
+		Priority:   s.Instance.Targets[0].Priority,
+		Weight:     s.Instance.Targets[0].Weight,
+		TTL:        s.Instance.TTL.Duration,
 	}
 
 	if inst.TTL == 0 {

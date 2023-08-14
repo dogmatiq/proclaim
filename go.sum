@@ -46,6 +46,8 @@ github.com/dnsimple/dnsimple-go v1.2.1/go.mod h1:G7a16dj2TULTldjxg1EAcSxonEqx0gk
 github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815/go.mod h1:WwZ+bS3ebgob9U8Nd0kOddGdZWjyMGR8Wziv+TBNwSE=
 github.com/dogmatiq/dissolve v0.2.0 h1:8RjOIBJCw14qee+GQcVDbO3wGb6OqJdqe+WU2AeeHpg=
 github.com/dogmatiq/dissolve v0.2.0/go.mod h1:3Y+3YJoIwLP3FNiEvw9ZVXB2ioj/mqs2PKaR87aOIz4=
+github.com/dogmatiq/dissolve v0.3.1 h1:wPRCGx0pa5iuABkQFLh8eJonMEqipsyWynTDZ9QQXTg=
+github.com/dogmatiq/dissolve v0.3.1/go.mod h1:4cy0rL/42IuqH0KRui1iCd6fH6MVPTipigb001rCc1o=
 github.com/dogmatiq/dyad v0.2.2 h1:gKBvCbJD11r5sHtsU0U2FuCwqxWQOZ37Q6cXO5Srbn4=
 github.com/dogmatiq/dyad v0.2.2/go.mod h1:d646/q0Ufks+xfJm3jGXpobX/VMdjTHP1bSIhy4jDp4=
 github.com/dogmatiq/ferrite v1.2.0 h1:JJt94m85bArcr1JoInbp9t7K7Jnc+i8SkaQNCUwaiEc=
