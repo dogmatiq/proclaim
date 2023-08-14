@@ -171,13 +171,13 @@ func (a *advertiser) findResourceRecordSet(
 
 func instanceName(inst dnssd.ServiceInstance) *string {
 	return aws.String(
-		dnssd.ServiceInstanceName(inst.Name, inst.ServiceType, inst.Domain) + ".",
+		inst.Absolute(),
 	)
 }
 
 func serviceName(inst dnssd.ServiceInstance) *string {
 	return aws.String(
-		dnssd.InstanceEnumerationDomain(inst.ServiceType, inst.Domain) + ".",
+		dnssd.AbsoluteInstanceEnumerationDomain(inst.ServiceType, inst.Domain),
 	)
 }
 

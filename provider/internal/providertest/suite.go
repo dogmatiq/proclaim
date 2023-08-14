@@ -139,24 +139,28 @@ func DeclareTestSuite(
 			ginkgo.It("can advertise and unadvertise instances", func() {
 				expect := []dnssd.ServiceInstance{
 					{
-						Name:        "instance-1",
-						ServiceType: service,
-						Domain:      tctx.Domain,
-						TargetHost:  "host1.example.com",
-						TargetPort:  1000,
-						Priority:    100,
-						Weight:      10,
-						TTL:         1 * time.Second,
+						ServiceInstanceName: dnssd.ServiceInstanceName{
+							Name:        "instance-1",
+							ServiceType: service,
+							Domain:      tctx.Domain,
+						},
+						TargetHost: "host1.example.com",
+						TargetPort: 1000,
+						Priority:   100,
+						Weight:     10,
+						TTL:        1 * time.Second,
 					},
 					{
-						Name:        "instance-2",
-						ServiceType: service,
-						Domain:      tctx.Domain,
-						TargetHost:  "host2.example.com",
-						TargetPort:  2000,
-						Priority:    200,
-						Weight:      20,
-						TTL:         2 * time.Second,
+						ServiceInstanceName: dnssd.ServiceInstanceName{
+							Name:        "instance-2",
+							ServiceType: service,
+							Domain:      tctx.Domain,
+						},
+						TargetHost: "host2.example.com",
+						TargetPort: 2000,
+						Priority:   200,
+						Weight:     20,
+						TTL:        2 * time.Second,
 					},
 				}
 
@@ -191,14 +195,16 @@ func DeclareTestSuite(
 
 			ginkgo.It("can update an existing instance", func() {
 				before := dnssd.ServiceInstance{
-					Name:        "instance",
-					ServiceType: service,
-					Domain:      tctx.Domain,
-					TargetHost:  "host.example.com",
-					TargetPort:  443,
-					Priority:    10,
-					Weight:      20,
-					TTL:         5 * time.Second,
+					ServiceInstanceName: dnssd.ServiceInstanceName{
+						Name:        "instance",
+						ServiceType: service,
+						Domain:      tctx.Domain,
+					},
+					TargetHost: "host.example.com",
+					TargetPort: 443,
+					Priority:   10,
+					Weight:     20,
+					TTL:        5 * time.Second,
 					Attributes: []dnssd.Attributes{
 						dnssd.
 							NewAttributes().
@@ -210,14 +216,16 @@ func DeclareTestSuite(
 				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 
 				after := dnssd.ServiceInstance{
-					Name:        "instance",
-					ServiceType: service,
-					Domain:      tctx.Domain,
-					TargetHost:  "updated.example.com",
-					TargetPort:  444,
-					Priority:    11,
-					Weight:      21,
-					TTL:         6 * time.Second,
+					ServiceInstanceName: dnssd.ServiceInstanceName{
+						Name:        "instance",
+						ServiceType: service,
+						Domain:      tctx.Domain,
+					},
+					TargetHost: "updated.example.com",
+					TargetPort: 444,
+					Priority:   11,
+					Weight:     21,
+					TTL:        6 * time.Second,
 					Attributes: []dnssd.Attributes{
 						dnssd.
 							NewAttributes().
@@ -235,14 +243,16 @@ func DeclareTestSuite(
 
 			ginkgo.It("ignores an existing identical instance", func() {
 				expect := dnssd.ServiceInstance{
-					Name:        "instance",
-					ServiceType: service,
-					Domain:      tctx.Domain,
-					TargetHost:  "host.example.com",
-					TargetPort:  443,
-					Priority:    10,
-					Weight:      20,
-					TTL:         5 * time.Second,
+					ServiceInstanceName: dnssd.ServiceInstanceName{
+						Name:        "instance",
+						ServiceType: service,
+						Domain:      tctx.Domain,
+					},
+					TargetHost: "host.example.com",
+					TargetPort: 443,
+					Priority:   10,
+					Weight:     20,
+					TTL:        5 * time.Second,
 					Attributes: []dnssd.Attributes{
 						dnssd.
 							NewAttributes().
@@ -262,14 +272,16 @@ func DeclareTestSuite(
 
 			ginkgo.It("does not fail when unadvertising a non-existent instance", func() {
 				inst := dnssd.ServiceInstance{
-					Name:        "instance",
-					ServiceType: service,
-					Domain:      tctx.Domain,
-					TargetHost:  "host.example.com",
-					TargetPort:  443,
-					Priority:    10,
-					Weight:      20,
-					TTL:         5 * time.Second,
+					ServiceInstanceName: dnssd.ServiceInstanceName{
+						Name:        "instance",
+						ServiceType: service,
+						Domain:      tctx.Domain,
+					},
+					TargetHost: "host.example.com",
+					TargetPort: 443,
+					Priority:   10,
+					Weight:     20,
+					TTL:        5 * time.Second,
 					Attributes: []dnssd.Attributes{
 						dnssd.
 							NewAttributes().
