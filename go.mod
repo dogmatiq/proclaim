@@ -9,13 +9,13 @@ require (
 	github.com/dnsimple/dnsimple-go v1.2.1
 	github.com/dogmatiq/dissolve v0.3.1
 	github.com/dogmatiq/dyad v0.2.2
-	github.com/dogmatiq/ferrite v1.2.0
+	github.com/dogmatiq/ferrite v1.2.1
 	github.com/dogmatiq/imbue v0.7.1
 	github.com/go-logr/logr v1.2.4
 	github.com/miekg/dns v1.1.55
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.10
-	golang.org/x/exp v0.0.0-20230108222341-4b8118a2686a
+	golang.org/x/exp v0.0.0-20230810033253-352e893a4cad
 	k8s.io/apimachinery v0.27.4
 	k8s.io/client-go v0.27.4
 	sigs.k8s.io/controller-runtime v0.15.1
@@ -58,7 +58,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
