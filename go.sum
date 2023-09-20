@@ -52,8 +52,8 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/dnsimple/dnsimple-go v1.2.1 h1:c63wz283ipB2ktB36X/6anv0Ikf5xz2SIn+8ZDyRIXw=
-github.com/dnsimple/dnsimple-go v1.2.1/go.mod h1:G7a16dj2TULTldjxg1EAcSxonEqx0gkTOP8PESBai+4=
+github.com/dnsimple/dnsimple-go v1.4.0 h1:nBqtRXI9dYx6k6YJDlPZ1x/JuTP86KMtgbsBj6/6sMA=
+github.com/dnsimple/dnsimple-go v1.4.0/go.mod h1:G7a16dj2TULTldjxg1EAcSxonEqx0gkTOP8PESBai+4=
 github.com/dogmatiq/dissolve v0.3.1 h1:wPRCGx0pa5iuABkQFLh8eJonMEqipsyWynTDZ9QQXTg=
 github.com/dogmatiq/dissolve v0.3.1/go.mod h1:4cy0rL/42IuqH0KRui1iCd6fH6MVPTipigb001rCc1o=
 github.com/dogmatiq/dyad v0.2.2 h1:gKBvCbJD11r5sHtsU0U2FuCwqxWQOZ37Q6cXO5Srbn4=
