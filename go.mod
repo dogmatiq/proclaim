@@ -14,7 +14,7 @@ require (
 	github.com/go-logr/logr v1.2.4
 	github.com/miekg/dns v1.1.56
 	github.com/onsi/ginkgo/v2 v2.12.1
-	github.com/onsi/gomega v1.27.10
+	github.com/onsi/gomega v1.28.0
 	golang.org/x/exp v0.0.0-20230810033253-352e893a4cad
 	k8s.io/apimachinery v0.28.2
 	k8s.io/client-go v0.28.2
