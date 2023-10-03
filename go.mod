@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.21.0
 	github.com/aws/aws-sdk-go-v2/config v1.18.43
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.29.5
-	github.com/dnsimple/dnsimple-go v1.2.1
+	github.com/dnsimple/dnsimple-go v1.4.1
 	github.com/dogmatiq/dissolve v0.3.1
 	github.com/dogmatiq/dyad v0.2.2
 	github.com/dogmatiq/ferrite v1.2.1
@@ -76,7 +76,7 @@ require (
 	go.uber.org/zap v1.25.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.15.0 // indirect
-	golang.org/x/oauth2 v0.10.0 // indirect
+	golang.org/x/oauth2 v0.11.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/term v0.12.0 // indirect
