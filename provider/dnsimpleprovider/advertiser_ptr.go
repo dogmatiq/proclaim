@@ -2,7 +2,6 @@ package dnsimpleprovider
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -29,7 +28,7 @@ func (a *advertiser) findPTR(
 				},
 			)
 			if err != nil {
-				return nil, nil, fmt.Errorf("unable to list PTR records: %w", err)
+				return nil, nil, dnsimplex.Errorf("unable to list PTR records: %w", err)
 			}
 
 			return res.Pagination, res.Data, nil

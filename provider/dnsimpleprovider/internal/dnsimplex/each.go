@@ -103,7 +103,7 @@ func Find[T, V any](
 //
 // If fn returns false, the iteration stops.
 func Each[T any](
-	ctx context.Context,
+	_ context.Context,
 	list func(dnsimple.ListOptions) (*dnsimple.Pagination, []T, error),
 	fn func(T) (bool, error),
 ) error {

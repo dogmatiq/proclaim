@@ -30,7 +30,7 @@ func (a *advertiser) findSRV(
 				},
 			)
 			if err != nil {
-				return nil, nil, fmt.Errorf("unable to list SRV records: %w", err)
+				return nil, nil, dnsimplex.Errorf("unable to list SRV records: %w", err)
 			}
 
 			return res.Pagination, res.Data, nil

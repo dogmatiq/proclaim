@@ -78,7 +78,7 @@ func (p *Provider) AdvertiserByDomain(
 		func(opts dnsimple.ListOptions) (*dnsimple.Pagination, []dnsimple.Account, error) {
 			res, err := p.Client.Accounts.ListAccounts(ctx, &opts)
 			if err != nil {
-				return nil, nil, fmt.Errorf("unable to list accounts: %w", err)
+				return nil, nil, dnsimplex.Errorf("unable to list accounts: %w", err)
 			}
 			return res.Pagination, res.Data, err
 		},
@@ -102,7 +102,7 @@ func (p *Provider) advertiserByDomain(
 		domain,
 	)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, dnsimplex.Errorf(
 			"unable to get %q zone on account %d: %w",
 			domain,
 			accountID,

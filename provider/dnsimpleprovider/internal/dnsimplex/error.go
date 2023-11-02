@@ -2,6 +2,7 @@ package dnsimplex
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
@@ -27,4 +28,23 @@ func IgnoreNotFound(err error) error {
 	}
 
 	return err
+}
+
+func flattenError(err error) error {
+	var res *dnsimple.ErrorResponse
+	if errors.As(err, &res) {
+		return errors.New(err.Error() + ": " + res.Message)
+	}
+	return err
+}
+
+// Errorf returns an error that formats according to a format specifier.
+func Errorf(format string, args ...any) error {
+	for i, arg := range args {
+		if err, ok := arg.(error); ok {
+			args[i] = flattenError(err)
+		}
+	}
+
+	return fmt.Errorf(format, args...)
 }

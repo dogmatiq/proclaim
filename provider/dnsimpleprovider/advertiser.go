@@ -2,12 +2,12 @@ package dnsimpleprovider
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
 	"github.com/dogmatiq/dissolve/dnssd"
 	"github.com/dogmatiq/proclaim/provider"
+	"github.com/dogmatiq/proclaim/provider/dnsimpleprovider/internal/dnsimplex"
 	"github.com/go-logr/logr"
 )
 
@@ -72,7 +72,7 @@ func (a *advertiser) apply(
 
 	for _, rec := range cs.deletes {
 		if _, err := a.Client.DeleteRecord(ctx, accountID, a.Zone.Name, rec.ID); err != nil {
-			return provider.ChangeSet{}, fmt.Errorf("unable to delete %s record: %w", rec.Type, err)
+			return provider.ChangeSet{}, dnsimplex.Errorf("unable to delete %s record: %w", rec.Type, err)
 		}
 
 		switch rec.Type {
@@ -96,7 +96,7 @@ func (a *advertiser) apply(
 
 	for _, up := range cs.updates {
 		if _, err := a.Client.UpdateRecord(ctx, accountID, a.Zone.Name, up.Before.ID, up.After); err != nil {
-			return provider.ChangeSet{}, fmt.Errorf("unable to update %s record: %w", up.Before.Type, err)
+			return provider.ChangeSet{}, dnsimplex.Errorf("unable to update %s record: %w", up.Before.Type, err)
 		}
 
 		switch up.Before.Type {
@@ -123,7 +123,7 @@ func (a *advertiser) apply(
 
 	for _, attr := range cs.creates {
 		if _, err := a.Client.CreateRecord(ctx, accountID, a.Zone.Name, attr); err != nil {
-			return provider.ChangeSet{}, fmt.Errorf("unable to create %s record: %w", attr.Type, err)
+			return provider.ChangeSet{}, dnsimplex.Errorf("unable to create %s record: %w", attr.Type, err)
 		}
 
 		switch attr.Type {
