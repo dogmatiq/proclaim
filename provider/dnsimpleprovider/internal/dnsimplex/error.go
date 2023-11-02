@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/dnsimple/dnsimple-go/dnsimple"
 )
@@ -30,14 +31,6 @@ func IgnoreNotFound(err error) error {
 	return err
 }
 
-func flattenError(err error) error {
-	var res *dnsimple.ErrorResponse
-	if errors.As(err, &res) {
-		return errors.New(err.Error() + ": " + res.Message)
-	}
-	return err
-}
-
 // Errorf returns an error that formats according to a format specifier.
 func Errorf(format string, args ...any) error {
 	for i, arg := range args {
@@ -47,4 +40,31 @@ func Errorf(format string, args ...any) error {
 	}
 
 	return fmt.Errorf(format, args...)
+}
+
+func flattenError(err error) error {
+	var res *dnsimple.ErrorResponse
+	if errors.As(err, &res) {
+		var m strings.Builder
+
+		m.WriteString(err.Error())
+
+		first := true
+		for name, errors := range res.AttributeErrors {
+			if first {
+				m.WriteString(": ")
+				first = false
+			} else {
+				m.WriteString(", ")
+			}
+
+			m.WriteString(name)
+			m.WriteString("=")
+			m.WriteString(strings.Join(errors, ","))
+		}
+
+		return errors.New(m.String())
+	}
+
+	return err
 }
