@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog], and this project adheres to
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## [0.4.4] - 2023-11-05
+
+### Changed
+
+- The dependency on the `proclaim` secret is now optional
+
 ## [0.4.3] - 2023-08-15
 
 ### Changed
@@ -109,6 +115,7 @@ The format is based on [Keep a Changelog], and this project adheres to
 [0.4.1]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.1
 [0.4.2]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.2
 [0.4.3]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.3
+[0.4.4]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.4
 
 <!-- version template
 ## [0.0.1] - YYYY-MM-DD

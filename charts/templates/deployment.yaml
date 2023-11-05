@@ -62,6 +62,7 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ .Values.proclaim.secretName }}
+                optional: true
           env:
             {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
