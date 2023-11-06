@@ -14,6 +14,11 @@ func init() {
 			cfg *dns.ClientConfig,
 		) (*dnssd.UnicastResolver, error) {
 			return &dnssd.UnicastResolver{
+				Client: &dns.Client{
+					// Always use TCP for DNS-SD queries to avoid truncation of
+					// large responses.
+					Net: "tcp",
+				},
 				Config: cfg,
 			}, nil
 		},
