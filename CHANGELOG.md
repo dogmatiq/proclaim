@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 <!-- REMEMBER TO BUMP THE VERSIONS IN THE CHART FILE -->
 
+## [0.4.7] - 2023-11-07
+
+### Fixed
+
+- Use case-insensitive comparison when detecting hostname drift
+
 ## [0.4.6] - 2023-11-07
 
 ### Fixed

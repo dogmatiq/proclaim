@@ -78,7 +78,7 @@ func (r *Reconciler) computeDiscoverable(
 // compare returns a (very) brief human-readable description of the differences
 // between the observed and desired service instance records.
 func compare(observed, desired dnssd.ServiceInstance) (string, bool) {
-	if observed.TargetHost != desired.TargetHost {
+	if !strings.EqualFold(observed.TargetHost, desired.TargetHost) {
 		return fmt.Sprintf("host %q != %q", observed.TargetHost, desired.TargetHost), false
 	}
 
