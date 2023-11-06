@@ -62,7 +62,7 @@ func (r *Reconciler) Reconcile(
 }
 
 func (r *Reconciler) initialize(
-	ctx context.Context,
+	_ context.Context,
 	res *crd.DNSSDServiceInstance,
 ) (bool, error) {
 	types := []string{

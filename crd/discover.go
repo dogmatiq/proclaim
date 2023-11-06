@@ -1,6 +1,8 @@
 package crd
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
@@ -84,26 +86,29 @@ func NegativeLookupResultCondition() metav1.Condition {
 // LookupResultOutOfSync records an event indicating that the service instance
 // was discovered via DNS-SD, but the result did not match the advertised DNS
 // records.
-func LookupResultOutOfSync(m manager.Manager, res *DNSSDServiceInstance) {
+func LookupResultOutOfSync(m manager.Manager, res *DNSSDServiceInstance, diff string) {
 	m.
 		GetEventRecorderFor("proclaim-dnssd").
 		Event(
 			res,
 			"Warning",
 			"LookupResultOutOfSync",
-			"instance discovered with incorrect (potentially cached) values",
+			"instance discovered with incorrect (potentially cached) values: "+diff,
 		)
 }
 
 // LookupResultOutOfSyncCondition returns a condition indicating that the
 // instance was found by a DNS-SD lookup operation, but the result did not match
 // the advertised DNS records.
-func LookupResultOutOfSyncCondition() metav1.Condition {
+func LookupResultOutOfSyncCondition(diff string) metav1.Condition {
 	return metav1.Condition{
-		Type:    ConditionTypeDiscoverable,
-		Status:  metav1.ConditionFalse,
-		Reason:  "LookupResultOutOfSync",
-		Message: "DNS-SD lookup result does not match the advertised DNS records",
+		Type:   ConditionTypeDiscoverable,
+		Status: metav1.ConditionFalse,
+		Reason: "LookupResultOutOfSync",
+		Message: fmt.Sprintf(
+			"DNS-SD lookup result does not match the advertised DNS records: %s",
+			diff,
+		),
 	}
 }
 

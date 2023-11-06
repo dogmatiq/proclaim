@@ -15,6 +15,11 @@ The format is based on [Keep a Changelog], and this project adheres to
 ### Fixed
 
 - Always use TCP (not UDP) for DNS-SD reconcilation queries to avoid truncated responses
+- Fixed false-negative reported for the `Discoverable` condition
+
+### Changed
+
+- Added brief description of the drifted values when `Discoverable` is `False` due to `LookupResultOutOfSync`
 
 ## [0.4.4] - 2023-11-05
 

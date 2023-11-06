@@ -2,9 +2,11 @@ package reconciler
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
+	"github.com/dogmatiq/dissolve/dnssd"
 	"github.com/dogmatiq/proclaim/crd"
 	"golang.org/x/exp/slices"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,20 +63,47 @@ func (r *Reconciler) computeDiscoverable(
 
 	desired := res.Spec.ToDissolve()
 
+	if drift, ok := compare(observed, desired); !ok {
+		crd.LookupResultOutOfSync(r.Manager, res, drift)
+		return observed.TTL, crd.LookupResultOutOfSyncCondition(drift)
+	}
+
+	d := res.Condition(crd.ConditionTypeDiscoverable)
+	if d.Status != metav1.ConditionTrue {
+		crd.Discovered(r.Manager, res)
+	}
+	return observed.TTL, crd.DiscoveredCondition()
+}
+
+// compare returns a (very) brief human-readable description of the differences
+// between the observed and desired service instance records.
+func compare(observed, desired dnssd.ServiceInstance) (string, bool) {
+	if observed.TargetHost != desired.TargetHost {
+		return fmt.Sprintf("host %q != %q", observed.TargetHost, desired.TargetHost), false
+	}
+
+	if observed.TargetPort != desired.TargetPort {
+		return fmt.Sprintf("port %d != %d", observed.TargetPort, desired.TargetPort), false
+	}
+
+	if observed.Priority != desired.Priority {
+		return fmt.Sprintf("priority %d != %d", observed.Priority, desired.Priority), false
+	}
+
+	if observed.Weight != desired.Weight {
+		return fmt.Sprintf("weight %d != %d", observed.Weight, desired.Weight), false
+	}
+
+	if !dnssd.AttributeCollectionsEqual(observed.Attributes, desired.Attributes) {
+		return "attributes", false
+	}
+
 	// The TTL of the observed instance may be less than the desired TTL based
 	// on how old the DNS server's cache is. So long as the observed TTL does
 	// not *exceed* the desired TTL, we consider the records to be in sync.
-	if observed.TTL <= desired.TTL {
-		desired.TTL = observed.TTL
-		if observed.Equal(desired) {
-			d := res.Condition(crd.ConditionTypeDiscoverable)
-			if d.Status != metav1.ConditionTrue {
-				crd.Discovered(r.Manager, res)
-			}
-			return observed.TTL, crd.DiscoveredCondition()
-		}
+	if observed.TTL > desired.TTL {
+		return fmt.Sprintf("ttl %d > %d", observed.TTL, desired.TTL), false
 	}
 
-	crd.LookupResultOutOfSync(r.Manager, res)
-	return observed.TTL, crd.LookupResultOutOfSyncCondition()
+	return "", true
 }
