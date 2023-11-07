@@ -40,8 +40,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dnsimple/dnsimple-go v1.5.0 h1:NtiaBCl+Y73ERflVYC2mjxemqoGbZZu6Enf5/vfvKGk=
 github.com/dnsimple/dnsimple-go v1.5.0/go.mod h1:fxTVOUu8VGT5Yi5q53uUnG2gP35qYuEV+QtAVN9upWU=
-github.com/dogmatiq/dissolve v0.3.1 h1:wPRCGx0pa5iuABkQFLh8eJonMEqipsyWynTDZ9QQXTg=
-github.com/dogmatiq/dissolve v0.3.1/go.mod h1:4cy0rL/42IuqH0KRui1iCd6fH6MVPTipigb001rCc1o=
+github.com/dogmatiq/dissolve v0.4.0 h1:vi/fDlf1ePfAbbYCWh979rFqcd621Dh8gbe/bTYnV2Y=
+github.com/dogmatiq/dissolve v0.4.0/go.mod h1:UWmZJRnXa5kmugfpuTaiSxBCFz5CPtm5FDm9A0cKMoU=
 github.com/dogmatiq/dyad v0.2.2 h1:gKBvCbJD11r5sHtsU0U2FuCwqxWQOZ37Q6cXO5Srbn4=
 github.com/dogmatiq/dyad v0.2.2/go.mod h1:d646/q0Ufks+xfJm3jGXpobX/VMdjTHP1bSIhy4jDp4=
 github.com/dogmatiq/ferrite v1.2.1 h1:F4JU99pwIQ7wa47Rk/VpSVeGH+kTiZoDjNhZ0F4oumg=
@@ -242,8 +242,8 @@ golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJ
 golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20210220032951-036812b2e83c/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
-golang.org/x/sync v0.3.0 h1:ftCYgMx6zT/asHUrPw8BLLscYtGznsLAnjq5RH9P66E=
-golang.org/x/sync v0.3.0/go.mod h1:FU7BRWz2tNW+3quACPkgCx/L+uEAv1htQ0V83Z9Rj+Y=
+golang.org/x/sync v0.5.0 h1:60k92dhOjHxJkrqnwsfl8KuaHbn/5dl0lUPUklKo3qE=
+golang.org/x/sync v0.5.0/go.mod h1:Czt+wKu1gCyEFDUtn0jG5QVvpJ6rzVqr5aXyt9drQfk=
 golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=

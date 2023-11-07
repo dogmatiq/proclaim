@@ -94,8 +94,8 @@ func compare(observed, desired dnssd.ServiceInstance) (string, bool) {
 		return fmt.Sprintf("weight %d != %d", observed.Weight, desired.Weight), false
 	}
 
-	if !dnssd.AttributeCollectionsEqual(observed.Attributes, desired.Attributes) {
-		return "attributes", false
+	if !observed.Attributes.Equal(desired.Attributes) {
+		return "attribute mismatch", false
 	}
 
 	// The TTL of the observed instance may be less than the desired TTL based
