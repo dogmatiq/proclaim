@@ -12,6 +12,13 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 <!-- REMEMBER TO BUMP THE VERSIONS IN THE CHART FILE -->
 
+## [0.4.8] - 2023-11-16
+
+### Added
+
+- Added `common.annotations` value to Helm chart, which adds annotations to all Kubernetes resources
+- Added `rbac.annotations` value to Helm chart, which adds annotations to RBAC-related Kubernetes resources
+
 ## [0.4.7] - 2023-11-07
 
 ### Fixed
