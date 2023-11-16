@@ -4,6 +4,13 @@ metadata:
   name: {{ template "proclaim.fullname" . }}
   labels:
     {{- include "proclaim.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.common.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.rbac.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 rules:
   - apiGroups:
       - proclaim.dogmatiq.io

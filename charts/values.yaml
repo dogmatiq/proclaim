@@ -35,6 +35,12 @@ proclaim:
 
 ################################################################################
 
+# common contains additional labels to add to all Kubernetes resources created
+# by this Helm chart.
+common:
+  annotations: {}
+  labels: {}
+
 # serviceAccount configures the service account used by the Proclaim controller.
 #
 # If publishing via Route 53 and running under EKS it is RECOMMENDED that you
@@ -53,11 +59,7 @@ serviceAccount:
 # respond to changes to DNSSDServiceInstance resources.
 rbac:
   create: true
-  additionalPermissions: []
-
-# common contains additional labels to add to all Kubernetes resources created
-# by this Helm chart.
-common:
+  annotations: {}
   labels: {}
 
 # deployment contains additional annotations and labels to add to the Deployment
@@ -84,7 +86,7 @@ fullnameOverride: ""
 
 affinity: {}
 
-dnsPolicy:
+dnsPolicy: ""
 
 env: {}
 

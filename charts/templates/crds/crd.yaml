@@ -4,6 +4,10 @@ metadata:
   name: dnssd-service-instances.proclaim.dogmatiq.io
   labels:
     {{- include "proclaim.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.common.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   scope: Namespaced
   group: proclaim.dogmatiq.io
