@@ -16,8 +16,8 @@ github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.1 h1:rpkF4n0
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.1/go.mod h1:l9ymW25HOqymeU2m1gbUQ3rUIsTwKs8gYHXkqDQUhiI=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.4 h1:rdovz3rEu0vZKbzoMYPTehp0E8veoE9AyfzqCr5Eeao=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.4/go.mod h1:aYCGNjyUCUelhofxlZyj63srdxWUSsBSGg5l6MCuXuE=
-github.com/aws/aws-sdk-go-v2/service/route53 v1.34.3 h1:kS89RytUBbaYijDp9CMOfz0gXu5/nr74eJbaFY8tLko=
-github.com/aws/aws-sdk-go-v2/service/route53 v1.34.3/go.mod h1:CK6B5dFi4LA27QnzBYJqZCnl6PT8sWOLzQTsVQeVkag=
+github.com/aws/aws-sdk-go-v2/service/route53 v1.34.4 h1:uoy5ZwffwfdyEZW2lcpaUs/v5nOW1xG+pwb2BzQSARs=
+github.com/aws/aws-sdk-go-v2/service/route53 v1.34.4/go.mod h1:CK6B5dFi4LA27QnzBYJqZCnl6PT8sWOLzQTsVQeVkag=
 github.com/aws/aws-sdk-go-v2/service/sso v1.17.4 h1:WSMiDIMaDGyIiXwruNITU0IJF0d0foXwjxpxRylamqQ=
 github.com/aws/aws-sdk-go-v2/service/sso v1.17.4/go.mod h1:oA6VjNsLll2eVuUoF2D+CMyORgNzPEW/3PyUdq6WQjI=
 github.com/aws/aws-sdk-go-v2/service/ssooidc v1.20.2 h1:GsrlsvTPBNxHvE3KBCwUMnR76MTO/6qnnO1ILSUOpTA=
