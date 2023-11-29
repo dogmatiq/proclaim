@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/aws/aws-sdk-go-v2 v1.23.2
 	github.com/aws/aws-sdk-go-v2/config v1.25.8
-	github.com/aws/aws-sdk-go-v2/service/route53 v1.34.4
+	github.com/aws/aws-sdk-go-v2/service/route53 v1.34.5
 	github.com/dnsimple/dnsimple-go v1.5.1
 	github.com/dogmatiq/dissolve v0.4.0
 	github.com/dogmatiq/dyad v0.2.2
