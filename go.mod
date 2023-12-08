@@ -3,7 +3,7 @@ module github.com/dogmatiq/proclaim
 go 1.21
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.23.5
+	github.com/aws/aws-sdk-go-v2 v1.24.0
 	github.com/aws/aws-sdk-go-v2/config v1.25.12
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.35.3
 	github.com/dnsimple/dnsimple-go v1.5.1
@@ -32,7 +32,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.18.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.21.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.26.3 // indirect
-	github.com/aws/smithy-go v1.18.1 // indirect
+	github.com/aws/smithy-go v1.19.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
