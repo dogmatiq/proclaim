@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 <!-- REMEMBER TO BUMP THE VERSIONS IN THE CHART FILE -->
 
+## [0.4.11] - 2024-01-12
+
+### Added
+
+- Log DNS resolver configuration on startup
+
 ## [0.4.10] - 2024-01-12
 
 ### Fixed

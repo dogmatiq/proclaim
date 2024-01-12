@@ -9,6 +9,7 @@ import (
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/reconciler"
 	"github.com/go-logr/logr"
+	"github.com/miekg/dns"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	controller "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -23,15 +24,23 @@ func main() {
 
 	ctx := controller.SetupSignalHandler()
 
-	if err := imbue.Invoke3(
+	if err := imbue.Invoke4(
 		ctx,
 		container,
 		func(
 			ctx context.Context,
 			m manager.Manager,
 			r *reconciler.Reconciler,
+			c *dns.ClientConfig,
 			l imbue.ByName[systemLogger, logr.Logger],
 		) error {
+			l.Value().Info(
+				"DNS configuration loaded",
+				"servers", c.Servers,
+				"port", c.Port,
+				"timeout", c.Timeout,
+			)
+
 			err := builder.
 				ControllerManagedBy(m).
 				For(&crd.DNSSDServiceInstance{}).
