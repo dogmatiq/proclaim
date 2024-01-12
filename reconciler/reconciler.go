@@ -9,6 +9,7 @@ import (
 	"github.com/dogmatiq/proclaim/crd"
 	"github.com/dogmatiq/proclaim/provider"
 	"github.com/go-logr/logr"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -30,7 +31,18 @@ type Reconciler struct {
 func (r *Reconciler) Reconcile(
 	ctx context.Context,
 	req reconcile.Request,
-) (reconcile.Result, error) {
+) (result reconcile.Result, err error) {
+	defer func() {
+		if apierrors.IsConflict(err) {
+			// If we get a conflict error, requeue the request.
+			result = reconcile.Result{Requeue: true}
+			err = nil
+		} else if err != nil {
+			// Avoid warning message about combining requeue with an error.
+			result = reconcile.Result{}
+		}
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 

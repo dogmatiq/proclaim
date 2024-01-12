@@ -12,6 +12,13 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 <!-- REMEMBER TO BUMP THE VERSIONS IN THE CHART FILE -->
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed "reconciler returned both a non-zero result and a non-nil error" warning
+- Fixed "the object has been modified" error by always requeing on conflict
+
 ## [0.4.8] - 2023-11-16
 
 ### Added
