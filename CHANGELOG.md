@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 <!-- REMEMBER TO BUMP THE VERSIONS IN THE CHART FILE -->
 
+## [0.4.10] - 2024-01-12
+
+### Fixed
+
+- Bumped chart version to 0.4.10
+
 ## [0.4.9] - 2024-01-12
 
 ### Fixed
