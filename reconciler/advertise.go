@@ -176,7 +176,7 @@ func (r *Reconciler) requeueResult(
 		reason = "resource updated since last advertised"
 	} else if d.Status == metav1.ConditionTrue {
 		reason = "drift detection"
-		delay = res.Spec.Instance.TTL.Duration
+		delay = 10 * res.Spec.Instance.TTL.Duration
 	} else if discoveredTTL == 0 {
 		// We have no TTL information from actual DNS records, so we compute
 		// something based on the TTL.
@@ -186,7 +186,7 @@ func (r *Reconciler) requeueResult(
 		// should wait before re-trying. It would be better if the provider
 		// could give us retry intervals based on the zone's SOA record (e.g.
 		// negative cache times) and/or API rate limiting.
-		delay = 10 * res.Spec.Instance.TTL.Duration
+		delay = res.Spec.Instance.TTL.Duration
 		reason = "not discoverable"
 	} else {
 		// Otherwise, we wait long enough for the mismatching discovered DNS

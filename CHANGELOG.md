@@ -12,6 +12,13 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 <!-- REMEMBER TO BUMP THE VERSIONS IN THE CHART FILE -->
 
+## [0.4.13] - 2024-01-12
+
+### Fixed
+
+- Decrease "drift detection" frequency only, still check again quickly after a
+  failed discovery.
+
 ## [0.4.12] - 2024-01-12
 
 ### Changed
@@ -183,6 +190,7 @@ The format is based on [Keep a Changelog], and this project adheres to
 [0.4.10]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.10
 [0.4.11]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.11
 [0.4.12]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.12
+[0.4.13]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.13
 
 <!-- version template
 ## [0.0.1] - YYYY-MM-DD
