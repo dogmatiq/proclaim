@@ -178,15 +178,15 @@ func (r *Reconciler) requeueResult(
 		reason = "drift detection"
 		delay = res.Spec.Instance.TTL.Duration
 	} else if discoveredTTL == 0 {
-		// We have no TTL information from actual DNS records, so we use
-		// the TTL from the specification.
+		// We have no TTL information from actual DNS records, so we compute
+		// something based on the TTL.
 		//
 		// HACK: This doesn't really have anything to do with the TTL, we're
 		// just using it as a (hopefully) reasonable indicator of how long we
 		// should wait before re-trying. It would be better if the provider
 		// could give us retry intervals based on the zone's SOA record (e.g.
 		// negative cache times) and/or API rate limiting.
-		delay = res.Spec.Instance.TTL.Duration
+		delay = 10 * res.Spec.Instance.TTL.Duration
 		reason = "not discoverable"
 	} else {
 		// Otherwise, we wait long enough for the mismatching discovered DNS

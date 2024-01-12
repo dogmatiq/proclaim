@@ -12,6 +12,14 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 <!-- REMEMBER TO BUMP THE VERSIONS IN THE CHART FILE -->
 
+## [0.4.12] - 2024-01-12
+
+### Changed
+
+- Decrease the frequency of reconcilation requests for healthy DNS-SD instances
+  (10 times TTL). This is a hack to reduce the likelyhood of false negatives
+  until a fix can be applied to the upstream dependency `dogmatiq/dissolve`.
+
 ## [0.4.11] - 2024-01-12
 
 ### Added
@@ -172,6 +180,9 @@ The format is based on [Keep a Changelog], and this project adheres to
 [0.4.7]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.7
 [0.4.8]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.8
 [0.4.9]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.9
+[0.4.10]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.10
+[0.4.11]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.11
+[0.4.12]: https://github.com/dogmatiq/proclaim/releases/tag/v0.4.12
 
 <!-- version template
 ## [0.0.1] - YYYY-MM-DD
