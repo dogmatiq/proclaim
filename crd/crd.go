@@ -11,8 +11,8 @@ const (
 	GroupName = "proclaim.dogmatiq.io"
 
 	// FinalizerName is the name of the finalizer used by Proclaim to ensure
-	// that DNS-SD services are unadvertised when they're underlying resource
-	// is deleted.
+	// that DNS-SD services are unadvertised when their underlying resource is
+	// deleted.
 	FinalizerName = GroupName + "/unadvertise"
 
 	// Version is the version of the API/CRDs.
