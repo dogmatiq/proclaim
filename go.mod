@@ -9,7 +9,7 @@ require (
 	github.com/dnsimple/dnsimple-go v1.7.0
 	github.com/dogmatiq/dissolve v0.4.0
 	github.com/dogmatiq/dyad v0.2.2
-	github.com/dogmatiq/ferrite v1.2.1
+	github.com/dogmatiq/ferrite v1.3.0
 	github.com/dogmatiq/imbue v0.7.1
 	github.com/go-logr/logr v1.4.1
 	github.com/miekg/dns v1.1.58
@@ -70,7 +70,7 @@ require (
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.45.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
-	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
