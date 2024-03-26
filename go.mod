@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.40.3
 	github.com/dnsimple/dnsimple-go v1.7.0
 	github.com/dogmatiq/dissolve v0.4.0
-	github.com/dogmatiq/dyad v0.2.2
+	github.com/dogmatiq/dyad v1.0.0
 	github.com/dogmatiq/ferrite v1.3.0
 	github.com/dogmatiq/imbue v0.7.1
 	github.com/go-logr/logr v1.4.1
