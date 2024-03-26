@@ -41,8 +41,8 @@ github.com/dnsimple/dnsimple-go v1.7.0 h1:JKu9xJtZ3SqOC+BuYgAWeab7+EEx0sz422vu8j
 github.com/dnsimple/dnsimple-go v1.7.0/go.mod h1:EKpuihlWizqYafSnQHGCd/gyvy3HkEQJ7ODB4KdV8T8=
 github.com/dogmatiq/dissolve v0.4.0 h1:vi/fDlf1ePfAbbYCWh979rFqcd621Dh8gbe/bTYnV2Y=
 github.com/dogmatiq/dissolve v0.4.0/go.mod h1:UWmZJRnXa5kmugfpuTaiSxBCFz5CPtm5FDm9A0cKMoU=
-github.com/dogmatiq/dyad v0.2.2 h1:gKBvCbJD11r5sHtsU0U2FuCwqxWQOZ37Q6cXO5Srbn4=
-github.com/dogmatiq/dyad v0.2.2/go.mod h1:d646/q0Ufks+xfJm3jGXpobX/VMdjTHP1bSIhy4jDp4=
+github.com/dogmatiq/dyad v1.0.0 h1:T50WQ9rAzCMcT941wVH5RW5+tAGRssuVlNog+ZMQR54=
+github.com/dogmatiq/dyad v1.0.0/go.mod h1:PrUQr7OCSEUjAkhi7ad8BjxFPKe0I9yP2f1kGimPcJE=
 github.com/dogmatiq/ferrite v1.3.0 h1:T8JnwO2x/Bu9TFDZxYDRH9UwrAf586+i/n2bQp3fXsI=
 github.com/dogmatiq/ferrite v1.3.0/go.mod h1:DfZDa1NcEgRklZ62WU5cuWdlketCxYcXQGY60cTkwJ0=
 github.com/dogmatiq/iago v0.4.0 h1:57nZqVT34IZxtCZEW/RFif7DNUEjMXgevfr/Mmd0N8I=
