@@ -40,6 +40,11 @@ var _ = Describe("type Provider", func() {
 							}, nil
 						},
 					),
+					// Allow a large number of retries because we often hit rate
+					// limits in CI when a PR is submitted because there are
+					// concurrent executions of the tests for both the branch
+					// and the PR itself.
+					RetryMaxAttempts: 100,
 				},
 			)
 
