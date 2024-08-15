@@ -14,7 +14,7 @@ require (
 	github.com/dogmatiq/ferrite v1.3.0
 	github.com/dogmatiq/imbue v0.7.1
 	github.com/go-logr/logr v1.4.2
-	github.com/miekg/dns v1.1.61
+	github.com/miekg/dns v1.1.62
 	github.com/onsi/ginkgo/v2 v2.20.0
 	github.com/onsi/gomega v1.34.1
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
