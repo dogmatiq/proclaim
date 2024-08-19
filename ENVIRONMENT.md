@@ -2,30 +2,18 @@
 
 This document describes the environment variables used by `proclaim`.
 
-| Name                 | Optionality                            | Description                      |
+| Name                 | Usage                                  | Description                      |
 | -------------------- | -------------------------------------- | -------------------------------- |
 | [`DNSIMPLE_API_URL`] | defaults to `https://api.dnsimple.com` | the URL of the DNSimple API      |
 | [`DNSIMPLE_ENABLED`] | defaults to `false`                    | enable the DNSimple provider     |
 | [`DNSIMPLE_TOKEN`]   | conditional                            | enable the DNSimple provider     |
 | [`ROUTE53_ENABLED`]  | defaults to `false`                    | enable the AWS Route 53 provider |
 
-⚠️ `proclaim` may consume other undocumented environment variables. This
-document only shows variables declared using [Ferrite].
+> [!TIP]
+> If an environment variable is set to an empty value, `proclaim` behaves as if
+> that variable is left undefined.
 
-## Specification
-
-All environment variables described below must meet the stated requirements.
-Otherwise, `proclaim` prints usage information to `STDERR` then exits.
-**Undefined** variables and **empty** values are equivalent.
-
-⚠️ This section includes **non-normative** example values. These examples are
-syntactically valid, but may not be meaningful to `proclaim`.
-
-The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**,
-**SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this
-document are to be interpreted as described in [RFC 2119].
-
-### `DNSIMPLE_API_URL`
+## `DNSIMPLE_API_URL`
 
 > the URL of the DNSimple API
 
@@ -48,11 +36,11 @@ not necessarily web addresses; `https://example.org` and
 
 </details>
 
-#### See Also
+### See Also
 
 - [`DNSIMPLE_ENABLED`] — enable the DNSimple provider
 
-### `DNSIMPLE_ENABLED`
+## `DNSIMPLE_ENABLED`
 
 > enable the DNSimple provider
 
@@ -65,7 +53,7 @@ export DNSIMPLE_ENABLED=true
 export DNSIMPLE_ENABLED=false # (default)
 ```
 
-### `DNSIMPLE_TOKEN`
+## `DNSIMPLE_TOKEN`
 
 > enable the DNSimple provider
 
@@ -74,11 +62,11 @@ The `DNSIMPLE_TOKEN` variable **MAY** be left undefined if and only if
 
 ⚠️ This variable is **sensitive**; its value may contain private information.
 
-#### See Also
+### See Also
 
 - [`DNSIMPLE_ENABLED`] — enable the DNSimple provider
 
-### `ROUTE53_ENABLED`
+## `ROUTE53_ENABLED`
 
 > enable the AWS Route 53 provider
 
@@ -91,11 +79,21 @@ export ROUTE53_ENABLED=true
 export ROUTE53_ENABLED=false # (default)
 ```
 
+---
+
+> [!NOTE]
+> This document only describes environment variables declared using [Ferrite].
+> `proclaim` may consume other undocumented environment variables.
+
+> [!IMPORTANT]
+> Some of the example values given in this document are **non-normative**.
+> Although these values are syntactically valid, they may not be meaningful to
+> `proclaim`.
+
 <!-- references -->
 
 [`dnsimple_api_url`]: #DNSIMPLE_API_URL
 [`dnsimple_enabled`]: #DNSIMPLE_ENABLED
 [`dnsimple_token`]: #DNSIMPLE_TOKEN
 [ferrite]: https://github.com/dogmatiq/ferrite
-[rfc 2119]: https://www.rfc-editor.org/rfc/rfc2119.html
 [`route53_enabled`]: #ROUTE53_ENABLED
