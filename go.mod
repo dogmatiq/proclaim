@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.2
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.30.5
+	github.com/aws/aws-sdk-go-v2 v1.31.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.35
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.43.3
 	github.com/dnsimple/dnsimple-go v1.7.0
@@ -34,7 +34,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.22.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.26.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.30.8 // indirect
-	github.com/aws/smithy-go v1.20.4 // indirect
+	github.com/aws/smithy-go v1.21.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
