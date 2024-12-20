@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.4
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.32.6
+	github.com/aws/aws-sdk-go-v2 v1.32.7
 	github.com/aws/aws-sdk-go-v2/config v1.28.6
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.46.3
 	github.com/dnsimple/dnsimple-go v1.7.0
