@@ -15,7 +15,7 @@ require (
 	github.com/dogmatiq/imbue v0.7.1
 	github.com/go-logr/logr v1.4.2
 	github.com/miekg/dns v1.1.62
-	github.com/onsi/ginkgo/v2 v2.22.1
+	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	k8s.io/apimachinery v0.32.0
