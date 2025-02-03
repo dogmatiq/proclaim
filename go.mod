@@ -7,7 +7,7 @@ toolchain go1.23.4
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.0
 	github.com/aws/aws-sdk-go-v2/config v1.29.4
-	github.com/aws/aws-sdk-go-v2/service/route53 v1.48.4
+	github.com/aws/aws-sdk-go-v2/service/route53 v1.48.5
 	github.com/dnsimple/dnsimple-go v1.7.0
 	github.com/dogmatiq/dissolve v0.4.0
 	github.com/dogmatiq/dyad v1.0.0
@@ -57,7 +57,6 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
