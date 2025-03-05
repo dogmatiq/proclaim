@@ -7,7 +7,7 @@ toolchain go1.23.4
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.29.9
-	github.com/aws/aws-sdk-go-v2/service/route53 v1.49.0
+	github.com/aws/aws-sdk-go-v2/service/route53 v1.49.1
 	github.com/dnsimple/dnsimple-go v1.7.0
 	github.com/dogmatiq/dissolve v0.4.0
 	github.com/dogmatiq/dyad v1.0.0
