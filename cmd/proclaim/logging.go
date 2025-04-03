@@ -17,7 +17,7 @@ func init() {
 	imbue.With0Named[systemLogger](
 		container,
 		func(
-			ctx imbue.Context,
+			imbue.Context,
 		) (logr.Logger, error) {
 			return zap.New(
 				zap.UseDevMode(
@@ -30,7 +30,7 @@ func init() {
 	imbue.With1Named[verboseLogger](
 		container,
 		func(
-			ctx imbue.Context,
+			_ imbue.Context,
 			l imbue.ByName[systemLogger, logr.Logger],
 		) (logr.Logger, error) {
 			return l.Value().V(1), nil

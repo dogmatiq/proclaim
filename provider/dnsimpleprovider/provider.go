@@ -8,7 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dnsimple/dnsimple-go/dnsimple"
+	"github.com/dnsimple/dnsimple-go/v4/dnsimple"
+	dnsimpleadvertiser "github.com/dogmatiq/dissolve/dnssd/advertiser/dnsimple"
 	"github.com/dogmatiq/proclaim/provider"
 	"github.com/dogmatiq/proclaim/provider/dnsimpleprovider/internal/dnsimplex"
 	"github.com/go-logr/logr"
@@ -111,9 +112,10 @@ func (p *Provider) advertiserByDomain(
 	}
 
 	return &advertiser{
-		p.Client.Zones,
+		&dnsimpleadvertiser.Advertiser{
+			Client: p.Client,
+		},
 		res.Data,
-		p.Logger,
 	}, nil
 }
 

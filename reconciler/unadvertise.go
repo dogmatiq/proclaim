@@ -28,7 +28,7 @@ func (r *Reconciler) unadvertise(
 	if ok {
 		advertised := res.Condition(crd.ConditionTypeAdvertised)
 
-		cs, err := a.Unadvertise(ctx, res.Spec.ToDissolve())
+		changed, err := a.Unadvertise(ctx, res.Spec.ToDissolve())
 		if err != nil {
 			crd.ProviderError(
 				r.Manager,
@@ -38,11 +38,11 @@ func (r *Reconciler) unadvertise(
 				err,
 			)
 			advertised = crd.UnadvertiseErrorCondition(err)
-		} else if cs.IsEmpty() {
-			advertised = crd.DNSRecordsDoNotExistCondition()
-		} else {
+		} else if changed {
 			crd.DNSRecordsDeleted(r.Manager, res)
 			advertised = crd.DNSRecordsDeletedCondition()
+		} else {
+			advertised = crd.DNSRecordsDoNotExistCondition()
 		}
 
 		if err := r.update(

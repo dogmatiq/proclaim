@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dnsimple/dnsimple-go/dnsimple"
+	"github.com/dnsimple/dnsimple-go/v4/dnsimple"
 )
 
 // IsNotFound returns true if err is an error response from dnsimple.com that

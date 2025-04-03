@@ -3,81 +3,8 @@ package dnsimplex
 import (
 	"context"
 
-	"github.com/dnsimple/dnsimple-go/dnsimple"
+	"github.com/dnsimple/dnsimple-go/v4/dnsimple"
 )
-
-// All returns a slice of all the values returned by list.
-//
-// list is called once for each page of results.
-func All[T any](
-	ctx context.Context,
-	list func(dnsimple.ListOptions) (*dnsimple.Pagination, []T, error),
-) ([]T, error) {
-	var result []T
-
-	err := Each(
-		ctx,
-		list,
-		func(v T) (bool, error) {
-			result = append(result, v)
-			return true, nil
-		},
-	)
-
-	return result, err
-}
-
-// One returns the first value returned by list.
-func One[T any](
-	ctx context.Context,
-	list func(dnsimple.ListOptions) (*dnsimple.Pagination, []T, error),
-) (T, bool, error) {
-	var result T
-	var ok bool
-
-	err := Each(
-		ctx,
-		func(opts dnsimple.ListOptions) (*dnsimple.Pagination, []T, error) {
-			opts.PerPage = dnsimple.Int(1)
-			return list(opts)
-		},
-		func(v T) (bool, error) {
-			result = v
-			ok = true
-			return false, nil
-		},
-	)
-
-	return result, ok, err
-}
-
-// First returns the first value returned by list for which pred returns true.
-//
-// list is called once for each page of results.
-func First[T any](
-	ctx context.Context,
-	list func(dnsimple.ListOptions) (*dnsimple.Pagination, []T, error),
-	pred func(T) bool,
-) (T, bool, error) {
-	var result T
-	var ok bool
-
-	err := Each(
-		ctx,
-		list,
-		func(v T) (bool, error) {
-			if pred(v) {
-				result = v
-				ok = true
-				return false, nil
-			}
-
-			return true, nil
-		},
-	)
-
-	return result, ok, err
-}
 
 // Find calls fn for each value returned by list until fn returns true.
 //

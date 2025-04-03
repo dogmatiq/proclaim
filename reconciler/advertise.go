@@ -56,7 +56,7 @@ func (r *Reconciler) doAdvertise(
 		return err
 	}
 
-	cs, err := a.Advertise(ctx, res.Spec.ToDissolve())
+	changed, err := a.Advertise(ctx, res.Spec.ToDissolve())
 
 	advertised := res.Condition(crd.ConditionTypeAdvertised)
 
@@ -69,17 +69,14 @@ func (r *Reconciler) doAdvertise(
 			err,
 		)
 		advertised = crd.AdvertiseErrorCondition(err)
-	} else if cs.IsEmpty() {
+	} else if changed {
+		crd.DNSRecordsUpdated(r.Manager, res)
+		advertised = crd.DNSRecordsUpdatedCondition()
+	} else {
 		crd.DNSRecordsVerified(r.Manager, res)
 		if advertised.Status != metav1.ConditionTrue {
 			advertised = crd.DNSRecordsObservedCondition()
 		}
-	} else if cs.IsCreate() {
-		crd.DNSRecordsCreated(r.Manager, res)
-		advertised = crd.DNSRecordsCreatedCondition()
-	} else {
-		crd.DNSRecordsUpdated(r.Manager, res)
-		advertised = crd.DNSRecordsUpdatedCondition()
 	}
 
 	return r.update(

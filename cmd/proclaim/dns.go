@@ -10,7 +10,7 @@ func init() {
 	imbue.With1(
 		container,
 		func(
-			ctx imbue.Context,
+			_ imbue.Context,
 			cfg *dns.ClientConfig,
 		) (*dnssd.UnicastResolver, error) {
 			return &dnssd.UnicastResolver{
@@ -27,7 +27,7 @@ func init() {
 	imbue.With0(
 		container,
 		func(
-			ctx imbue.Context,
+			imbue.Context,
 		) (*dns.ClientConfig, error) {
 			return dns.ClientConfigFromFile("/etc/resolv.conf")
 		},

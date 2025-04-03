@@ -9,32 +9,8 @@ import (
 // service instance has been advertised via a provider.
 const ConditionTypeAdvertised = "Advertised"
 
-// DNSRecordsCreated records an event indicating that new DNS records were
-// created.
-func DNSRecordsCreated(m manager.Manager, res *DNSSDServiceInstance) {
-	m.
-		GetEventRecorderFor("proclaim-"+res.Status.Provider).
-		Event(
-			res,
-			"Normal",
-			"RecordsCreated",
-			"created new DNS records",
-		)
-}
-
-// DNSRecordsCreatedCondition returns a condition indicating that the
-// instance's DNS records have been created.
-func DNSRecordsCreatedCondition() metav1.Condition {
-	return metav1.Condition{
-		Type:    ConditionTypeAdvertised,
-		Status:  metav1.ConditionTrue,
-		Reason:  "RecordsCreated",
-		Message: "created new DNS records",
-	}
-}
-
-// DNSRecordsUpdated records an event indicating that existing DNS records were
-// updated.
+// DNSRecordsUpdated records an event indicating that DNS records were created
+// or updated.
 func DNSRecordsUpdated(m manager.Manager, res *DNSSDServiceInstance) {
 	m.
 		GetEventRecorderFor("proclaim-"+res.Status.Provider).
@@ -42,18 +18,18 @@ func DNSRecordsUpdated(m manager.Manager, res *DNSSDServiceInstance) {
 			res,
 			"Normal",
 			"RecordsUpdated",
-			"updated existing DNS records",
+			"updated DNS records",
 		)
 }
 
 // DNSRecordsUpdatedCondition returns a condition indicating that the instance's
-// DNS records have been updated.
+// DNS records have been created or updated.
 func DNSRecordsUpdatedCondition() metav1.Condition {
 	return metav1.Condition{
 		Type:    ConditionTypeAdvertised,
 		Status:  metav1.ConditionTrue,
 		Reason:  "RecordsUpdated",
-		Message: "updating existing DNS records",
+		Message: "updated DNS records",
 	}
 }
 
@@ -81,8 +57,7 @@ func DNSRecordsObservedCondition() metav1.Condition {
 	}
 }
 
-// DNSRecordsDeleted records an event indicating that existing DNS records were
-// deleted.
+// DNSRecordsDeleted records an event indicating that DNS records were deleted.
 func DNSRecordsDeleted(m manager.Manager, res *DNSSDServiceInstance) {
 	m.
 		GetEventRecorderFor("proclaim-"+res.Status.Provider).
@@ -90,7 +65,7 @@ func DNSRecordsDeleted(m manager.Manager, res *DNSSDServiceInstance) {
 			res,
 			"Normal",
 			"RecordsDeleted",
-			"deleted existing DNS records",
+			"deleted DNS records",
 		)
 }
 
@@ -101,7 +76,7 @@ func DNSRecordsDeletedCondition() metav1.Condition {
 		Type:    ConditionTypeAdvertised,
 		Status:  metav1.ConditionFalse,
 		Reason:  "RecordsDeleted",
-		Message: "deleted existing DNS records",
+		Message: "deleted DNS records",
 	}
 }
 

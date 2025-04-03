@@ -20,7 +20,7 @@ func init() {
 	imbue.Decorate2(
 		container,
 		func(
-			ctx imbue.Context,
+			_ imbue.Context,
 			r *reconciler.Reconciler,
 			c imbue.Optional[*route53.Client],
 			l imbue.ByName[verboseLogger, logr.Logger],
@@ -49,7 +49,7 @@ func init() {
 	imbue.With1(
 		container,
 		func(
-			ctx imbue.Context,
+			_ imbue.Context,
 			cfg aws.Config,
 		) (*route53.Client, error) {
 			return route53.NewFromConfig(cfg), nil

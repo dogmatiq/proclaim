@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
+	route53advertiser "github.com/dogmatiq/dissolve/dnssd/advertiser/route53"
 	"github.com/dogmatiq/proclaim/provider"
 	"github.com/go-logr/logr"
 )
@@ -57,9 +58,10 @@ func (p *Provider) AdvertiserByID(
 	}
 
 	return &advertiser{
-		p.Client,
+		&route53advertiser.Advertiser{
+			Client: p.Client,
+		},
 		zoneID,
-		p.Logger,
 	}, nil
 }
 
@@ -95,9 +97,10 @@ func (p *Provider) AdvertiserByDomain(
 	}
 
 	return &advertiser{
-		p.Client,
+		&route53advertiser.Advertiser{
+			Client: p.Client,
+		},
 		*zone.Id,
-		p.Logger,
 	}, true, nil
 }
 

@@ -16,7 +16,7 @@ func init() {
 	imbue.With1(
 		container,
 		func(
-			ctx imbue.Context,
+			_ imbue.Context,
 			l imbue.ByName[systemLogger, logr.Logger],
 		) (manager.Manager, error) {
 			cfg, err := controller.GetConfig()
@@ -36,7 +36,7 @@ func init() {
 	imbue.With3(
 		container,
 		func(
-			ctx imbue.Context,
+			_ imbue.Context,
 			m manager.Manager,
 			r *dnssd.UnicastResolver,
 			l imbue.ByName[verboseLogger, logr.Logger],
@@ -53,7 +53,7 @@ func init() {
 	imbue.Decorate0(
 		container,
 		func(
-			ctx imbue.Context,
+			_ imbue.Context,
 			m manager.Manager,
 		) (manager.Manager, error) {
 			b := &scheme.Builder{

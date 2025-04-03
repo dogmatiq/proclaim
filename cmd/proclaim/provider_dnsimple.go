@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/dnsimple/dnsimple-go/dnsimple"
+	"github.com/dnsimple/dnsimple-go/v4/dnsimple"
 	"github.com/dogmatiq/ferrite"
 	"github.com/dogmatiq/imbue"
 	"github.com/dogmatiq/proclaim/provider/dnsimpleprovider"
