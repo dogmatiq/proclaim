@@ -35,8 +35,17 @@ func DeclareTestSuite(
 			tctx = setUp(ctx)
 		})
 
-		ginkgo.When("the provider can not advertise on the domain", func() {
-			ginkgo.Describe("func AdvertiserByDomain()", func() {
+		ginkgo.Describe("func AdvertiserByDomain()", func() {
+			ginkgo.When("the provider can advertise on the domain", func() {
+				ginkgo.It("returns an advertiser", func() {
+					advertiser, ok, err := tctx.Provider.AdvertiserByDomain(ctx, tctx.Domain)
+					gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
+					gomega.Expect(ok).To(gomega.BeTrue())
+					gomega.Expect(advertiser).NotTo(gomega.BeNil())
+				})
+			})
+
+			ginkgo.When("the provider can not advertise on the domain", func() {
 				ginkgo.It("returns false", func() {
 					_, ok, err := tctx.Provider.AdvertiserByDomain(ctx, "non-existent."+tctx.Domain)
 					gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
@@ -45,14 +54,20 @@ func DeclareTestSuite(
 			})
 		})
 
-		ginkgo.When("the provider can advertise on the domain", func() {
-			ginkgo.Describe("func AdvertiserByDomain()", func() {
-				ginkgo.It("returns an advertiser", func() {
-					advertiser, ok, err := tctx.Provider.AdvertiserByDomain(ctx, tctx.Domain)
-					gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-					gomega.Expect(ok).To(gomega.BeTrue())
-					gomega.Expect(advertiser).NotTo(gomega.BeNil())
-				})
+		ginkgo.Describe("func AdvertiserByID()", func() {
+			ginkgo.It("returns the advertiser", func() {
+				advertiser, ok, err := tctx.Provider.AdvertiserByDomain(ctx, tctx.Domain)
+				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
+				gomega.Expect(ok).To(gomega.BeTrue())
+
+				advertiser, err = tctx.Provider.AdvertiserByID(ctx, advertiser.ID())
+				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
+				gomega.Expect(advertiser).NotTo(gomega.BeNil())
+			})
+
+			ginkgo.It("returns an error if the ID is invalid", func() {
+				_, err := tctx.Provider.AdvertiserByID(ctx, map[string]any{})
+				gomega.Expect(err).Should(gomega.HaveOccurred())
 			})
 		})
 	})

@@ -12,8 +12,11 @@ import (
 // IsNotFound returns true if err is an error response from dnsimple.com that
 // indicates that the requested resource does not exist.
 func IsNotFound(err error) bool {
-	var res *dnsimple.ErrorResponse
+	if err == nil {
+		return false
+	}
 
+	var res *dnsimple.ErrorResponse
 	if errors.As(err, &res) {
 		return res.HTTPResponse.StatusCode == http.StatusNotFound
 	}
@@ -35,36 +38,37 @@ func IgnoreNotFound(err error) error {
 func Errorf(format string, args ...any) error {
 	for i, arg := range args {
 		if err, ok := arg.(error); ok {
-			args[i] = flattenError(err)
+			args[i] = enrichErrorMessage(err)
 		}
 	}
 
 	return fmt.Errorf(format, args...)
 }
 
-func flattenError(err error) error {
+// enrichErrorMessage extracts more detailed information from an
+// [dnsimple.ErrorResponse] and returns a new error that includes the original
+// error message and detailed information about invalid attributes.
+func enrichErrorMessage(err error) error {
 	var res *dnsimple.ErrorResponse
-	if errors.As(err, &res) {
-		var m strings.Builder
-
-		m.WriteString(err.Error())
-
-		first := true
-		for name, errors := range res.AttributeErrors {
-			if first {
-				m.WriteString(": ")
-				first = false
-			} else {
-				m.WriteString(", ")
-			}
-
-			m.WriteString(name)
-			m.WriteString("=")
-			m.WriteString(strings.Join(errors, ","))
-		}
-
-		return errors.New(m.String())
+	if !errors.As(err, &res) {
+		return err
 	}
 
-	return err
+	var m strings.Builder
+
+	first := true
+	for name, errors := range res.AttributeErrors {
+		if first {
+			m.WriteString(": ")
+			first = false
+		} else {
+			m.WriteString(", ")
+		}
+
+		m.WriteString(name)
+		m.WriteString("=")
+		m.WriteString(strings.Join(errors, ","))
+	}
+
+	return fmt.Errorf("%w: %s", err, m.String())
 }

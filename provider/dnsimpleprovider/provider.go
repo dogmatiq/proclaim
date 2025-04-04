@@ -103,6 +103,7 @@ func (p *Provider) advertiserByDomain(
 		domain,
 	)
 	if err != nil {
+		// return nil, errors.New(err.Error())
 		return nil, dnsimplex.Errorf(
 			"unable to get %q zone on account %d: %w",
 			domain,
