@@ -6,7 +6,6 @@ import (
 	"github.com/dogmatiq/imbue"
 	"github.com/dogmatiq/proclaim/provider/dnsimpleprovider"
 	"github.com/dogmatiq/proclaim/reconciler"
-	"github.com/go-logr/logr"
 )
 
 var dnsimpleEnabled = ferrite.
@@ -25,12 +24,11 @@ var dnsimpleURL = ferrite.
 	Required(ferrite.RelevantIf(dnsimpleEnabled))
 
 func init() {
-	imbue.Decorate1(
+	imbue.Decorate0(
 		container,
 		func(
 			ctx imbue.Context,
 			r *reconciler.Reconciler,
-			l imbue.ByName[verboseLogger, logr.Logger],
 		) (*reconciler.Reconciler, error) {
 			if !dnsimpleEnabled.Value() {
 				return r, nil
@@ -48,7 +46,6 @@ func init() {
 				r.Providers,
 				&dnsimpleprovider.Provider{
 					Client: client,
-					Logger: l.Value(),
 				},
 			)
 

@@ -12,14 +12,12 @@ import (
 	dnsimpleadvertiser "github.com/dogmatiq/dissolve/dnssd/advertiser/dnsimple"
 	"github.com/dogmatiq/proclaim/provider"
 	"github.com/dogmatiq/proclaim/provider/dnsimpleprovider/internal/dnsimplex"
-	"github.com/go-logr/logr"
 )
 
 // Provider is an implementation of provider.Provider that advertises DNS-SD
 // services on domains hosted by dnsimple.com.
 type Provider struct {
 	Client *dnsimple.Client
-	Logger logr.Logger
 }
 
 // ID returns a short unique identifier for the provider.
