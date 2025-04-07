@@ -12,6 +12,20 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 <!-- REMEMBER TO BUMP THE VERSIONS IN THE CHART FILE -->
 
+## [0.4.14] - 2025-04-08
+
+### Changed
+
+- Build under Go v1.24
+- Use `dogmatiq/dissolve` for manipulating DNS records in the `aws` and
+  `dnsimple` providers.
+
+### Fixed
+
+- The `dnsimple` provider now correctly handles the error that occurs when
+  attempting to publish on a domain name that is not managed by the configured
+  DNSimple account.
+
 ## [0.4.13] - 2024-01-12
 
 ### Fixed
