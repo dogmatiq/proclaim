@@ -12,12 +12,19 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 <!-- REMEMBER TO BUMP THE VERSIONS IN THE CHART FILE -->
 
+## [0.4.15] - 2025-04-08
+
+### Fixed
+
+- The `route53` provider now correctly identifies records created by prior
+  versions of Proclaim.
+
 ## [0.4.14] - 2025-04-08
 
 ### Changed
 
 - Build under Go v1.24
-- Use `dogmatiq/dissolve` for manipulating DNS records in the `aws` and
+- Use `dogmatiq/dissolve` for manipulating DNS records in the `route53` and
   `dnsimple` providers.
 
 ### Fixed
