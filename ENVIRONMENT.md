@@ -19,8 +19,8 @@ This document describes the environment variables used by `proclaim`.
 
 The `DNSIMPLE_API_URL` variable **MAY** be left undefined, in which case the
 default value of `https://api.dnsimple.com` is used. Otherwise, the value
-**MUST** be a fully-qualified URL. The value is not used when
-[`DNSIMPLE_ENABLED`] is `false`.
+**MUST** be a fully-qualified URL. It is ignored when [`DNSIMPLE_ENABLED`] is
+`false`.
 
 ```bash
 export DNSIMPLE_API_URL=https://api.dnsimple.com # (default)
@@ -57,7 +57,7 @@ export DNSIMPLE_ENABLED=false # (default)
 
 > enable the DNSimple provider
 
-The `DNSIMPLE_TOKEN` variable **MAY** be left undefined if and only if
+The `DNSIMPLE_TOKEN` variable **MAY** be left undefined when
 [`DNSIMPLE_ENABLED`] is `false`.
 
 ⚠️ This variable is **sensitive**; its value may contain private information.
