@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/aws/aws-sdk-go-v2 v1.41.1
 	github.com/aws/aws-sdk-go-v2/config v1.32.7
-	github.com/aws/aws-sdk-go-v2/service/route53 v1.62.0
+	github.com/aws/aws-sdk-go-v2/service/route53 v1.62.1
 	github.com/dnsimple/dnsimple-go/v4 v4.0.0
 	github.com/dogmatiq/dissolve v0.5.2
 	github.com/dogmatiq/dyad v1.0.0
