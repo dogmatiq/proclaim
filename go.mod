@@ -3,7 +3,7 @@ module github.com/dogmatiq/proclaim
 go 1.25.0
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.41.4
+	github.com/aws/aws-sdk-go-v2 v1.41.5
 	github.com/aws/aws-sdk-go-v2/config v1.32.12
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.62.4
 	github.com/dnsimple/dnsimple-go/v4 v4.0.0
