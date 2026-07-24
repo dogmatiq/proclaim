@@ -11,7 +11,7 @@ require (
 	github.com/dogmatiq/dyad v1.0.0
 	github.com/dogmatiq/ferrite v1.5.1
 	github.com/dogmatiq/imbue v0.7.1
-	github.com/go-logr/logr v1.4.3
+	github.com/go-logr/logr v1.4.4
 	github.com/miekg/dns v1.1.72
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
 	k8s.io/apimachinery v0.36.3
