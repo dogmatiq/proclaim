@@ -9,7 +9,7 @@ require (
 	github.com/dnsimple/dnsimple-go/v4 v4.0.0
 	github.com/dogmatiq/dissolve v0.5.2
 	github.com/dogmatiq/dyad v1.0.0
-	github.com/dogmatiq/ferrite v1.5.1
+	github.com/dogmatiq/ferrite v1.7.0
 	github.com/dogmatiq/imbue v0.7.1
 	github.com/go-logr/logr v1.4.4
 	github.com/miekg/dns v1.1.72
@@ -34,6 +34,7 @@ require (
 	github.com/aws/smithy-go v1.28.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dogmatiq/iago v0.4.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
@@ -50,7 +51,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/mattn/go-runewidth v0.0.23 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
