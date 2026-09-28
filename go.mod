@@ -14,7 +14,7 @@ require (
 	github.com/go-logr/logr v1.4.4
 	github.com/miekg/dns v1.1.72
 	golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93
-	k8s.io/apimachinery v0.37.0
+	k8s.io/apimachinery v0.37.1
 	k8s.io/client-go v0.37.0
 	sigs.k8s.io/controller-runtime v0.24.1
 )
