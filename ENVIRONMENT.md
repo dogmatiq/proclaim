@@ -92,8 +92,8 @@ export ROUTE53_ENABLED=false # (default)
 
 <!-- references -->
 
-[`dnsimple_api_url`]: #DNSIMPLE_API_URL
-[`dnsimple_enabled`]: #DNSIMPLE_ENABLED
-[`dnsimple_token`]: #DNSIMPLE_TOKEN
+[`dnsimple_api_url`]: #dnsimple_api_url
+[`dnsimple_enabled`]: #dnsimple_enabled
+[`dnsimple_token`]: #dnsimple_token
 [ferrite]: https://github.com/dogmatiq/ferrite
-[`route53_enabled`]: #ROUTE53_ENABLED
+[`route53_enabled`]: #route53_enabled
