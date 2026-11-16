@@ -10,6 +10,7 @@ import (
 	"github.com/dogmatiq/proclaim/reconciler"
 	"github.com/go-logr/logr"
 	"github.com/miekg/dns"
+	_ "golang.org/x/crypto/x509roots/fallback" // Provide root certificates in scratch containers.
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	controller "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"

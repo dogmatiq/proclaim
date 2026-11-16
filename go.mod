@@ -13,6 +13,7 @@ require (
 	github.com/dogmatiq/imbue v0.7.1
 	github.com/go-logr/logr v1.4.4
 	github.com/miekg/dns v1.1.73
+	golang.org/x/crypto/x509roots/fallback v0.0.0-20261115193255-739070949446
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f
 	k8s.io/apimachinery v0.37.2
 	k8s.io/client-go v0.37.2
