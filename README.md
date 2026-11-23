@@ -1,12 +1,15 @@
 <div align="center">
 
-# Proclaim
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://dogmatiq.io/res/img/dynamic/repo/proclaim/banner/dark.svg">
+  <img alt="Dogmatiq proclaim" src="https://dogmatiq.io/res/img/dynamic/repo/proclaim/banner/light.svg" height="44">
+</picture>
 
 A Kubernetes controller and CRD that publishes DNS-SD records.
 
-[![Latest Version](https://img.shields.io/github/tag/dogmatiq/proclaim.svg?&style=for-the-badge&label=semver)](https://github.com/dogmatiq/proclaim/releases)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/dogmatiq/proclaim/ci.yml?style=for-the-badge&branch=main)](https://github.com/dogmatiq/proclaim/actions/workflows/ci.yml)
-[![Code Coverage](https://img.shields.io/codecov/c/github/dogmatiq/proclaim/main.svg?style=for-the-badge)](https://codecov.io/github/dogmatiq/proclaim)
+[![Latest version](https://dogmatiq.io/res/img/dynamic/repo/proclaim/badge/semver.svg)](https://github.com/dogmatiq/proclaim/releases)
+[![Build status](https://dogmatiq.io/res/img/dynamic/repo/proclaim/badge/build.svg)](https://github.com/dogmatiq/proclaim/actions/workflows/ci.yml)
+[![Code coverage](https://dogmatiq.io/res/img/dynamic/repo/proclaim/badge/coverage.svg)](https://codecov.io/github/dogmatiq/proclaim)
 
 </div>
 
